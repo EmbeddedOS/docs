@@ -1,0 +1,117 @@
+The Linux Programming Interface - A Linux and UNIX System Programming Handbook
+
+
+
+
+12. System and Process information:
+	+ In this chapter, We look at ways of accessing a variety of system and process information.
+	+ The primary focus of the chapter is a discussion of the '/proc' file system.
+	+ We also describe the uname() system call.
+	
+	12.1 The '/proc' file system:
+		+ In older UNIX implementations, there was typically no easy way to change attributes of the kernel, \
+			To answer questions such as the following:
+			+ How may processes are running on the system and who owns them ?
+			+ What files does a process have open ?
+			+ What files are currently locked, and which processes hold the locks ?
+			+ What sockets are being used on the system?
+			
+		+ Some older UNIX implementations solves this problem by allowing privileged programs to delve into data structures in kernel memory. \
+			Howerver, this approach suffered various problems. \
+			In particular, it required specialized knowledge of the kernel the data structures, \
+			And these structures might change from one kernel version to the next, \
+			Requiring programs that depended on them to be rewritten.
+			
+		+ In order to provide easier access to kernel information, \
+			many modern UNIX implementations provide a '/proc' virtual file system. \
+			This file system resides under thr '/proc' directory \
+			and contains various files that expose kernel information, \
+			Allow processes to conveniently read that information, \
+			And change it in some cases using normal file I/O system calls.
+			
+		+ The /proc file system is said to be virtual \
+			because the files anf subdirectories that it contains don't reside on the disk. \
+			Instead, The kernel creates them "on the fly" as processes access them.
+			
+		
+	12.2. Obtaining Information About a Process: '/proc/PID/'
+		+ For each process on the system, the kernel provides a corresponding directory named procPID, \
+			where PID is the ID of the process.
+		+ Within this directory are various files and subdirectories containing information about that process. \
+			For example, we can obtain information about the init process, \
+			Which always has the process ID 1, by looking at files under the directory '/proc/1/'.
+			
+		+ 'status' file in each '/proc/PID/' provides a range of infomation about the process:
+				Name:   bash
+                Umask:  0022
+                State:  S (sleeping)
+                Tgid:   17248
+                Ngid:   0
+                Pid:    17248
+                PPid:   17200
+                TracerPid:      0
+                Uid:    1000    1000    1000    1000
+                Gid:    100     100     100     100
+                FDSize: 256
+                Groups: 16 33 100
+                NStgid: 17248
+                NSpid:  17248
+                NSpgid: 17248
+                NSsid:  17200
+                VmPeak:     131168 kB
+                VmSize:     131168 kB
+                VmLck:           0 kB
+                VmPin:           0 kB
+                VmHWM:       13484 kB
+                VmRSS:       13484 kB
+                RssAnon:     10264 kB
+                RssFile:      3220 kB
+                RssShmem:        0 kB
+                VmData:      10332 kB
+                VmStk:         136 kB
+                VmExe:         992 kB
+                VmLib:        2104 kB
+                VmPTE:          76 kB
+                VmPMD:          12 kB
+                VmSwap:          0 kB			
+				HugetlbPages:          0 kB       
+                CoreDumping:   0                 
+                Threads:        1
+                SigQ:   0/3067
+                SigPnd: 0000000000000000
+                ShdPnd: 0000000000000000
+                SigBlk: 0000000000010000
+                SigIgn: 0000000000384004
+                SigCgt: 000000004b813efb
+                CapInh: 0000000000000000
+                CapPrm: 0000000000000000
+                CapEff: 0000000000000000
+                CapBnd: ffffffffffffffff
+                CapAmb:   0000000000000000
+                NoNewPrivs:     0
+                Seccomp:        0
+                Speculation_Store_Bypass:       vulnerable
+                Cpus_allowed:   00000001
+                Cpus_allowed_list:      0
+                Mems_allowed:   1
+                Mems_allowed_list:      0
+                voluntary_ctxt_switches:        150
+                nonvoluntary_ctxt_switches:     545
+			
+			+ Detailed information: https://man7.org/linux/man-pages/man5/proc.5.html
+		
+		+ The fact that the contents of this file have changed over time raises a general point about the use of '/proc' file: \
+			When these files consist of multiple entries, \
+			We should parse them defensively - in this case, looking for a match on a line contain a particular string. \
+			(e.g., PPid),\
+			rather than processing the file by line number.
+			
+		+ Lists some other files found in each 
+		
+			
+		
+		
+			
+		
+		
+			
