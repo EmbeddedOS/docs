@@ -1,0 +1,65 @@
+Book: Linux system programming
+
+
+9. Memory Management:
+	+ 
+	+ 
+	9.1. The Process Address Space
+	9.2. Allocating Dynamic Memory
+	9.3. Managing the Data Segment
+	9.4. Anonymous Memory Mappings
+	9.5. Advanced Memory Allocation
+	9.6. Debugging Memory Allocations
+		+ Programs can set the environment variable MALLOC_CHECK_ \
+			to enable enhanced debugging in the memory subsystem.
+			
+		+  The additional debugging checks come at the expense of less efficient memory allocations, \
+			but the overhead is often worth it during the debugging stage of application development.	
+			
+		+ Because an environment variable controls the debugging, there is no need to recompile your program. \
+			For example, you can simply issue a command like the following:
+			$ MALLOC_CHECK_=1 ./rudder
+
+		+ MALLOC_CHECK_:
+			+ 0: the memory subsystem silently ignores any errors.
+			+ 1: an informative message is printed to stderr.
+			+ 2: the program is immediately terminated via abort().
+			+ 3: 
+			
+		9.6.1. Obtaining Statistics
+			+ Linux provides the mallinfo() function for obtaining statistics related to the memory allocation system:
+				#include <malloc.h>
+				struct mallinfo mallinfo (void);
+
+			+ A call to mallinfo() returns statistics in a mallinfo structure. \
+				The structure is returned by value, not via a pointer. \
+				Its contents are also defined in <malloc.h>:
+				
+				/* all sizes in bytes */
+				struct mallinfo {
+					int arena; 		/* size of data segment used by malloc */
+					int ordblks; 	/* number of free chunks */
+					int smblks; 	/* number of fast bins */
+					int hblks; 		/* number of anonymous mappings */
+					int hblkhd; 	/* size of anonymous mappings */
+					int usmblks; 	/* maximum total allocated size */
+					int fsmblks; 	/* size of available fast bins */
+					int uordblks; 	/* size of total allocated space */
+					int fordblks; 	/* size of available chunks */
+					int keepcost; 	/* size of trimmable space */
+				};
+
+			+ Linux also provides the malloc_stats() function, \
+				which prints memory-related statistics to stderr:
+				#include <malloc.h>
+				void malloc_stats (void);
+
+			+ Invoking malloc_stats() in a memory-intensive program yields some big numbers:
+				Arena 0:
+				system bytes = 865939456
+				in use bytes = 851988200
+				Total (incl. mmap):
+				system bytes = 3216519168
+				in use bytes = 3202567912
+				max mmap regions = 65536
+				max mmap bytes = 2350579712

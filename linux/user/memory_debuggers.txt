@@ -1,0 +1,20 @@
+Reference Link: https://elinux.org/Memory_Debuggers
+
++ Several tools exist for finding memory leaks or for reporting individual memory allocations of a program. \
+	These tools help analyze memory usage patterns, detect unbalanced allocations and frees, report buffer over- and under-runs, etc.
+	
+1. mtrace:
+	+ mtrace is a builtin part of glibc which allows detection of memory leaks \
+		caused by unbalanced malloc/free calls. 
+	
+	+ To use it, \
+		The program is modified to call mtrace() and muntrace() to start and stop tracing of allocations. \
+		A log file is created, wich can then be scanned by the 'mtrace' Perl script.
+	
+	+ The 'mtrace' program lists only unbalanced allocations. \
+		If source is available it can show the source line where the problem occurred. \
+		mtrace can be used on both C and C++ programs.
+		
+	+ wiki: http://wikipedia.org/wiki/Mtrace
+
+2. memwatch:

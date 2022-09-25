@@ -1,0 +1,18 @@
+Reference link: https://man7.org/linux/man-pages/man3/mcheck.3.html
+
+
+1. NAME
+	mcheck, mcheck_check_all, mcheck_pedantic, mprobe - heap consistency checking
+
+2. SYNOPSIS         
+	#include <mcheck.h>
+
+	int mcheck(void (*abortfunc)(enum mcheck_status mstatus));
+    int mcheck_pedantic(void (*abortfunc)(enum mcheck_status mstatus));
+    void mcheck_check_all(void);
+
+    enum mcheck_status mprobe(void *ptr);
+	
+3. DESCRIPTION
+	+  The mcheck() function installs a set of debugging hooks for the malloc() family \
+		of memory-allocation functions.

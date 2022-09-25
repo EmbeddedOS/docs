@@ -106,12 +106,83 @@ The Linux Programming Interface - A Linux and UNIX System Programming Handbook
 			(e.g., PPid),\
 			rather than processing the file by line number.
 			
-		+ Lists some other files found in each 
+		+ Lists some other files found in each /proc/PID directory:
+			File 				Description (process attribute)
+			cmdline 			Command-line arguments delimited by \0
+			cwd 				Symbolic link to current working directory
+			environ 			Environment list NAME=value pairs, delimited by \0
+			exe 				Symbolic link to file being executed
+			fd 					Directory containing symbolic links to files opened by this process
+			maps 				Memory mappings
+			mem 				Process virtual memory (must lseek() to valid offset before I/O)
+			mounts 				Mount points for this process
+			root 				Symbolic link to root directory
+			status 				Various information (e.g., process IDs, credentials, memory usage, signals)
+			task 				Contains one subdirectory for each thread in process (Linux 2.6)
 		
+	12.3. The '/proc/PID/fd' directory:
+		+ '/proc/PID/fd' directory contains one symbolic link for each file descriptor that the process has open.
+		+ Each of these symbolic links has a name that matches the descriptor number.
+		+ AS A CONVENIENCE, any process can access its own /proc/PID/ directory \
+			using the symbolic link '/proc/self/'.
 			
-		
-		
+	12.4. Threads: '/proc/PID/task' directory:		
+		+ For each thread in this process, the kernel provides a subdirectory named '/proc/PID/task/TID', \
+			where TID is the thread ID of the thread. \
+			(This is the same number as would be returned by a call to gettid() in the thread.)
 			
-		
-		
+		+ Each '/proc/PID/task/TID' subdirectory is a set of files \
+			and directories exactly like those that are found under /proc/PID.
 			
+		+ Since threads share many attributes, much of the information in these files is the same for each of the threads in the process. 
+		
+	12.5. System information under '/proc/':
+		+ Various files and subdirectories under /proc provide access to system-wide information.
+			Directory 				Information exposed by files in this directory
+			/proc 					Various system information
+			/proc/net 				Status information about networking and sockets
+			/proc/sys/fs 			Settings related to file systems
+			/proc/sys/kernel 		Various general kernel settings
+			/proc/sys/net 			Networking and sockets settings
+			/proc/sys/vm 			Memory-management settings
+			/proc/sys/vipc 			Information about System V IPC objects
+			
+	12.6. Accessing /proc/ Files:
+		+ File under /proc/ are often accessed using shell scripts. \
+			(Most /proc files that contain multiple values can be easily parsed with a scripting language such as Python or Perl).
+			
+		+ '/proc/' files can also be accessed from a program using normal file I/O system calls.
+		+ Some restrictions apply when accessing these files:
+			+ Some files are read-only.
+			+ SOme files can be read only by the file owner.
+			+ Other than the files in '/proc/PID/' subdirectories, most files under '/proc/ are owned by root.
+			
+	12.7. System Identification: uname()
+		+ The uname() system call returns a range of identifying information \
+			about the host system on which an application is running, in the structure pointed to by utsbuf.
+			
+			int uname(struct utsname *utsbuf);
+
+			struct utsname {
+				char sysname[UTSNAMELENGTH]; 	/* Implementation name */
+				char nodename[UTSNAMELENGTH]; 	/* Node name on network */
+				char release[UTSNAMELENGTH]; 	/* Implementation release level */
+				char version[UTSNAMELENGTH]; 	/* Release version level */
+				char machine[UTSNAMELENGTH]; 	/* Hardware on which system is running */
+			#ifdef GNUSOURCE 					/* Following is Linux-specific */
+				char domainname[UTSNAMELENGTH]; /* NIS domain name of host */
+			#endif
+			};
+
+	12.8. Summary:
+		+ The '/proc/' file system exposes a range of kernel information to application programs.
+		+ Each /proc/PID/ subdirectory contains files and subdirectories that \
+			provide information about the process whose ID matches PID.
+			
+		+ Various other files and directories under '/proc/' expose system-wide information that programs
+			 can read and, in some cases, modify.
+	
+	12.9. Further information:
+		+ proc(5) manual page: https://man7.org/linux/man-pages/man5/proc.5.html
+		+ kernel source file Documentation: https://github.com/torvalds/linux/blob/master/Documentation/filesystems/proc.rst
+		

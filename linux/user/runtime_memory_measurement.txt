@@ -1,0 +1,20 @@
+Referenece link: https://elinux.org/Runtime_Memory_Measurement#Memory_Debuggers
+
+
++ This page has a collection of ideas and resources having to to with measure runtime memory of a Linux system.
++ Unfortunately, the existing memory measurement techniques do not give a 100% accurate accounting of memory pages \
+	(since some pages are counted more than once by some measures). 
+	
+1. Measuring memory in Linux (the basics)
+	+ Here are some basic techniques for measuring memory usage in Linux.
+	1.1. free and /proc
+
+2. Measuring user process memory use:
+	2.5. Heap memory usage:
+		+ Heap is the dynamically allocated memory inside each process's address space \
+			that is managed by the application ITSELF. \
+			The structure of this memory is actually managed by the C library, with the application calling malloc() and free().
+			
+		+ glibc has the capability to collect statistivs information of heap functions like malloc() \
+			And the other functions like memory leak checking or double free.
+			
