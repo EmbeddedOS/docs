@@ -1,0 +1,18 @@
+Book: Pthreads programming: A POSIX standard for Better Multiprocessing.
+
+1. Why Threads?
+	+ In this chapter:
+		+ What are Pthreads?
+		+ Potential Parallelism.
+		+ Specifying Potential Parallelism a Concurrent Programming Environment.
+		+ Parallel vs. Concurrent Programming.
+		+ Synchronization.
+		+ Who Am I? Who are you?
+		+ Terminating Thread Execution.
+		+ Why uses Threads Over Processes ?
+		+ A Structured Programming Environment.
+		+ Choosing which Applications to Threads.
+	
+	1.1. What are Pthreads ?
+		+ How do you design a program so that it executes in multiple threads within a process? \
+			
