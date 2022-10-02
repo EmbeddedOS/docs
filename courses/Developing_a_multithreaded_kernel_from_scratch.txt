@@ -1,0 +1,592 @@
+Developing a Multithreaded Kernel From Scratch.
+
+1. introduction:
+	+ learning real mode where we develop an actual bootloader, the boot from real hardware (our real computers).
+	
+	+ your journey starts here throughout real NMO. \
+		we also load sectors from our hard disk into memory. 
+		
+	+ real mode is a compatibility mode by Intel that allows intel processors \
+		to run as they ran maybe 20 or 30 years ago. \
+		-> real mode is a legacy mode by intel.
+	
+	+ protected mode (32 bit operating system).
+	
+	+ we learn all about virtual memory, memory virtualization, mapping virtual addresses to physical addresses. 
+		 our process is all shared the same addresses.
+		 
+	+ we can have multiple processes running and they all share the same memory addresses.
+		-> Paging. -> we can prevent processes from seeing certain parts of memory.
+			-> it is a great security feature and it allows us to compile all user programs at the same address.
+			
+	+ your kernel will be capable of handling the entire system memory. \
+		+ it'll be able to allocate memory to different processes.
+		+ it'll be able to restrict memory access from certain processes.
+		
+	+ this course show you how to create processes for your operating system and load them into memory and run them.
+
+	+ we can have multitasking kernel, we can have multiple processes running at the exact same time.
+	
+	
+	+ when process violates those rules, interrupt exception is called and our kernel will say no, no, no \
+		it'll kill the process and unload it from memory.
+	
+	
+	+ you also learn how to handle program crashes.
+	
+
+
+2. Setup And A Brief Explanation of Kernel Develoment:
+	2. What is Memory?
+		+ Memory is a piece of hardware that allows computers to store information.
+		+ RAM (Random Access Memory) is your computers main memory, here programs can read and write information. 
+		+ ROM (Read Only Memory) is a form of memory that can only be read from.
+		
+		+ RAM explained ?
+			+ RAM is writeable memory and can be written and read from.
+			+ RAM is used only for temporary storage.
+			+ all data in RAM is lost when you power down your computer.
+			
+		+ ROM explained ?
+			+ ROM cannot be written to through normal means.
+			+ ROM is permanent storage and will maintain its data after power lost.
+			+ ROM is genetally used for storing permanent programs that will never change, examples include embedded devices.
+			+ your computer BIOS is stored on a ROM.
+	
+	3. The Boot Process:
+		+ step to a booted system:
+			+ step 1: the BIOS is executed directly from ROM.
+			+ step 2: the BIOS loads the Boot Loader into address 0x7C00.
+			+ step 3: the bootloader loads the kernel.
+			
+		+ what is a bootloader ?
+			+ A bootloader  is a small program responsible for loading the kernel of an OS.
+				(Linux have a GRUB, window have a BIOS....)
+				
+			+ when the computer first boots, real mode only gives us access to one megabyte of memory. it also runs only 16 bit code.
+				-> we are actually fairly limited at this stage.
+				-> we have to load a little program called the "bootloader". \
+					And the only response to be of our bootloader is to put us into what's know as protected mode, \
+					which give us access to four gigabytes of address space, and then we be running three to code.
+				-> loads our kernel into memory, switch the processor into 32 bit protective mode and then executes our kernel, \
+					the bootloader generally uses functions availiable in the BIOS to assist itself.
+			
+			+ we write the bootloader so the BIOS loads the bootloader, the bootloader load operating system.
+			
+		+ The BIOS is executed directly from ROM.
+			+ when we turn on the PC, the CPU executes instructiond directly from the BIOS's ROM.
+			+ the BIOS generally loads its self into RAM then continues execution from RAM.
+			+ the BIOS will initialize essential hardware. \
+				it will provide basic disk drivers to the hard disk and so on.
+				
+			+ the BIOS looks for a bootloader to boot by searching all storage mediums for the boot signature "0x55AA".
+				+ if the BIOS find that signaturem it will load that sector into address 0x7600, \
+					and will then execute from that address running our bootloader.
+					
+				+ for examples, mediums could include USB sticks, floppy drives, hard disk...
+					-> it will go through all of theses devices.
+					
+			+ The BIOS loads the bootloader into RAM at absolute address 0x7c00.
+			+ the BIOS instructs the process to perform a jump to absolute address 0x7C00 \
+				and begin executing the operating systems bootloader.
+				
+		
+		+ the BIOS is kernel in its self.
+			+ Tne BIOS contains routines to assist our bootloader in booting our kernel.
+			+ the BIOS is 16 bit code which means only 16 bit code can execute it properly.
+			+ the BIOS routines are generic and a standard.
+			
+			
+	4. installing what we need for real mode development.
+		+ we will need to create a bootloader before we can make fully functioning kernel.
+		+ installing:
+			+ sudo apt install nasm
+		
+		+ we are going to need an emulator to run our bootloader and kernel.
+			+ sudo apt install qemu-system-x86
+		
+		+ for testing, run command:
+			qemu-system-x86_x64
+			
+
+3. real mode development:
+	5. Hello world Bootloader:
+		+ in this lecture, we will create a bootloader that outputs the text "Hello World".
+		+ using visual studio code with extension: x86 and x86_64 Assembly
+
+		+ we first need to specify our assembly origin so that the assembly knows how to offset our data.
+		
+		+ BIOS loads us into address 0x7C00 so we can tell our assembler to originate from that address.
+			: ORG 0x7C00
+		+ next, we need to tell the assembler that we are using 16 bit architecture.
+			: BITS 16
+			-> this will ensure that the assembler will only assemble assembly instructions into 16 bit code.
+			
+		+ Interrupt jump table:	https://www.ctyme.com/intr/int.htm
+			+ We going to use interrupt 10 of x86 architecture. Using TELETYPE OUTPUT feature:
+				Int 10/AH=0Eh - VIDEO - TELETYPE OUTPUT
+
+				VIDEO - TELETYPE OUTPUT
+				AH = 0Eh
+				AL = character to write
+				BH = page number
+				BL = foreground color (graphics modes only)
+
+				Return:
+				Nothing
+
+				Desc: Display a character on the screen, \
+					advancing the cursor and scrolling the screen as necessary.
+
+				Notes: Characters 07h (BEL), 08h (BS), 0Ah (LF), and 0Dh (CR) are interpreted and do the expected things. IBM PC ROMs dated 1981/4/24 and 1981/10/19 require that BH be the same as the current active page
+		
+	6. Understanding real mode:
+		+ In real mode, we can pnly acess one megabyte of RAM.
+		+ Real mode is based on the original electronics design, the one from the 1970s.
+		+ You have NO SECURITY (process have access to memory regions of other processes.).
+		+ Only 16 bits can be accessed at one time in decimal terms. \
+			-> we can access numbers from 0 to 65535 in real mode.
+			
+		+ 1 Mb of RAm accessible:
+			+ Memory access is done through the segmentation memory model.
+			+ Only 1MB of RAM is addressable it does not matter if have 4GB of RAM.
+			
+		+ Based on the original x86 design:
+			+ when your processor runs in real mode \
+				it acts like the older intel processors from the 1970s such as the 8086 processor.
+			+ when in real mode we have the same limitations as the older processors from many years ago.
+			
+			+ All code in real mode is required to be 16 bits. \
+				think of 32 bit and 64 bit programs. \
+				Now imagine 16 bit programs.
+				(We can override this behaviour on a per instruction basis but we will avoid it.)
+				
+		+ No security:
+			+ Real mode provides no memory security.
+			+ Real mode provides no hardware security.
+			+ Simple user programs can destroy our operating system with no way for us to stop them.
+			
+		+ 16 bit's accessible at one time:
+			+ when in real mode we can only access the 8 bit and 16 bit registers.
+			+ we can only request memory address offsets of up to 65535 for our given segment.
+			+ All operations can only be done with 16 bit numbers.
+			
+			
+	7. Segmentation Memory Model:
+		+ Memory is accessed by a segment and an offset.
+			+ 8086 Segment registers:
+				+ CS - Code segment.
+				+ SS - Stack segment.
+				+ DS - Data segment.
+				+ ES - Extra segment.
+				
+			+ Calcuting Absolute Offset:
+				+ Take the segment register multiply it by 16 and add the offset.
+					-> We can calucalate an absolute position in RAM \
+						where a particular piece of data is you do this by taking the segment register, \
+						such as the data segment, extra segment, etc.
+						
+				+ Code segment = 0x7c0
+				+ Assembly Origin "org" is zero.
+				+ Our first instruction is at origin zero so our offset is zero.
+				+ So to calculate the absolute position of the first instruction in our program, \
+					we do 0x7c0 multipled by 16 = 0x7c00. \
+					And then our plus our instruction offset is 0x7c00 + 0 = 0x7c00.
+					-> absolute position of the first instruction is 0x7c00.
+					
+			+ Example Offsets For Absolute Address 0x7cff:
+				+ Segment 0 offset 0x7cff.
+				+ Segment 0x7c0 offset 0xFF.
+				+ Segment 0x7cf offset 0x0F.
+				
+				+ Calculation:
+					0x7cf * 16 = 0x7cf0
+					0x7cf0 + 0x0f = 0x7cff
+				
+				
+			+ Different instructions use different segment registers:
+				+ "lodsb" uses the DS:SI register combination.
+				+ For example:
+					Org 0
+					Mov ax, ox7c0
+					Mov ds, ax
+					Mov si, 0x1F
+					
+					+ Calculation:
+						0x7cf * 16 = 0x7cf0
+						0x7cf0 + 0x0f = 0x7cff
+		
+		
+		+ Programs can be loaded in different areas of memory but run without problems.
+			+ Imagine we have two programs loaded into memory, \
+				both were assembleed with the origin being zero.
+				
+			+ Program 1 uses segment 0x7C0 for all its segment registers.
+			+ Program 1 is loaded at address 0x7C00.
+			+ Program 2 uses segment 0x7D0 for all its segment registers.
+			+ Program 2 is located at address 0x7D00.
+			+ We swap our segment register when switch to the other process.
+			+ We register all the registers of the process we are switching too.
+			+ It resumes as if we never switched process at all.
+			
+		+ Multiple segments are available through the use of segment registers.
+			+ Mov byte al, [es:32]
+			
+		+ Stack segment:
+			+ SS (Stack Segment) = 0x00
+			+ SP (Stack Pointer) = 0x7c00
+			+ Let's imagine we run the instruction:
+				push 0xffff
+				; Decrement stack pointer by 2 
+				Stack pointer = 0x7BFE
+				Set 0x7BFE-0x7BFF to 0xffff
+				
+	8. Improving Our Bootloader:
+		+ We are going to improve our bootloader by setting up segment registers \
+			and changing our program's origon when BIOS first loads us.
+				
+	9. Preparing our bootloader	to be booted on real hardware.
+		+ Some BIOS (start with USB) assume your data and override them. \
+			We get around this problem by implementing the "BIOS Parameter Block" (https://wiki.osdev.org/FAT).
+		
+		+ It is including 33 bytes.
+				
+	10. Writing our bootloader to a USB stick:
+		+ plug USB to the computer.
+		+ check USB device: 
+			sudo fdisk -l
+		+ Please make sure there is nothing valuable on your USB stick because you are about to lose it all.
+			-> Make sure it is empty.
+		
+		+ copy bootloader to USB (e.g USB device is mounted to /dev/sdb):
+			sudo dd if=boot.bin of=/dev/sdb
+			
+			-> The file system doesn't exist on the USB stick anymore. It is now just data.
+		
+	11. Booting bootloader:
+		+ first step, unplug the USB, and plug to a computer, that you want to boot from.
+		+ turn on that computer and press F2 continuously.
+			-> Now the BIOS will load. 
+		+ We are going to the boot menu, \
+			and then select boot from USB stick (select device name.)
+			-> Hello word is displayed =))).
+			
+	12. The interrupt vector table explained:
+		+ What are interrupts?
+			+ Interrupts are like subroutines, but you don't need to know the memory address to invoke them.
+			+ Interrupts are called through the use of interrupt numbers rather than memory addresses.
+			+ Interrupts can be setup by the programmer. \
+				For example you could set interrupt "0x32" and have it point to your code. \
+				Then when someone does "int 0x32" it will invoke your code.
+				
+		+ What happends when you invoke an interrupt?
+			+ Processor is intterupted.
+			+ Old state saved on the stack.
+			+ Interrupt executed.
+			
+		+ Interrupt vector table is a table describing 256 intterupt handlers. 
+		+ Each entires contain 4 bytes (offset: segment).
+		+ Interrupts are in numberical order in the table.
+		+ For example:
+			Interrupt 0 = address 0x00.
+			Interrupt 1 = address 0x04.
+			Interrupt 2 = address 0x08.
+
+			WHat offset do you think interrupt 0x13 is?
+				0x13 * 0x04 = 0x46 or 76 decimal.
+				"int 0x13" processor looks at offset 76 in RAM:
+					byte 76-77 = 2 byte of Offset .
+					byte 78-79 = 2 byte of segment.
+				
+		+ example of Memory layout:
+			
+			|byte 0|byte 1|byte 2|byte 3|byte 4|byte 5|byte 6|byte 7|byte 8|byte 9|byte 10|byte 11|
+			| Offset 	  | Segment		| Offset 	  | Segment		|Offset 	  |Segment		  |
+			| Interrupt 0				| Interrupt 1				| Interrupt 2				  |
+
+			| 0x00		  | 0x7c0		| 0x8d00	  | 0x00		| 0x00 		  | 0x8d0		  |
+			
+			
+	13. Implementing our own interrupts in real mode:
+		+ In this lecture, we are going to vreate our very own intterupt by changing the interrupt vector table.
+		+ For example, setup handler for intterupt 0:
+			interrupt_0_handler:
+				; do some thing.
+				iret
+		
+		
+			mov word[ss:0x00], interrupt_0_handler  ; 2 bytes for offset.
+			mov word[ss:0x02], 0x7c0                ; 2 bytes for segment.
+
+			+ call intterupt 0:
+				int 0x00
+			
+			+ or automatic call intterupt 0 by violating Divide-by-zero Error:
+				mov ax, 0x00
+				div ax
+		+ For detailed exception information: 	https://wiki.osdev.org/Exceptions
+		
+	14. Disk access and how to it works:
+		+ Files do not exist:
+			1. File systems are kernel implemented they are not the responsibility of the hard disk. \
+				Files are a kernel OS concept on disks. \
+				File systems are special data structures that explain files. \
+				
+				The disk itself has no concept of files. \
+				The disk itself just holds loads of data blocks called "SECTORS".
+				
+			2. Implementing a file system requires \
+				the kernel programmer to create a file system driver for the target filesystem.
+				
+				If you want your kernel to understand files, you have to create a file system driver \
+				that targets that specific file system that is  on your disk.
+				
+		+ Data is read and written in sectors:
+			+ Data is read and written in sectors typically 512 byte blocks.
+				+ The sector size can be different depending on the disk, \
+					although all modern hard disk generally 512 bytes for  per sector.
+			
+				+ Reading the sector of a disk will return 512 bytes og data for the chosen sectors.
+				
+		+ CHS (Cylinder head sector):
+			+ Sectors are rad and written by specifying a "head", "track", and "sector".
+			+ This is olf fashioned and not the modern way of reading from a disk drive.
+			
+		+ LBA (Logical block address):
+			+ this is the modern way of reading from a hard disk, \
+				rather than specify "head", "track" and "sector", \
+				we just specify a number that starts from zero.
+			+ LBA allows us to read from the disk as if we are reading blocks from a very large file.
+			+ LBA 0 = first sector on the disk.
+			+ LBA 1 = second sector on the disk.
+			
+		+ Calculating LBA:
+			+ Let's say we want to read the byte at position 58376 on the disk how do we do it?
+			+ LBA = 58376 /512
+			+ Now if er read that LBA we can load 512 bytes into memory.
+			+ Next we need to know our offset that our byte is in our buffer.
+			+ Offset = 58376 % 512 = 8
+			+ lets confirm we are right:
+				114 * 512 = 58368
+				58368 + 8 = 58376
+
+		+ BIOS DISK routines:
+			+ In 16 bit real mode, the BIOS provides interrupt 13h for disk operations
+			+ In 32 bit mode, you have to create your own disk driver which is a little more complicated.
+			
+	15. Read from the hard disk:
+		+ make a text file.
+		+ copy content of the file to bin:
+			dd if=message.txt >> boot.bin
+		+ install bless command for parsing binary file:
+			bless boot.bin
+
+			-> content of the file appear and the message at start of the second sector.
+
+		+ we going to use intterupt 13 to handle hask disk event: http://www.ctyme.com/intr/int-13.htm
+			int 13/AH=02h - Disk - Read sector(s) into memory.
+			
+			AH = 02h
+			AL = number of sectors to read (must be nonzero)
+			CH = low eight bits of cylinder number
+			CL = sector number 1-63 (bits 0-5)
+			high two bits of cylinder (bits 6-7, hard disk only)
+			DH = head number
+			DL = drive number (bit 7 set for hard disk)
+			ES:BX -> data buffer
+
+4. Protected Mode Development:
+	16. What is Protected Mode ?
+	
+			Most Privileged <------->Least Privileged.
+			Kernel <-> Device drivers -> Applications.
+			
+		+ Memory And Hardware Protection:
+			+ Protected Mode Allows Yout to Protect Memory From Being Accessed.
+			+ Protected Mode can prevent user programs talking with hardware.
+			
+		+ Different Memory Schemes:
+			1. Selector Memory Schemes (CS, DS, ES), etc.
+				+ Our segmentation registers become selector registers.
+				+ Selectors point to data structures that describe memory ranges \
+					and the permissions required to access a given range.
+			2. Paging (Remapping Memory Addresses).
+				+ Memory is virtual and what you address can point to somewhere entirely different in memory.
+				+ Memory protection is easier to control.
+				+ PAging is the most popular choice for memory schemes with kernels/ operating systems.
+				
+		+ 4GB of addressable memory
+			+ we gain access to 32-bit instructions and can easily work with 32-bit registers.
+			+ We can address up to 4Gb of memory at any time and \
+				we are no longer limited to the 1 MB of memory provided by real mode.
+				
+	17. Switching to protected mode:
+		+ 
+
+
+
+
+			
+6. Assembly language Catchup:
+	+ this assembly section has been created to help those with weaker assembly language skills \
+		play catch up to help them with the course. \
+	
+	+ I do advise you start this course with al least some assembly experience.
+	
+	131. what is assembly language ?
+	132. install emulator:
+		+ install and run emu8086.
+	133. Hello world with assembly:
+		+ 8086 INSTRUCTION SET
+			+ General-purpose registers are used to store temporary data within the microprocessor. \
+				There are 8 general-purpose registers in the 8086 microprocessor:
+				
+				+ AX: AH + AL
+					+ This is the accumulator. \
+						It is of 16 bits and is divided into two 8-bit registers AH and AL to also perform 8-bit instructions. \
+						It is generally used for arithmetical and logical instructions \
+						but in 8086 microprocessor it is not mandatory to have an accumulator as the destination operand.
+						For example:
+						
+						ADD AX, AX (AX = AX + AX)
+							
+				+ BX: BH + BL
+					+ BX: this is the base register. \
+						It is of 16 bits and is divided into two 8-bit registers BH abnd BL, \
+						to also perform 8-bit instructions. \
+						It is used to store the value of the offset. For example:
+						
+						MOV BL, [500] 	(BL = 500H)
+				+ CX: CH + CL
+					+ This is counter register. \
+						It is of 16 bits and is divided into two 8-bit registers CH abnd CL, \
+						to also perform 8-bit instructions. \
+						It is used in looping and rotation. For example:
+						
+						MOV CX, 0005
+						LOOP
+						
+				+ DX: DH + DL
+					+ This is the data register. \
+						It is of 16 bits and is divided into two 8-bit registers DH abnd DL, \
+						to also perform 8-bit instructions. \
+						It is used in the multiplication and input/output port addressing. \
+						For example:
+						
+						MUL BX (DX, AX = AX * BX)
+												
+				+ SP
+					+ this is stack pointer. \
+						It points to the topmost item of the stack.
+						
+					+ If the stack is empty the stack pointer will be (FFFE)H. \
+						Its offset address is relative to the stack segment.
+						
+				+ BP
+					+ This is the base pointer. It is of 16 bits. \
+						It is primarily used in accessing parameters passed by the stack. \
+						Its offset address is relative to the stack segment.
+				+ SI
+					+ This is the source index register. \
+						It is of 16 bits. \
+						It is used in the pointer addressing of data and as a source in some string-related operations. \
+						Its offset is relative to the data segment.		
+				+ DI
+					+ This is the destination index register. \
+						It is of 16 bits. \
+						It is used in the pointer addressing of data as a destination in some string-related operations. \
+						Its offset is relative to the extra segment.
+						
+			+ instructions:
+				INT : Interrupt numbered by immediate byte (0..255). 
+				
+				Example:
+				MOV AH, 0Eh ; teletype.
+				MOV AL, 'A'
+				INT 10h ; BIOS interrupt, in the bios's kernel, interrupt 10h, which is responsible for ouputing to screen.
+				RET 
+			
+				jmp : Unconditional Jump. Transfers control to another part of the program. \
+					4-byte address may be entered in this form: 1234h:5678h, \
+					first value is a segment second value is an offset. 
+					
+			
+				db : db means data bytes and it allows us \
+					to specify like allows us to specify a number of characters.
+					
+					
+				lodsb : Load byte at DS:[SI] into AL. Update SI.
+
+				cmp             REG, memory             Compare.
+								memory, REG
+								REG, REG
+								memory, immediate
+								REG, immediate
+
+				je              label                   Short Jump if first operand is Equal to second operand (as set by CMP instruction).
+														Example:
+														CMP AL, 5
+														JE label1
+
+			+ make a lable:
+				label_name:
+					; some instructions.
+				
+			+ make a function:
+				function_name:
+					; some instructions.
+					ret
+				
+		+ Hello world program:
+			org 100h
+
+			jmp main						; jump to main.
+			message: db 'Hello world!', 0
+			print:              
+				mov ah, 0eh					; int 10h 'print char' function	
+			._loop:
+				lodsb						; Load byte at DS:[SI] into AL. Update SI.
+				cmp al, 0					; compare al with 0 value.
+				je .done					; jump to done if al equal 0.
+				
+				int 10h						; outputing character to screen.
+				jmp ._loop					; loop for next characters.
+			.done:
+				ret							; out of print function.
+				
+			main:   
+				mov si, message				; copy address of message to si register.
+				call print
+				ret
+				
+	134. Transistors and logic gates inderstanding the processor:
+		+ So in this lecture, we are going to explain what logic gates and how the process works internally.
+		+ Essentially what happens is an instruction is binary?
+		+ when we write assembly and we pass through, an assembler is converted to its binary equivalent..
+		
+	135. Registers in the 8086	
+		mov al, 30 ; move 30 to low byte of ax register.
+		mov ax, 0xffff	; move 0xffff to ax register (both ah and al).
+		 - IP - Instruction pointer, contains the value of the current address you are executing a memory, so the process uses the IP register to know which instruction to load from RAM.
+                - CS:IP - CS is base address of segment, IP is current address in that segment. For example: 0700:00FF
+
+
+
+- Need for segmentation:
+
+        - CS - Code segment register. Is used for addressing memory location in the code segment of the memory, where the executable program is stored.
+
+        - DS - Data segment register. points to the data segment of the memory where the data is stored.
+
+        - ES - Extra Segment register. also refers to a segment in the memory which is another data segment in the memory.
+
+        - SS - Stack segment register. is used for addressing stack segment of the memory. The stack segment is that segment of memory which is used to store stack data.
+
+	136. Segmentation memory model explained:
+		 mov ax, 0x300
+		 mov ds, ax 			; data segment will point to 0x300 address.
+ 		 mov [0xff], 0x30 		;writing a specify address in current segment. 0300:0x00FF
+
+	137. Stack, subroutines and endiness explained:
+		+ push 0xffff ; push immediate to the stack (current memory)
+		+ call function will auto push address need to return to stack.

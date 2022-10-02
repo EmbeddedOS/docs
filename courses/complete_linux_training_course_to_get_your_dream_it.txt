@@ -1,0 +1,9 @@
+Complete Linux Training Course to Get your dream IT job 2022.
+
+0. Undefined:
+1. Module 1 - Understanding Linux Concepts:
+	8. WHat is Linux ?
+		+ Linux is an Operating system which sits in the middle of your hardware and users.
+	9. Unix vs Linux ?	
+		
+		

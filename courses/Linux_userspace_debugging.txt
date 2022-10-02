@@ -1,0 +1,36 @@
+Linux user space debugging
+
+1. GDB:
+	1.1. What is GDB ?
+		+ GDB stands for GNU Debugger which helps you to debug your binary object file created in compilation process.
+		+ GDB allows to you see what happening in your program which really helps much when program crashes, \
+			especially when segmentation fault occurs.
+			
+			
+	1.2. Some uses of gdb:
+		+ Step through a program line by line.
+		+ Set breakpoints that will stop your program.
+		+ Make your program stop on specified conditions.
+		+ Show the present values of variables.
+		+ Examine the contents of any frame on the call stack.
+		
+	1.3. Languages supported by GDB:
+		+ Ada, Assembly, C, C++, D, Fortran, Go, etc.
+		
+	1.4. How to compile a program to use with gdb.
+		'gcc -g -o binary_file source_file'
+		
+		+ '-g' tell the compiler to store symbol table information in the executable.
+		+ This includes:
+			+ Symbol names.
+			+ Type info for symbols.
+			+ Files and line numbers where the symbols came from.
+		+ Tip: Check the size of binary with and without debugging symbols.
+		
+		
+2. Coredump valgrind:
+
+3. Strace, Ltrace:
+
+4. Linux command:
+	

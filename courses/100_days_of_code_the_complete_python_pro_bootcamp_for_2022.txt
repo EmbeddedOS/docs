@@ -1,0 +1,52 @@
+100 days of code: the complete python pro bootcamp for 2022
+
+4. Day 4 - beginner - randomisation and python lists:
+	40. Day 4 goals: what we will make by the end of the day:
+	41. Random module:
+		+ search all python module: https://www.askpython.com/
+		+ So what exactly is the module ? \
+			you are seen that we have mostly been writing our code all on the same page in a sort of script style, right ?
+			IT is same as including header in C++.
+			
+		+ random.choice(list)
+		+ random.choice(range(10, 101))
+			-> random in a list.
+			
+		+ random.randint(10,100)
+			-> random integer.
+			
+			
+	43. Understanding the Offset and Appending Items to Lists
+		+ The list is what you would call a data structure. \
+			It's just a way of organizing and storing data in Python.
+			
+		+ Now we have already seen ways of storing single pieces of data, \
+			and that was done through the simple variable where we just said \
+			a = 3, b = hello ...
+			
+		+ But sometimes you might want to store grouped pieces of data, \
+			data that has some sort of connection with each other. \
+			For example, if you wanted to store all of the names of the States in the US \
+			then it doesn't really make sense to store them all individually, \
+			because they kind of belong together, right ?
+			
+		+ List:
+			fruits = [item1, item2]
+			fruits = ["cherry", "Apple", "pear"]
+			
+	45. Index errors and working with nested lists:
+		+ IndexError: list index out of range.
+		
+5. Python Loops:
+	49. Day 5 goals: what we will make by the end of the day.
+	50. Using the for Loops with Python lists:
+		+ For loop syntax:
+			for item in list_of_items:
+				#Do something to each item. 
+				
+6. Python functions & Karel:
+	58. Day 6 goals: what we will make by the end of day:
+		+ Code Blocks.
+		+ Function.
+		+ While loops.
+		+ 
