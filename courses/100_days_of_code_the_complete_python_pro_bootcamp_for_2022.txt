@@ -49,4 +49,8 @@
 		+ Code Blocks.
 		+ Function.
 		+ While loops.
+
+16. Day 16 -Intermediate - Object Oriented programming (OOP):
+	145. Why do we need OOP and how does it work?
+	146. How to uses OOP: classes and objects:
 		+ 

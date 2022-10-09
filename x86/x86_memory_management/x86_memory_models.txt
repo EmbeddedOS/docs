@@ -1,0 +1,14 @@
+Page: https://en.wikipedia.org/wiki/X86_memory_models
+
+X86 Memory models
+
++ In computing, Intel memory model refers to a set of six different memory models of the x86 CPU in REAL MODE.
+
+1. Memory segmentation:
+	+ Four registers are used to refer to four segments on the 16-bit x86 segmented memory architecture. \
+		DS (data segment), CS (code segment), SS (stack segment), and ES (Extra segment).
+		
+	+ Another 16-bit register can act as an offset into a given segment, \
+		and so a logical address on this platform is written SEGMENT:OFFSET.
+		
+		

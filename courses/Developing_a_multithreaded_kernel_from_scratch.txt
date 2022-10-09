@@ -421,8 +421,8 @@ Developing a Multithreaded Kernel From Scratch.
 				we are no longer limited to the 1 MB of memory provided by real mode.
 				
 	17. Switching to protected mode:
+	18. Restructing our project:
 		+ 
-
 
 
 

@@ -1,0 +1,56 @@
+page: https://en.wikipedia.org/wiki/Memory_segmentation
+Memory segmentation
+
++ Memory segmentation is an OS memory management technique of division of computer's primary memory \
+	into SEGMENTS or SECTIONS.
+
++ In computer system using segmentation, a reference to a memory location includes \
+	a VALUE that identifies a segment and an OFFSET (memory location) within that segment.
+	
++ Segments or sections are also used in object files of compiled programs \
+	when they are linked together into a program image and when the image is loaded into memory.
+	
++ Segments usually correspond to natural divisions of a program such as individual routines or data tables, \
+	So segmentation is generally more visible to the programmer than paging alone. \
+	Segments may be created for program modules, \
+	or for classes of memory usage such as code and data segment. \
+	Certain segments may be shared between programs.
+	
++ In a x86-64 architecture it is considered legacy and most x86-64 based modern system software \
+	DON'T USE memory segmentation. \
+	Instead they handle programs and their data by utilizing MEMORY-PAGING which also serves \
+	as a way of memory protection.
+	
+	
+1. Hardware implementation:
+	+ In a system using segmentation, \
+		computer memory addresses consist of a SEGMENT ID and an OFFSET within the segment.
+	
+	+ Memory Management Unit (MMU) is responsible for translating the segment and offset into a physical address.
+		
+	+ Each segment has a length and set of permissions (for example, read, write, execute) associated with it. \
+		A process is only allowed to make a reference into a segment if the type of reference is allowed by the permissions, \
+		and if the offset within the segment is within the range specified by the length of the segment.
+		
+	+ Segments may also be used to implement virtual memory.
+	
+	+ Segmentation is one method of implementing memory protection. \
+		paging is another, and they can be combined.
+		
+	+ The size of a memory segment is generally not fixed and may br as small a single byte.
+	
+	1.1. Segmentation without paging:
+		+ Associted with each segment is information that indicates where the segment is located in memory \
+			-- segment base. \
+			When a program references a memory location, the offset is added to the segment base to generate a physical memory address.
+			
+			
+		
+	1.2. Segmentation with paging:
+		+ Instead of a memory location, \
+			the segment information includes the address of a PAGE TABLE for the segment.
+			
+		+ when a program reference a memory location the offset is translated to a memory address using the page table. \
+			A segment can be extended by allocating another memory page and adding it to the segment's page table.
+			
+			

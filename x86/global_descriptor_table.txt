@@ -1,0 +1,66 @@
+Page: https://en.wikipedia.org/wiki/Global_Descriptor_Table
+
+Global Descriptor Table
+
++ The Global Descriptor Table is a data structure used by Intel x86 family processors \
+	In order to define the characteristics of the various memory areas used during program execution, \
+	including the BASE ADDRESS, \
+	the SIZE, \
+	and ACCESS PRIVILEGES like executability and writability.
+	
+	-> These memory areas are called segments in Intel terminology.
+	
+	
+1. Global Descriptor Table:
+	+ Global Descriptor Table con hold things other than segment descriptors as well. \
+		Every 8-byte entry in the GDT is a descriptor, \
+		but these descriptors can be references not only to memory segments but also to Task State Segment (TSS), \
+		Local Descriptor Table, or Call Gate structures in memory.
+		
+	+ Every memory access which a program can perform always goes through a segment. \
+		Because of 32-bit segment offsets and limits, \
+		It is possible to make segments cover the entire addressable memory, \
+		Which makes segment-relative addressing transparent to user.
+		
+	+ In order to reference a segment, a program must use its index inside the GDT or the LDT. \
+		Such an index is called a SEGMENT SELECTOR.
+		+ The selector must generally be loaded into a SEGMENT REGISTER to be used.
+		
+		+ Loading a selector into a segment register AUTOMATICALLY reads the GDT or the LDT \
+			and stores the properties of the segment inside the processor itself.\
+			Subsequent modifications to the  GDT or LDT \
+			will not be effictive unless the segment register is reloaded.
+			
+	+ Format of a segment descriptor:
+		|31					24|23		20|19		16|15		12|11		8|7					0|
+		|Base address (24-31) |G |DB|  |A |Limit	  |P |DPL  |S | Type	 |Base address(16-23)|
+		|			Base address ( Bit 0-15)		  |				Segment Limit (Bit 0-15)	 |
+	
+	1.1. GDT example: Shown below is NASM assembly implementation of a GDT which opens up all 4Gb of available memory:
+		+ base = 0x00000000, segment limit = 0xffffffff
+			gdt:
+
+			; offset 0x0 (0 bytes)
+			.null_descriptor:
+				dq 0x0
+
+			; offset 0x8 (8 bytes)
+			.code_descriptor:	; cs should point to this descriptor
+				dw 0xffff		; segment limit first 0-15 bits
+				dw 0x0			; base first 0-15 bits
+				db 0x0			; base 16-23 bits
+				db 0x9a			; access byte
+				db 0b11001111	; high 4 bits (flags) low 4 bits (limit 4 last bits)(limit is 20 bit wide)
+				db 0x0			; base 24-31 bits
+
+			; offset 0x10 (16 bytes)
+			.data_descriptor:	; ds, es, fs, gs, and ss should point to this descriptor
+				dw 0xffff		; segment limit first 0-15 bits
+				dw 0x0			; base first 0-15 bits
+				db 0x0			; base 16-23 bits
+				db 0x92			; access byte
+				db 0b11001111	; high 4 bits (flags) low 4 bits (limit 4 last bits)(limit is 20 bit wide)
+				db 0x0			; base 24-31 bits
+
+	
+2. Local Descriptor Table:

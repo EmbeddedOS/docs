@@ -1,0 +1,96 @@
+Page: https://en.wikipedia.org/wiki/X86_memory_segmentation
+
+x86 memory segmentation
+
+
++ x86 memory segmentation refers to the implementation of memory segmentation in the Intel x86. \
+	Segmentation was introduced on the intel 8086 in 1978 \
+	as a way to allow programs to address MORE THAN 64 kb of memory.
+	
++ In both real and protected modes, the system uses 16-bit segment register to derive the actual memory address. \
+	In real mode, the register CS, DS, SS and ES point to the currently used program \
+	code segment (CS), the current data segment (DS), the current stack segment (SS), and one extra segment determined by the programmer (ES). 
+	 
+	 
++ The choice of segment is normally defaulted by the processor according to the function being executed.
+	+ Instructions are always fetched from the code segment. 
+	+ Any stack push or pop or any data reference referring to the stack uses the stack segment.
+	+ All other references to data use the data segment. 
+	+ The extra segment is the default destination for string operations.
+	
+1. real mode:
+	+ In real mode, the size of a segment can range from 1 byte up to 64 kilobyte (65536 bytes).
+	
+	+ The 16-bit segment selector in the segment register is interpreted \
+		as the most significant 16 bits of a linear 20 bit address (physical address, All of memory) called a segment address, \
+		of which the remaining four least significant bits are all zeros.
+		
+	+ For instance:  the segmented address 06EFh:1234h
+		+ has a segment selector of 06EFh, 
+		+ representing a segment address of 06EF0h, 
+		+ to which the offset is added, yielding the linear address 06EF0h + 1234h = 08124h.
+		
+		
+			0000 0110 1110 1111 0000	Segment,	16 bits, shifted 4 bits left (or multiplied by 0x10)
+			+    0001 0010 0011 0100	Offset,		16 bits
+								
+			0000 1000 0001 0010 0100	Address,	20 bits
+		  
+	+ Because of the way the segment address and offset are added, \
+		a single linear address can be mapped to up to 2^12 = 4096 distinct segment:offset pairs.
+		
+	+ For example, the linear address 08124h can have the segmented addresses:
+		06EFh:1234h, 0812h:0004h, 0000h:8124h, etc.
+		
+	+ Three segments in real mode memory:
+												|						|
+												|Segment 3 				|
+		Start of segment 3:	------------------->|Segment addr: 0x28C0	|
+			+ Address: 0x28C0:0000 \			.........................
+				or 0x2143:0x77D0				|
+			+ Linear addr: 0x28C00				|					
+												|
+												|
+												|
+												|Segment 2
+		Start of segment 2:	------------------->|Segment addr: 0x2143
+			+ Address: 0x2143:0000				.........................
+	        + Linear addr: 0x21430				|
+												|
+												|
+												|Segment 1
+		Start of segment 1:	------------------->|Segment addr: 0x0CEF
+			+ Address: 0x0CEF:0000				.........................
+	        + Linear addr: 0x0CEF0				            										
+			
+			
+	+ The effective 20-bit address space or real mode limits the addressable memory to 2^20 bytes, \
+		or 1,948,576 bytes (1Mb). \
+		This derived directly from the hardware design of the Intel 8086, \
+		which had exactly 20 address pins.
+		
+2. Protected mode:
+	+ The 80286's protected mode extends the processor's address space to 224 bytes (16 megabytes), \
+		but not by adjusting the shift value. \
+		Instead the 16-bit segment registes now contain an index into a table of SEGMENT DESCRIPTOR \
+		contain 24-bit base addresses to which the offset is added.
+		
+	+ To support old software, the processor starts up in "real mode", \
+		a mode in which it uses the segmented addressing model of the 8086.
+		
+	2.1. Detailed segmentation unit workflow:
+		+ A logical address consists of a 16 bit segment selector (supply 13 + 1 address bits)\
+			and a 16-bit offset.
+		
+		+ The segment selector must be located in one of the segment registers. \
+			That selector consists of a 2-bit requested privilege level (RPL), \
+			a 1-bit table indicator(TI), \
+			and a 13-bit index.
+			
+		+ When attempting address translation of a given logical address, \
+			the processor reads the 64-bit SEGMENT DESCRIPTOR structure from \
+			either the GLOBAL DESCRIPTOR TABLE when TI=0 or \
+			the LOCAL DESCRIPTOR TABLE when TI = 1. 
+			
+		+ It then performs the privilege check: max(CPL, RPL) ≤ DPL
+

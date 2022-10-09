@@ -1,6 +1,87 @@
 Book: The Linux Programming Interface - A Linux and UNIX System Programming Handbook
 
 
+4. File I/O: The universal I/O model 
+	+ Files are a good place to start, since they are central to the UNIX philosophy. 
+	
+	4.1. Overview:
+		+ All system calls for performing I/O refer to open files using a file descriptor, \
+			a (usually small) non-negative in integer.
+			
+		+ File descriptors are used to refer to all types of open file, \
+			including pipes, \
+			FIFOs, \
+			sockets, \
+			terminals, \
+			devices, \
+			and regular files.
+			
+		+ Each process has its own set of file descriptor.
+		
+		+ By convention, most programs expect to be able to use THREE standard file descriptors listed in:
+			File descriptor 	Purpose 			POSIX name 		stdio stream
+			
+			0 					standard input 		STDIN_FILENO 	stdin
+			1 					standard output 	STDOUT_FILENO 	stdout
+			2 					standard error 		STDERR_FILENO 	stderr
+			
+		+ When referring to these file descriptors in a program, \
+			we can use either the number (0, 1 or 2) or, preferably, \
+			the POSIX standard names defined in <unistd.h>.
+			
+		+ The following are four key system calls for performing file I/O, \
+			(Programming languages and software packages typically employ these calls only indirectly, via I/O libraries):
+			+ fd = open(pathname, flags, mode)
+				+ Open the file identified by pathname.
+				+ Return a file descriptor used to refer to the open file in subsequent calls.
+				+ If the file doesn't exist, open() may create it, \
+					depending on the settings of the flags bit-mask argument. \
+					The flags argument also specifies whether the file is to be opened for reading, writing or both.
+				+ The mode argument specifies the permissions to be placed on the file if it is created by this call. \
+					If the open() call is not being used to create a file, this argument is ignored \
+					and cam be omitted.
+				
+			+ num_read = read(fd, buffer, count)
+				+ reads at most count bytes from the open file referred to by fd and stores them in buffer.
+				+ The read() call returns the number of bytes actually read.
+				
+			+ num_write = write(fd, buffer, count)
+				+ writes up to count byte from buffer to the open file referred to by fd.
+				+ The write() call returns the number of bytes actually written, which may be less than count.
+				
+			+ status = close(fd)
+				+ Is called after all I/O has been completed, \
+					in order to release the file descriptor fd and its associated kernel resources.
+					
+	4.2. Universality of I/O:
+		+ One of the distinguishing features of the UNIX I/O model \
+			is the concept of universality of I/O.
+			
+		+ This means that the same four system calls: open(), read(), write(), and close() \
+			-- are used to perform I/O on ALL TYPES OF FILES, \
+			including devices such as terminals. 
+			
+		+ Consequently, if we write a program using only these system calls, \
+			that program will work on ANY TYPE OF FILE.
+			
+		+ Universality of I/O is achieved by ensuring that each file system and \
+			device driver implements the SAME set of I/O system calls.
+			
+		+ Because details specific to the file system 
+			
+			
+			
+			
+11. System limits and options:
+	+ Each UNIX implementation sets limit on various system features and resources, \
+		And provides- or chooses not to provide- options defined in various standards. \
+		Examples include the following:
+		+ How many files can a process hold open at one time?
+		+ Does the system support realtime signals?
+		+ What is the largest value that can be stored in a variable of type int?
+		+ How big an argument list can a program have?
+		+ What is the maximum length of a pathname ?
+		
 
 
 12. System and Process information:
@@ -185,4 +266,5 @@ Book: The Linux Programming Interface - A Linux and UNIX System Programming Hand
 	12.9. Further information:
 		+ proc(5) manual page: https://man7.org/linux/man-pages/man5/proc.5.html
 		+ kernel source file Documentation: https://github.com/torvalds/linux/blob/master/Documentation/filesystems/proc.rst
-		
+
+13. File I/O buffering
