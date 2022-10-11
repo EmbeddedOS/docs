@@ -1,0 +1,60 @@
+Writing a Simple Operating System — from Scratch
+
+1. Introduction:
+	+ Here, concentrating on the widely used x86 architecture CPU, \
+		learning along the way about:
+		+ How a computer boots.
+		+ How to write low-level programs in the barren landscape where no operating system yet exists.
+		+ How to configure the CPU so that we can begin to use its extended functionality.
+		+ How to bootstrap code written in a high-level language, \
+			so that we can really start to make some progress towards our own OS.
+		+ How to create some fundamental OS services, \
+			such as device drivers, \
+			file systems, multitasking processing.
+			
+2. Computer Architecture and the Boot Process:
+	2.1. The Boot Process:
+
+		+ When we reboot our computer, it must start up again, \
+			initially without any notion of OS.
+			
+		+ Somehow, it must load the OS -- whatever variant that may be -- \
+			from some permanent store device that is currently attached to the computer \
+			(e.g. a floppy disk, a hard disk, a USB dongle, etc.)
+			
+		+ The Pre-OS environment of your computer offers little in the way of rich services:
+			+ at this stage even a simple file system would be a luxury (e.g. read and write logical files.), \
+				but we have none of that. 
+				
+			+ Luckily, what we do have is the BASIC INPUT / OUTPUT SOFTWARE (BIOS), \
+				a collection of software routines that are initially loaded from a chip into memory \
+				and initialised when the computer is switched on.
+				
+			+ BIOS provides auto-detection and basic control of your computer's essential devices, \
+				such as the screen, keyboard, and harddisk.
+				
+			
+		+ After BIOS completes some low-level tests of the hardware, \
+			particular whether or not the installed memory is working correctly, \
+			it must boot the OS stored on one of your devices.
+			
+		+ So, easiest place for BIOS to find our OS is in the first sector of one of the disks, \
+			known as the BOOT SECTOR.
+		
+		+ Since some of our disks may not contain an operating systems \
+			(they may simply be connected for additional storage), \
+			then it is important that BIOS can determine whether \
+			the boot sector of a particular disk is boot code that is intended for execution \
+			or simply data.
+		
+		+ the LAST TWO BYTES of an intended boot sector must be set to the MAGIC NUMBER 0xaa55. \
+			So, BIOS loops through each storage device (e.g. floppy drive, hard disk, CD drive, etc.), \
+			reads the boot sector into memory, \
+			and instructs the CPU to begin executing the first boot sector it finds that ends with the magic number.
+			
+			
+	2.2. BIOS, Boot Blocks, and the Magic Number:
+		+ A machine code boot sector, with each byte displayed in hexadecimal.
+		
+		
+	

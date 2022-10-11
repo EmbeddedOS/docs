@@ -262,3 +262,26 @@ NOTE: convert masm to nasm: https://left404.com/2011/01/04/converting-x86-assemb
 						
 					greeting1 BYTE "Good afternoon",0
 					greeting2 BYTE 'Good night',0
+					
+				+ Each character uses a byte of storage.
+				
+				+ Strings are an exception to the rule that byte values must be separated by commas. \
+					Without that exception, greeting1 would have to be defined as:
+						
+					greeting1 BYTE 'G','o','o','d'....etc.
+
+			3.4.2.3. DUP Operator:
+				+ The DUP operator allocates storage for multiple data items, using a integer expression as a counter.
+				+ It is particularly useful when allocating space for a string or array, and can be used with initialized or uninitialized data:
+					BYTE 20 DUP(0) 		; 20 bytes, all equal to zero
+					BYTE 20 DUP(?) 		; 20 bytes, uninitialized
+					BYTE 4 DUP("STACK") ; 20 bytes: "STACKSTACKSTACKSTACK"
+		
+	3.5. Symbolic constants:
+		3.5.3. EQU directive:
+			+ The EQU directive associates a symbolic name with an integer expression or some arbitrary text.
+				There are three formats:
+				
+				name EQU expression
+				name EQU symbol
+				name EQU <text>
