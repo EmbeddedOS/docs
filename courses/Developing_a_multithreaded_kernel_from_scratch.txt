@@ -422,7 +422,8 @@ Developing a Multithreaded Kernel From Scratch.
 				
 	17. Switching to protected mode:
 	18. Restructing our project:
-		+ 
+	20. Creating a cross compiler so we can code in C.
+	
 
 
 

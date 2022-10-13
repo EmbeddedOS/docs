@@ -1,0 +1,75 @@
+Page: https://en.wikipedia.org/wiki/A20_line
+A20 line
+
++ The A20, or address line 20, is one of the electrical lines that make up the system bus of an x86-based computer system. \
+	The A20 line in particular is used to TRANSMIT the 21st bit on the address bus.
+	
++ A microprocessor typically has a number of address lines EQUAL to \
+	the base-two logarithm of the number of words in its physical address space. \
+	
+	For example, a processor with 4Gb of byte-addressable physical space requires 32 lines (2^32), \
+	which are named A0 though A31.
+	
++ The lines are named after the zero-based number of the bit in the address that they are transmitting. 
+
++ A20 transmit bit 20 (the 21st bit) and becomes active once addresses reach 1MB, or 2^20.
+
+
+1. Overview:
+	+ The Intel 8086, Intel 8088, and Intel 80186 processors had 20 address lines, \
+		numbered A0 to A19;\
+		with these, the processor can access 220 bytes, or 1 MB.
+		
+	+ Internal address registers of such processors only had 16 bits. \
+		To access a 20-bit address space, \
+		an external memory reference was made up of a 16-bit OFFSET address added to a 16-bit SEGMENT number, \
+		shifted 4 bits so as to produce a 20-bit physical address. \
+		The resulting address is equal to segment × 16 + offset.
+		
+	+ For example, here are four of the 4096 different segment:offset combinations, \
+		all referencing the byte whose physical address is 0x000FFFFF \
+		(the last byte in 1 MB-memory space):
+		
+			F000:FFFF
+			FFFF:000F
+			F555:AAAF
+			F800:7FFF
+	
+	+ When IBM designed the IBM PC AT(1984) machine, \
+		it decided to use the new high-performance Intel 80286 microprocessor. \
+		The 80286 could could address UP TO 16MB of system memory PROTECTED MODE. \
+		
+		However, the CPU was supposed to EMULATE an 8086'S BEHAVIOR in REAL MODE, \
+		its startup mode, so that it could run OS and programs that were not written for protected mode. \
+		The 80286 did not force the A20 line to zero in real mode, howerver. \
+		To remain compatible with such programs, IBM decided to correct the problem on the motherboard.
+		
+	+ That was accomplished by inserting a logic gate on the A20 line between the processor and system bus, \
+		which got named GATE-A20. \
+	
+	+ Gate-A20 can be enabled or disabled by software to allow \
+		or prevent the address bus from receiving a signal from A20. 
+		
+	+ At boot time, the BIOS first enables Gate-A20 when it counts and tests all of the system memory, \
+		and then disables it before transferring control to the operating system.
+		
+	+ Originally, the logic gate was a gate connected to the Intel 8042 keyboard controller. \
+		Controlling it was a relatively slow process. \
+		Other methods have since been added to allow more efficient multitasking of programs that require this wrap-around with programs that access all of the system memory. \
+		There are multiple methods to control the A20 line.
+		
+	-> Enabling the Gate-A20 line is one of the first steps that a protected mode x86 OS does in the bootup process, \
+		often before control has been passed to the kernel from bootstrap.
+		
+2. A20 gate:
+	+ Controlling the A20 line was an important feature at one stage in the growth of the IBM PC architecture, \
+		as it added access to an additional 65,520 bytes (64 KB − 16 bytes) of memory in real mode, \
+		without significant software changes.
+		
+	+ The A20 gate is still present on many modern PCs, \
+		and the gate is initially closed right after boot. \
+		Modern protected-mode operating systems typically open the A20 gate early during the boot process and NEVER CLOSE it again.
+		Such operating systems do not have the compatibility reasons for keeping it closed, \
+		and they gain access to the full range of physical addresses available by opening it.
+		
+3. Enable A20 line: https://wiki.osdev.org/A20_Line#Enabling
