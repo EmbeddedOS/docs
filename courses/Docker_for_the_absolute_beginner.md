@@ -147,3 +147,20 @@ Ways to install docker:
     ```bash
    sudo docker run hello-world
     ```
+
+## II. Docker Commands
+
+### 9. Basic Docker Commands
+
+run - start a container.
+ps - list containers.
+stop - stop a container.
+rm - remove a container.
+images - list images.
+rmi - remove images.
+pull -download a image.
+exec - execute a command.
+
+Run attach and detach. Run docker with `-d` option will run container in background mode. Or run `docker attach id_of_container`
+
+[Docker Hub](https://hub.docker.com/) is the world's largest library and community for container images.
