@@ -142,7 +142,7 @@ Ways to install docker:
     ./docker-compose-plugin_<version>_<arch>.deb
     ```
 
-    5. Verify the docker.
+5. Verify the docker.
 
     ```bash
    sudo docker run hello-world
@@ -164,3 +164,66 @@ exec - execute a command.
 Run attach and detach. Run docker with `-d` option will run container in background mode. Or run `docker attach id_of_container`
 
 [Docker Hub](https://hub.docker.com/) is the world's largest library and community for container images.
+
+## III. Docker run
+
+### 16. Docker Run
+
+## IV. Docker images
+
+### 20. Docker image
+
+* What am I containerizing?
+* How to create my own image?
+  * OS-ubuntu
+  * Update apt repo
+  * Install dependencies using apt
+  * Install Python dependencies using pip
+  * Copy source code to /opt folder
+  * Run the web server using "flask" command
+
+* build image with docker build command and register it with docker push.
+
+Dockerfile:
+
+INSTRUCTION ARGUMENT
+
+For example:
+
+```dockerfile
+FROM Ubuntu
+RUN apt-get update && apt-get -y install python
+RUN pip install flask flask-my-sql
+COPY . /opt/source-code
+ENTRYPOINT FLASK_APP=/opt/source-code/app.py flask run
+```
+
+therein `FROM` specify starting from a base OS or another image, Every Docker image need to base something. `RUN` instructions specify installing all dependencies on the image. the `COPY` instruction copy files on the local system to the image. Finally, `ENTRYPOINT` instruction.
+
+Layered architecture: five layers are defined:
+
+docker build . -f Dockerfile -t larva_image/tag:2.0
+
+* Layer 1. Base on Ubuntu layer - 120MB
+* Layer 2. Changes in apt packages - 306MB
+* Layer 3. Changes in pip packages - 6.3MB
+* Layer 4. Source code - 229B
+* Layer 5. Update Entrypoint with "flask" command - 0B
+
+### 21. Create a Docker image
+
+### 23. Environment Variable
+
+To send environment variable to container when running using `-e` flag:
+
+```bash
+docker run -e IMAGE_NAME=larva larva_image
+```
+
+Inspect the environment variables with docker inspect:
+
+```bash
+docker inspect larva_image
+```
+
+### docker command vs entry point
