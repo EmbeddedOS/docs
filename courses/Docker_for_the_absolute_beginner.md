@@ -142,7 +142,7 @@ Ways to install docker:
     ./docker-compose-plugin_<version>_<arch>.deb
     ```
 
-5. Verify the docker.
+    5. Verify the docker.
 
     ```bash
    sudo docker run hello-world
@@ -151,6 +151,8 @@ Ways to install docker:
 ## II. Docker Commands
 
 ### 9. Basic Docker Commands
+
+All docker command: [link](https://docs.docker.com/engine/reference/commandline/)
 
 run - start a container.
 ps - list containers.
@@ -186,12 +188,13 @@ Run attach and detach. Run docker with `-d` option will run container in backgro
 
 Dockerfile:
 
+All dockerfile instruction: [link](https://docs.docker.com/engine/reference/builder/)
 INSTRUCTION ARGUMENT
 
 For example:
 
 ```dockerfile
-FROM Ubuntu
+FROM ubuntu:18.04
 RUN apt-get update && apt-get -y install python
 RUN pip install flask flask-my-sql
 COPY . /opt/source-code
@@ -227,3 +230,8 @@ docker inspect larva_image
 ```
 
 ### docker command vs entry point
+
+## V. Docker compose
+
+Docker compose: [All document](https://docs.docker.com/compose/compose-file/)
+
