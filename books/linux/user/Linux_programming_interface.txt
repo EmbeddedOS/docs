@@ -268,3 +268,39 @@ Book: The Linux Programming Interface - A Linux and UNIX System Programming Hand
 		+ kernel source file Documentation: https://github.com/torvalds/linux/blob/master/Documentation/filesystems/proc.rst
 
 13. File I/O buffering
+	+ In the interests of speed and efficiency, I/O system calls (i.e, the kernel) \
+		and the I/O functions of the standard C library (stdio function) buffer data when operating on disk files. \
+	+ In this chapter, we describe both types of buffering and consider how they affect application performance.
+	+ We also look at various techniques for influencing and disabling both types of buffering, \
+		and look at a technique called direct I/O, \
+		which is useful for bypassing kernel buffering in certain circumstances.
+
+	13.1. Kernel Buffering of file I/O: buffer cache
+		+ When working with disk files, the read() and write() system calls don't directly initiate disk access. \
+			Instead, they simply copy data between a user-space buffer and a buffer in the kernel buffer cache. 
+			+ For example, the following call transfers 3 bytes of data from a buffer in user-space memory to a buffer in kernel space:
+				write(fd, "abc", 3);
+
+		+ At this point, write() returns. At some later point, the kernel writes (flushes) its buffer to the disk. \
+			(Hence, we say that the system call is not synchronized with the disk operation.) \
+			If, in the interim, another process attempts to read these bytes of the file, \
+			then the kernel automatically supplies the data from the buffer cache, \
+			rather than from (the outdated contents of) the file.
+
+		+ Correspondingly, for input, the kernel reads data from the disk and stores it in a kernel buffer. \
+			Calls to read() fetch data from this buffer until it is exhausted, \
+			at which point the kernel reads the next segment of the file into the buffer cache.
+
+		+ The aim of this design is to allow read() and write() to be fast, \
+			since they don't need to wait on a (slow) disk operation. \
+			This design is also efficient, since it reduces the number of disk transfers that the kernel must perform.
+		
+		+ The linux kernel imposes no fixed upper limit on the size of the buffer cache. \
+			The linux kernel will allocate as many buffer cache pages as are required, \
+			limited only by the amount of available physical memory and the demands for physical memory for other purposes \
+			(e.g., holding the text and data pages required by running processes).
+		+ If available memory is scarce, then the kernel flushes some modified buffer cache pages to disk, \
+			in order to free those pages for reuse.
+
+	13.2. Effect of buffer size on I/O system call performance
+
