@@ -303,4 +303,58 @@ Book: The Linux Programming Interface - A Linux and UNIX System Programming Hand
 			in order to free those pages for reuse.
 
 	13.2. Effect of buffer size on I/O system call performance
+		+ The kernel performs the same number of disk accesses, \
+			regardless of whether we performs 1000 writes of a single byte or a single write of a 1000 bytes. \
+			However, the latter is preferable, since it requires a single system call, \
+			while the former requires 1000. \
+			Although much faster than disk operations, system calls nevertheless amount of time, \
+			since the kernel must trap the call, check the validity of the system call arguments, \
+			and transfer data between user space and kernel space.
 
+		+ Table 13-1 shows the time that \
+			this program requires to copy a file of 100 million bytes on a Linux ext2 file system using different BUF_SIZE values.
+
+		+ Table 13-1. Time required to duplicate a file of 100 million bytes	
+			|BUF_SIZE|TIME(second)						   |
+			|		 |Elapsed|Total CPU|User CPU|System CPU|
+			|--------|-------|---------|--------|----------|
+			|1 		 |107.43 |107.32   |8.20    |99.12     |
+			|2 		 |54.16  |53.89	   |4.13    |49.76     |
+			|4 		 |31.72  |30.96    |2.30    |28.66     |
+			|8 		 |15.59  |14.34    |1.08    |13.26     |
+			|16 	 |7.50 	 |7.14     |0.51    |6.63      |
+			|32 	 |3.76 	 |3.68     |0.26    |3.41      |
+			|64 	 |2.19 	 |2.04     |0.13    |1.91      |
+			|128 	 |2.16 	 |1.59     |0.11    |1.48      |
+			|256 	 |2.06 	 |1.75     |0.10    |1.65      |
+			|512 	 |2.06 	 |1.03     |0.05    |0.98      |
+			|1024 	 |2.05 	 |0.65     |0.02    |0.63      |
+			|4096 	 |2.05 	 |0.38     |0.01    |0.38      |
+			|16384 	 |2.05 	 |0.34     |0.00    |0.33      |
+			|65536 	 |2.06 	 |0.32     |0.00    |0.32      |
+		
+		+ Note the following points concerning the information in this table:
+			+ The `Elapsed` and `Total CPU` time columns have the obvious meanings. \
+				The `User CPU` and `System CPU` columns show a breakdown of the `Total CPU` time into, \
+				respectively, the time spent executing code in user code and the time spent executing kernel code (i.e., system calls).
+			+ The tests shown in the table were performed using a vanilla 2.6.30 kernel on an `ext2` file system with a block size of 4096 bytes.
+			+ Each row shows the average of 20 runs for the given buffer size. \
+				In these tests, as in other tests shown later in this chapter, \
+				the file system was unmounted and remounted between each execution of the program to ensure that the buffer cache for the file system was empty. \
+				Timing was done using the shell `time` command.
+
+		+ Since the total amount of data transferred (and hence the number) is the same for the various buffer sizes, \
+			what table 13-1 illustrates is the overhead of making `read()` and `write()` calls. \
+			With a buffer size of 1 byte, 100 million calls are made to `read()` and `write()`. \
+			With a buffer size of 4096 bytes, \
+			the number of invocations of each system call falls to around 24.000, \
+			and near optimal performance is reached. \
+			Beyond this point, there is no significant performance improvement, \
+			because the cost of making read() and write() system calls becomes \
+			negligible compared to the time required to copy data between user space and kernel space, \
+			and to perform actual disk I/O.
+
+		+ In Summary, if we are transferring a large amount of data to or from a file, \
+			then by buffering data in large blocks, \
+			and thus performing fewer system calls, \
+			we can greatly improve I/O performance.
