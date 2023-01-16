@@ -138,3 +138,52 @@
 - Allow for quick testing and deploying.
 - No tooling existed to support this.
 - No time saving was achieved.
+
+## 4. Microservices Architecture
+
+### 16. Introduction
+
+- History:
+  - Problems with monolith and SOA led to a new paradigm.
+  - Has to be modular, with simple API.
+  - The term "microservices" first appeared in  2011.
+  - In 2014 Martin Fowler and James Lewis published their "Microservices". [Link](https://martinfowler.com/articles/microservices.html).
+  - Became the de-facto standard for Microservices definition.
+
+- Characteristics of Microservices:
+  - Componentization via Services.
+  - Organized Around Business Capabilities.
+  - Products not Projects.
+  - Smart Endpoints and Dumb Pipes.
+  - Decentralized Governance.
+  - Decentralized Data Management.
+  - Infrastructure Automation.
+  - Design for Failure.
+  - Evolutionary Design.
+
+### 17. Componentization via Services
+
+- Modular design is always a good idea.
+- Components are the parts that together compose the software.
+- Modularity can be achieved using:
+  - Libraries - called directly within the process (import, include, require, using, etc.).
+  - Services - called by out-of-process mechanism (Web API, RPC).
+
+- In Microservices we prefer using Services for the componentization.
+- Libraries can be used inside the service.
+
+- Motivation:
+  - Independent deployment.
+  - Well defined interface.
+
+### 18. Organized Around Business Capabilities
+
+- Tradition projects have teams with horizontal responsibilities - UI, API, Logic, DB, etc.
+- For example:
+
+|------UI Team A-----|
+|-----API Team B-----|
+|-----LOGIC TEAM C---|
+|---DATABASE TEAM D--|
+
+- The problem begins when these team need to talk with each other. Now, since the teams work on the same system they will have a lot of opportunities to talk to each other. Inter-group communication is by definition, slow and cumbersome. The teams don't use same terminology, they don't have the same schedule, and in the wort case they don't even have the same GOALS.
