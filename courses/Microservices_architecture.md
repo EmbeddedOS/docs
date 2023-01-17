@@ -187,3 +187,42 @@
 |---DATABASE TEAM D--|
 
 - The problem begins when these team need to talk with each other. Now, since the teams work on the same system they will have a lot of opportunities to talk to each other. Inter-group communication is by definition, slow and cumbersome. The teams don't use same terminology, they don't have the same schedule, and in the wort case they don't even have the same GOALS.
+
+- With microservices, every service is handled by a single team, response for all aspects.
+
+|------UI Team A-----|
+|-----API Team A-----|
+|-----LOGIC TEAM A---|
+|---DATABASE TEAM A--|
+
+- The team has one and only one GOAL.
+- With Microservices, every service handles a well-defined business capability.
+
+- Motivation:
+  - Quick development.
+  - Well-defined boundaries.
+
+### 19. Products not Projects
+
+- With traditional projects, the goal is to deliver a working code.
+- No lasting relationship with the customer.
+- Often no acquaintance with the customer.
+- After delivering - the team moves on to the next project.
+
+- With Microservices - the goal is to deliver a working product.
+- A product needs ongoing support and requires close relationship with the customer.
+- The team is responsible for the Microservice after the delivery too.
+- 'You build it, you run it.' Werner Vogels, AWS CTO.
+
+- Motivation:
+  - Increase customer's satisfaction.
+  - Change developers' mindset.
+
+### 20. Smart endpoints and dumb pipes
+
+- Traditional SOA projects used two complicated mechanisms:
+  - ESB (Enterprise Service Bus).
+  - WS-* protocol.
+
+- Made inter-service communication complicated and difficult to maintain.
+- Microservice systems use "dumb pipes" - simple protocols.
