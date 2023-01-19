@@ -225,4 +225,14 @@
   - WS-* protocol.
 
 - Made inter-service communication complicated and difficult to maintain.
-- Microservice systems use "dumb pipes" - simple protocols.
+- Microservice systems use "dumb pipes" - simple protocols. We want to use the simplest form of communication possible and leave the complexity to the services logic itself.
+- We strive to use what the web already offers.
+- Usually - REST API, the simplest API in existence.
+- Important notes:
+  - Direct connections between services is not a good idea.
+  - Better use discovery service or a gateway.
+  - In recent years more protocols were introduced (GraphQL, gRPC), some of them quite complex.
+
+- Motivation:
+  - Accelerate development.
+  - make the app easier to maintain.
