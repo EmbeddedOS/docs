@@ -510,6 +510,718 @@
 
 ### 36. Defining Communication patterns
 
+- Efficient communication between services is crucial.
+- It's important to choose the correct communication pattern. Using the wrong pattern can lead to slow performance, unmaintainable system, and poor role handling.
+- Main patterns:
+  - 1-to-1 Sync.
+  - 1-to-1 Async.
+  - Pub-sub / Event Driven.
+
+- 1-to-1 Sync
+  - A service calls another service and waits for the response. The calling services process is blocked until a response is returned from the other service. This is called a synchronous request.
+  - Used mainly when the first service needs the response to continue processing.
+  - For example:
+
+    Orders|----Is item in stock?------------>| Inventory
+          |<-------------yes-----------------|
+
+  - Pros:
+    - Immediate response
+    - Error handling.
+    - Easy to implement.
+  - cons:
+    - performance.
+  - Implementation:
+    - Orders ---- API (REST, GraphQL, gRPC) ----> Payments.
+    - Direct connection -> Not recommend.
+  - Direct connection is not recommended for many services. -> Complex and depend to each other.
+  - Solution:
+    - Using Service Discovery, Services query to the Service Discovery to get URL that will be used to query to other service.
+      - Services only need to know the Directory's URL: Consul
+    - Gateway
+      - Services only need to know the Gateway's URL.
+      - For example: Service A ---> Gateway ---> Service E.
+
+- 1-to-1 Async:
+  - A service calls another service and continues working.
+  - Doesn't for the response - Fire and Forget.
+  - Used mainly when the first service wants to pass a message to the other services.
+  - Pros:
+    - Performance.
+  - Cons:
+    - Need more setup.
+    - Difficult error handling.
+  - Implementation:
+    - Orders -----> Queue (RabbitMQ)-----> Payments.
+
+- Pub-Sub / Event Driven.
+  - A service wants to notify other services about something.
+  - The service has no idea how many services listen.
+  - Doesn't wait for the response - Fire and Forget.
+  - Used mainly when the first service wants to notify about an important event in the system.
+  - Orders ------(Order cancelled)----> Inventory.
+                                  |---> Customers.
+                                  |---> Payments.
+  - Pros:
+    - Performance.
+    - Notify multiple services at once.
+  - Cons:
+    - Needs more setup.
+    - Might cause load.
+    - Difficult error handling.
+  - Orders ------Pub/sub(Rabbit MQ)----> Inventory.
+                                   |---> Customers.
+                                   |---> Payments.
+  - Other engines such as Azure Event Grid, Rabbit MQ.
+
+- Communication Patterns Summary
+  - Choosing the correct communication pattern is crucial.
+  - Affects:
+    - Performance.
+    - Error handling.
+    - Flow.
+    - Almost impossible to reverse.
+
 ### 37. Selecting Technology Stack
 
+- The decentralized governance allows selecting different technology stack for each service.
+- We will focus on Backend platforms and Storage platforms.
+- There is no objective "RIght" or "Wrong".
+- Make it concrete decision based on hard evidence.
+
+- Development Platform:
+  - Python - App types: All, Type System: Dynamic, Cross platform: Yes, Community: huge, performance: ok, learning curve: short.
+  - PHP - App types: Web apps, web API , Type System: Dynamic, Cross platform: Yes, Community: large, performance: ok, learning curve: medium.
+
+- Data store:
+  - 4 types of data store:
+    - Relational Database.
+      - Stores data in tables.
+      - Tables have concrete set of columns.
+      - Popular database:
+        - SQLserver.
+        - MySQL.
+        - PostgreSQL.
+    - NoSQL Database.
+      - Emphasis on scale and performance.
+      - Schema-less.
+      - Data usually stored in JSON format.
+      - Popular databases:
+        - MongoDB.
+        - Amazon DynamoDB.
+        - Couchbase.
+        - Azure Cosmos DB.
+    - Cache.
+      - Stores in-memory data for fast access.
+      - Distributes data across nodes.
+      - Uses proprietary protocol.
+      - Stores serializable objects.
+      - Popular databases:
+        - Redis.
+    - Object Store.
+      - Stores un-structured, large data:
+        - Documents.
+        - Photos.
+        - Images.
+      - Popular stores:
+        - Microsoft Azure.
+        - Amazon S3.
+        - MINIO.
+
 ### 38. Design the architecture
+
+- Service's architecture is no different from regular software.
+- Based on the layers paradigm.
+- Layers:
+  - Represent horizontal functionality.
+    Expose User interface / API     ----> UI/SI (Expose API, JSON Handling, Auth)
+        Execute Logic               ----> Business Logic (BL)(Validation, Enrichment, Computations)
+      Save / Retrieve Data          ----> Data access layer (DAL)(Connection Handling, query/saving data, transaction handling).
+  - Purpose of Layers:
+    - Forces well formed and focused code.
+    - Modular.
+  - Concepts of Layers:
+    - COde Flow: UI/SI ---> Business Logic (BL) ---> Data Access Layer (DAL).
+
+## 7. Deploying Microservices
+
+### 39. Introduction
+
+- Deployment of microservices is extremely important.
+- Remember: "Infrastructure Automation".
+- Slow and complicated deployment will render the whole system ineffective and useless.
+- Architect should be aware of deployment, not responsible.
+
+### 40. CI/CD
+
+- Stands for:
+  - Continuous Integration / Continuous Delivery.
+  - The full automation of the integration and delivery stages.
+
+- Integration & Delivery
+  - Typical schedule of system development:
+    Build-----Unit tests-----Integration Tests------Staging---------Production-->
+    |----------------Integration-------------||-----Delivery, Deployment-----|
+
+- Why Use CI/CD?
+  - Faster release cycle.
+  - Reliability.
+  - Reporting.
+
+- CI/CD Pipelines:
+  - The heart of the CI/CD process.
+  - Define the set of actions to perform as part of the CI/CD.
+  - Usually defined using YAML, with UI representation.
+
+- As the Architect:
+  - MAke sure there is a CI/CD engine in place.
+  - Help shape the steps in the pipeline.
+
+### 41. Containers
+
+- Traditional deployment:
+  - Code was copied and built on the production server.
+  - Problems were found on the servers that were not found in the dev machines.
+- Containers:
+  - Thin package model.
+  - Packages software, its dependencies, and configuration files.
+  - Can be copied between machines.
+  - Uses the underlying operating system.
+- Container vs VM:
+  - VM: infrastructure -> hypervisor -> virtual machine (Guest OS -> APP.)
+  - Container: infrastructure -> Host OS -> container runtime -> App 1, App 2, etc.
+
+- Why containers?
+  - Predictability: The same package is deployed from the dev machine to the test to production.
+  - Performance: Container goes up in seconds vs minutes in VM.
+  - Density: One server can thousands of containers vs dozens of VMs.
+
+- Why Not Containers?
+  - Isolation: Containers share the same OS, so isolation is lighter than VM.
+
+### 42. Introduction to docker
+
+- Docker:
+  - The most popular container environment.
+  - De-facto standard for containers.
+  - Release on 2013.
+- dockerfile:
+  - Contains instructions for building custom images.
+- Support for docker:
+  - all major systems (window, Linux, OSX)
+  - Supported by major cloud providers: amazon ECR, Azure ACR.
+
+### 43. Containers management
+
+For example, we have six container: two front-end, two BE, one Batch Processes, one DB.
+
+- Deployment.
+- Scalability.
+- MOnitoring.
+- ROuting.
+- High-availability.
+
+### 44. Introduction to Kubernetes
+
+- The most popular container management platform.
+- De-facto standard for container management.
+- Release by google 2014.
+- Provides all aspects of management:
+  - Deployment.
+  - Scalability.
+  - MOnitoring.
+  - ROuting.
+  - High-availability.
+  - Automated Deployment.
+  - COnfiguration Management.
+  - And more...
+
+- service is a mechanism used by Kubernetes to expose functionality to the outside world.
+
+- Deployment - Summary
+  - Automated deployment is must for effective microservices architect.
+  - Docker and Kubernetes are the de-facto industry standard.
+  - As an Architect, you are not responsible for the deployment but should be aware.
+
+## 8. Testing microservices
+
+### 45. Introduction
+
+- Testing Microservices:
+  - Testing is important in all systems and all architecture types.
+  - With Microservice it's even more important.
+  - Testing Microservices poses additional challenges.
+- Tests Types:
+  - Unit Test.
+  - Integration test.
+  - End-to-End Test.
+
+### 46. Challenges with Microservices testing
+
+- Microservices systems have a lot of moving parts.
+- Testing and tracing all the services is not trivial.
+  Begin test -> service A ---> service B -> service C -> End test.
+
+- Main challenges:
+  - Testing state across services.
+  - Non-functional dependent services.
+
+### 47. Unit tests
+
+- Unit tests:
+  - Tests individual code units.
+    - Method, interface, etc.
+  - In-process only.
+  - Usually automated.
+  - Developed by the developers.
+
+- For example:
+  - Orders Service:
+    - AddOrder()
+    - CancelOrder()
+    - GetOrderDetails()
+    - GetOrderForUser()
+- Unit test in microservice:
+  - No different.
+  - Test only in-process code.
+  - Use the same frameworks and methodologies.
+
+### 48. Integration Tests
+
+- Test the service's functionality.
+- Cover (almost) all code paths in the service.
+- Some paths might include accessing external objects:
+  - Database, other services.
+- What happens if the database (or other external service) is not ready?
+  - Test double:
+    - Pretends to be the real object / service to allow testing.
+    - Three types:
+      - Fake:
+        - Implements a shortcut to the external service.
+        - For example - stores data in-memory.
+        - Many times implemented in-process.
+        - Requires code change in the code.
+      - Stub:
+        - Holds hard-coded data.
+        - Usually replaces data stored in a DB.
+        - Allows simulating data services quickly.
+        - No code change required.
+      - Mock:
+        - Verifies access was made.
+        - Holds no data.
+        - NO code change required.
+- Integration tests:
+  - Use the service's API.
+  - Developed and conducted by the QA team.
+  - Should be automated.
+  - MOst unit testing frameworks support integration test.
+
+### 49. End to End Tests
+
+- TEst the whole flow(s) of the system.
+- TOuch all services.
+- TEst for end state.
+- Extremely fragile.
+- Require code.
+
+### 50. Summary
+
+- Extremely important.
+- FOcus on the integration tests.
+- As an Architect:
+  - Make sure there is a test automation framework in place.
+  - Be involved in the test results analysis, may requires architecture changes.
+
+## 9. Service Mesh
+
+### 51. Introduction
+
+- Service Mesh:
+  - Manages all service-to-service communication.
+  - Provides additional services.
+  - Platform agnostic (usually).
+
+### 52. Problems solved by service mesh
+
+- Microservices communicate between them a lot.
+- The communication might cause a lot of problems and challenges:
+  - Timeouts.
+  - Security.
+  - Retries.
+  - Monitoring.
+
+- Service Mesh:
+  - Software Components that sit near the service and manage all service-to-service communication.
+  - Provides all communication services.
+  - The service interacts with the service mesh only.
+
+- Service Mesh Services:
+  - Protocol conversion.
+  - COmmunication security.
+  - Authentication.
+  - Reliability (timeouts, retries, health checks, circuit, breaking).
+  - Monitoring.
+  - Service Discovery.
+  - Testing(A/B testing, traffic splitting).
+  - Load Balancing.
+
+- Circuit Breaker:
+  - Prevents cascading failures when a service fails:
+
+- In short:
+- Service's developers need not handle communication aspects when using Service Mesh.
+
+### 53. Service Mesh Architecture
+
+- Service A <-> (Data plane) Mesh <---  Control plane -----> Mesh (Data plane) <-> Service B
+
+### 54. Type of service mesh
+
+- Two main types:
+  - In-Process
+  - Sidecar
+
+- In process:
+  - (Service A | Mesh) <-----------> (Mesh | Service B)
+
+- Sidecar:
+  - Service A <-> Mesh <-----------> Mesh <-> Service B
+
+- In-process -- Sidecar
+  Performance -- platform agnostic
+              -- code agnostic
+              -- MORE POPULAR
+
+### 55. Products and implementations
+
+- There are quite a few Service Mesh Implementations.
+- Some in-process, most sidecar.
+- MOst free, some aren't.
+- DO NOT develop your own.
+
+- Sidecar:
+  - Istio.
+  - Linkerd.
+  - maesh.
+
+- In-Process:
+  - DDS.
+
+### 46. Should you use Service Mesh?
+
+- Only if:
+  - You have a lot of services.
+  - Which communicate a lot with each other.
+  - Or you have a complex communication requirement with various protocols or brittle network.
+
+## 10. Logging and Monitoring
+
+### 57. Introduction
+
+- Extremely important Microservices.
+- Flow goes through multiple processes.
+- Hard to get wholistic view.
+- Hard to know what is going on with the services.
+
+### 58. Logging and Monitoring
+
+- Logging ----------------------------------------- Monitoring
+  Recording the system's active |Based on system's metrics.
+  Audit                         |Alerting when needed.
+  Documenting errors            |
+
+### 59. Implementing Logging
+
+- Logging should provide wholistic view on the system.
+- Should allow tracing end-to-end flow.
+- Should contain as much information as possible.
+- Can be filtered using severity, module, time, etc.
+
+- Logging:
+  - Traditional:
+    - Service A -> Log
+    - Service B -> Log
+    - What are problems?
+      - Separate.
+      - Different formats.
+      - Not aggregated.
+      - Can't be analyzed.
+  - Microservices:
+    - Service A -> Logging Service
+    - Service B /
+    - Solved:
+      - Unified.
+      - Aggregated.
+      - Can be analyzed.
+    - Logging library?
+    - Transport?
+    - Service?
+
+- Logging Library
+  - Better use one library for all the services.
+    - Winston (NodeJS), Serilog (.NET core).
+  - If using various platforms - one library for each platform.
+  - Use severity wisely.
+  - Logging as much info as possible, at least:
+    - timestamp.
+    - user.
+    - severity.
+    - service.
+    - message.
+    - stack trace (if error).
+    - correlation ID.
+
+- Correlation ID:
+  - A flow identifier.
+  - Correlates events between services.
+  - Enable stitching separate events to single flow.
+  - For example:
+    - Same flow: Correlation ID:56, FLow start
+                 Correlation ID: 56, FLow stop
+
+- Transport
+  - Preferably Queue.
+  - Balances the load.
+  - No performance hit on the client side.
+  - Usually RabbitMQ / Kafka.
+
+- Logging service:
+  - Preferably based on indexing/ digesting/ search product.
+  - Can index any log format.
+  - Provides great visualization.
+  - No development required.
+  - Stack, Splunk
+
+### 60. IMplement Monitoring
+
+- Monitoring looks at metrics and detects anomalies.
+- Provides simplified view of the system status.
+- ALerts when there is a problem.
+- Types of Monitoring:
+  - Infrastructure
+    - Monitors the server
+    - CPU/RAM/DISK/Network
+    - Alerts when infrastructure problems is detected.
+    - Data source: agent on the machine.
+  - Application:
+    - Monitors the application.
+    - Looks at metrics published by the app.
+      - Requests/min, orders/day, etc.
+    - Alerts when application problem is detected.
+    - Data source: Application's logs, event log.
+  - Most monitoring products provide both.
+
+- Monitoring product:
+  - Nagios, Stack, New Relic, Application Insight, etc.
+
+## 11. WHen not to use microservices?
+
+### 61. INtroduction
+
+- Microservices are not one-size-fits-all.
+- There are cases where they shouldn't be used.
+- Might even cause damage.
+- Need to evaluate on a case-by-case basis.
+
+### 62. Small systems
+
+- Small systems with low complexity should usually be a monolith.
+- Microservices add complexity.
+- If the service mapping result in 2-3 services - microservices are probably not the right option.
+
+### 63. Intermingled functionality or data
+
+- One of the most important microservice's attributes is its autonomy.
+- When there is no way to separate logic or data - microservices will not help.
+- If almost all requests for data span more than one service - there's a problem.
+
+### 64. Performance Sensitive systems
+
+- Microservices systems have performance overhead.
+- Result of the network hops.
+- If the system is VERY performance sensitive - think twice.
+  - SLA is in low-milliseconds or even microseconds.
+
+### 65. Quick and dirty systems
+
+- Microservices design and implementation takes time.
+- If you need a small, quick system, and need it NOW, don't go with microservices.
+- Usually have short lifespan.
+
+### 66. No planned Updates
+
+- Some systems have almost no planned future updates.
+- For example: embedded systems.
+- Microservice's main strength is in the short update cycle.
+- No updates == No microservices.
+
+## 12. Microservices and the Organization
+
+### 67. Introduction
+
+- Microservices require different mindset.
+- Traditional organizations will have hard time succeeding with Microservice.
+- Without adapting - there is no point in going with Microservices.
+
+### 68. Conway's Law
+
+- Introduced in 1967 by Melvin Conway.
+- Still relevant ...
+- Describes the relationship between the organization and the software structure / architecture.
+- "Any organization that design a system (defined broadly) will produce a design whose structure is a copy of the organization's communication structure."
+
+- Traditional Project's Organization Chart.
+  - Project Manager:
+    - IT services.
+    - Backend Developers.
+    - Frontend Developers.
+    - DBA.
+  - Frontend --> Backend --> DB --> IT.
+
+### 69. The Problem with Traditional Team
+
+- When there are multiple teams - no one takes responsibility.
+- Teams are horizontal - Backend, Frontend, IT etc.
+- No wholistic view on the product.
+
+### 70. The ideal team
+
+- The ideal team is responsible for all aspects of the service:
+  - Backend.
+  - Frontend.
+  - DB.
+  - Deployment.
+
+- Jeff Bezos: "Every internal team should be small enough that it can be fed with two pizzas."
+- The ideal Team Size:
+  - Pizza not mandatory :).
+  - Exact number varies.
+  - Should be small (Usually 3-7).
+
+### 71. Changing Mindset
+
+- Traditional organizations have hard time transition to Microservices.
+- Need help in the process.
+- You can and should help.
+- How to help?
+  - Training - Lecture on Microservices, success stories, basic principles.
+  - POC - Go small, quick win.
+  - Work closely with the team during design and development.
+
+## 13. Anti-Patterns and Common Mistakes
+
+### 72. Introduction
+
+- Microservices require thorough design.
+- They are not "Fire and Forget".
+- It's easy to make mistakes that will cause the project to fail.
+
+### 73. No Well-defined Services
+
+- Mapping the Components
+  - The single most important step in the whole process.
+  - Determines how the system will look like in the long run.
+  - Once set - not easy to change.
+
+- Negligent mapping results in bloated services.
+- Dependent functionality gets added continuously...
+- ...and creates a mini-monolith.
+
+### 74. No Well-Defined API
+
+- API is the door to the service.
+- Should be well thought of and easy to learn.
+- MUST be consistent.
+- MUST be versioned.
+- MUST be platform agnostic.
+- MUST be part of the design.
+
+- For example, API design:
+
+|Functionality|Path|Return codes|
+|-----------------------------|-----------------------------------------|-----------------|
+|Get next list to be processed| GET /api/v1/lists/next?location=...     | 200 OK          |
+|                             |                                         | 400 Bad Request |
+|Mask items as collected /    | PUT /api/v1/list/{listID}/item/{itemID} | 200 OK          |
+|Unavailable                  |                                         | 404 Not found   |
+|Export list's payment data   | POST /api/v1/list/{listID}/export       | 200 OK          |
+|                             |                                         | 404 Not found   |
+
+### 75. Implement cross-cutting last
+
+- Every system has cross-cutting (system-wide) services.
+  - Logging.
+  - Caching.
+  - User Management.
+  - Authz & Authn.
+  - And more.
+
+- Should be implemented first.
+- Other services are going to use them.
+- No one likes to go back and modify existing code.
+
+### 76. Expanding Service Boundaries
+
+- Every service has well-defined boundaries.
+- Expanding these boundaries makes the service inefficient and bloated.
+- It's tempting - don't to that!
+- Many times new service should be used instead of expanding existing service's boundaries.
+
+## 14. Breaking Monolith to Microservices
+
+### 77. Introduction
+
+- Quite common scenario.
+- The organization wants to improve the current system.
+- Needs to be thoroughly planned.
+- High rate of failures.
+
+### 78. Motivation for Breaking Monolith
+
+- Shorten update cycle.
+- Modularize the system.
+- Save costs.
+- Modernize the system.
+- Being attractive.
+
+### 79. Strategies for Breaking Monolith
+
+- Breaking Monolith is a delicate process.
+- Must be planned ahead.
+- There are three main strategies for that.
+- Strategies:
+  - New Modules as Services.
+  - Separate Existing Modules to Services.
+  - Complete Rewrite.
+
+### 80. New module as services
+
+- Pros:
+  - Easy to implement.
+  - Minimum code changes.
+- Cons:
+  - Takes time.
+  - End result is not pure Microservices architecture.
+
+### 81. Separate Existing Modules to Services
+
+- Pros
+  - End result is pure Microservices architecture.
+- Cons
+  - Takes time.
+  - A lot of code changes.
+  - Regression testing required.
+
+### 82. Complete rewrite
+
+- Pros:
+  - End result is pure microservices architecture.
+  - Opportunity for modernization.
+- Cons:
+  - Takes time.
+  - Rigorous testing required.
+
+## 15. Case study
+
+### 83. Introduction
+
