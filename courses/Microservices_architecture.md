@@ -1225,3 +1225,13 @@ For example, we have six container: two front-end, two BE, one Batch Processes, 
 
 ### 83. Introduction
 
+- Use what we learned in a real-world system.
+- Go through main steps of the architecture process:
+  - Functional Requirements.
+  - Non-Functional Requirements.
+  - Mapping the Components.
+  - Defining Communication.
+
+- We won't discuss technology stack.
+  - Not specifically relevant to Microservices.
+- By the end this section.
