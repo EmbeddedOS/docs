@@ -390,4 +390,304 @@ func main() {
 
 ## 6. Interface
 
-### 53. Purpose o Interfaces
+### 53. Purpose of Interfaces
+
+- We know that ...:
+  - Every value has a type.
+  - Every function has to specify the type of its arguments.
+- So does that mean ...:
+  - Every function we ever write has to rewritten to accommodate different types even if the logic in it is identical?
+  - for example:
+    - func (d deck) shuffle(): Can only shuffle a value of type 'deck'
+    - func (s []float64) shuffle(): Can only shuffle a value of type '[]float64'
+    - func (s []string) shuffle(): Can only shuffle a value of type '[]string'
+
+### 54. Problems without interfaces
+
+- In Go language, the interface is a custom type is used to specify a set of one or more method signatures and the interface is abstract, so you are not allowed to create an instance of the interface. But you are allowed to create a variable of an interface type and this variable can be assigned with a concrete type value that has the methods the interface requires. Or in other words, the interface is a collection of methods as well as it is a custom type.
+
+- How to create an interface?
+
+```go
+type interface_name interface{
+  // Method signatures
+}
+```
+
+- For Example:
+
+```go
+// Creating an interface
+type myInterface interface{
+
+// Methods
+fun1() int
+fun2() float64
+}
+```
+
+- Important Points:
+  - The zero value of the interface is nil.
+  - When an interface contains zero methods, such types of interface is known as the empty interface. So, all the types implement the empty interface.
+  - syntax: `interface{}`
+  - Interface Types: The interface is of two types one is static and another one is dynamic type. The static type is the interface itself. But interface does not have a static value so it always points to the dynamic values.
+
+  - Type Assertions: In Go language, type assertion is an operation applied to the value of the interface. Or in other words, type assertion is a process to extract the values of the interface.
+    - Syntax: `a.(T)`
+    - Here, `a` is the value or the expression of the interface and `T` is the type also known as asserted type.
+    - The type assertion is used to check that the dynamic dynamic type of its operand will match the asserted type or not. If the `T` is concrete type, then the type assertion checks proceeds successfully, then the type assertion returns the dynamic value of `a`. Or if the checking fails, then the operation will panics. If the `T` is of an interface type, then the type assertion checks the given dynamic type of a satisfies `T`, here if the checking proceeds successfully, then the dynamic value is not extracted.
+
+```go
+// Go program to illustrate
+// the type assertion
+package main
+  
+import "fmt"
+  
+func myfun(a interface{}) {
+  
+    // Extracting the value of a
+    val := a.(string)
+    fmt.Println("Value: ", val)
+}
+func main() {
+  
+    var val interface {
+    } = "Hello world"
+      
+    myfun(val)
+
+    var str string = "Hello Hell"
+    myfun(str)
+}
+```
+
+### 57. Extras interface notes
+
+- Interfaces are not generic types: Other languages have 'generic' types - go (famously) does not.
+- Interfaces are 'implicit': We don't manually have to say that our custom type satisfies some interface.
+- Interfaces are a contract to help us manage types: GARBAGE IN -> GARBAGE OUT. If our custom type's implementation of a function is broken then interfaces won't help us.
+- Interfaces are tough. step #1 is understanding how to read them: Understand how to read interfaces in the standard lib. Writing your own interfaces is tough are requires experience.
+
+### 58. The HTTP Package
+
+```go
+package main
+
+import (
+  "fmt"
+  "net/http"
+  "os") 
+
+func main() {
+  resp, err := http.Get("http://google.com")
+  if err != nil {
+    os.Exit(1)
+  }
+  bs := make([]byte, 9999)
+  resp.Body.Read(bs)
+  fmt.Println(string(bs))
+  fmt.Println(resp.StatusCode)
+}
+```
+
+### 62. The reader interface
+
+- Source of Input:
+  - HTTP Request Body.
+  - Text file on hard drive.
+  - Image file on hard drive.
+  - User entering text into command line.
+  - Data from analog sensor plugged into machine.
+
+### 65. The writer interface
+
+- writer interface describes something that can take info and send it outside of our program.
+
+|[]byte| ---> |writer|---> |source of Output|
+
+- source of Output: We need to find something in the standard library that "implements" the Writer interface, and use that to log out all the that we are receiving from the Reader.
+  - Outgoing HTTP request
+  - Text file on hard drive.
+  - Image file on hard drive.
+  - Terminal.
+
+### 66. The IO copy function
+
+```go
+func Copy(dst Writer, src Reader) (written int64, err error)
+```
+
+## 7. Channels and Go Routines
+
+- A goroutine is a **lightweight thread** of execution managed by the Go runtime.
+
+```go
+go f(x, y, z)
+// starts a new goroutine running: f(x, y, z)
+```
+
+- The evaluation of `f`, `x`, `y`, `z` happens in the current goroutine and the execution of `f` happens in the new goroutine.
+
+- Go-routines run in the same address space, so access to shared memory must be synchronized. The `sync` package provides useful primitives, although you won't need them much in Go as there are other primitives.
+
+- **Channels** are a typed conduit though which you can send and receive values with the channel operator, `<-`.
+
+```go
+ch <- v    // Send v to channel ch.
+v := <-ch  // Receive from ch, and
+           // assign value to v.
+```
+
+- Like maps and slices, channels must be created before use:
+
+```go
+ch := make(chan int)
+```
+
+- by default, sends and receives block until the other side is ready. This allows GO-routines to synchronize without explicit locks or condition variables.
+
+- **Buffered Channels**
+  - channels can be buffered. Provide the buffer length as the second argument to `make` to initialize a buffered channel:
+  
+  ```go
+  ch := make(chan int, 100)
+  ```
+
+  - Sends to a buffered channel block only when the buffer is full. Receives block when the buffer is empty.
+
+  ```go
+  package main
+
+  import "fmt"
+
+  func main() {
+    ch := make(chan int, 2)
+    ch <- 1
+    ch <- 2
+    fmt.Println(<-ch)
+    fmt.Println(<-ch)
+  }
+  ```
+
+- **Select**
+  - The `select` statement lets a goroutine wait on multiple communication operations.
+  - A `select` blocks until one of its case can run, then it executes that case. It chooses one at random if multiple are ready.
+
+  ```go
+  package main
+
+  import "fmt"
+
+  func fibonacci(c, quit chan int) {
+    x, y := 0, 1
+    for {
+      select {
+      case c <- x:
+        x, y = y, x+y
+      case <-quit:
+        fmt.Println("quit")
+        return
+      }
+    }
+  }
+
+  func main() {
+    c := make(chan int)
+    quit := make(chan int)
+    go func() {
+      for i := 0; i < 10; i++ {
+        fmt.Println(<-c)
+      }
+      quit <- 0
+    }()
+    fibonacci(c, quit)
+  }
+  ```
+
+  - **Default Selection** The default case in a select is run if no other case is ready.
+  - Use a default case to try a send or receive without blocking:
+
+  ```go
+  select {
+  case i := <-c:
+      // use i
+  default:
+      // receiving from c would block
+  }
+  ```
+
+- **sync.Mutex**
+  - We've seen how channels are great for communication among go-routines.
+  - But what if we don't need communication? What if we just want to make sure only one goroutine can access a variable at a time to avoid conflicts?
+  - This concept is called *mutual exclusion*, and the conventional name for the data structure that provides it is *mutex*.
+
+  - Go's standard library provides mutual exclusion with `sync.Mutex` and its two methods:
+    - Lock
+    - Unlock
+  - We can define a block of code to be executed in mutual exclusion by surrounding it with a call to `Lock` and `Unlock` as shown on the `Inc` method.
+
+We can also use `defer` to ensure the mutex will be unlocked as in the `Value` method.
+
+  ```go
+  package main
+
+  import (
+    "fmt"
+    "sync"
+    "time"
+  )
+
+  // SafeCounter is safe to use concurrently.
+  type SafeCounter struct {
+    mu sync.Mutex
+    v  map[string]int
+  }
+
+  // Inc increments the counter for the given key.
+  func (c *SafeCounter) Inc(key string) {
+    c.mu.Lock()
+    // Lock so only one goroutine at a time can access the map c.v.
+    c.v[key]++
+    c.mu.Unlock()
+  }
+
+  // Value returns the current value of the counter for the given key.
+  func (c *SafeCounter) Value(key string) int {
+    c.mu.Lock()
+    // Lock so only one goroutine at a time can access the map c.v.
+    defer c.mu.Unlock()
+    return c.v[key]
+  }
+
+  func main() {
+    c := SafeCounter{v: make(map[string]int)}
+    for i := 0; i < 1000; i++ {
+      go c.Inc("somekey")
+    }
+
+    time.Sleep(time.Second)
+    fmt.Println(c.Value("somekey"))
+  }
+  ```
+
+### 79. Alternative loop syntax
+
+```go
+for {
+  // run forever.
+}
+```
+
+### 81. Function literal
+
+- Javascript: Anonymous Function.
+- Ruby: lambda
+- python: lambda
+- GO: FUnction literal.
+
+```go
+func(args arg_type) {
+  // do some thing. with args is referenced.
+}(args)
+```
