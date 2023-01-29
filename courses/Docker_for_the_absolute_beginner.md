@@ -128,19 +128,19 @@ Ways to install docker:
 
     3. Download the following deb files for the Docker Engine, CLI, containerd, and Docker Compose packages:
 
-       * containerd.io_<version>_<arch>.deb
-       * docker-ce_<version>_<arch>.deb
-       * docker-ce-cli_<version>_<arch>.deb
-       * docker-compose-plugin_<version>_<arch>.deb
+       * `containerd.io_<version>_<arch>.deb`
+       * `docker-ce_<version>_<arch>.deb`
+       * `docker-ce-cli_<version>_<arch>.deb`
+       * `docker-compose-plugin_<version>_<arch>.deb`
 
     4. Install the .deb packages. Update the paths in the following example to where you* downloaded the Docker packages.
 
-    ```bash
-    sudo dpkg -i ./containerd.io_<version>_<arch>.deb \
-    ./docker-ce_<version>_<arch>.deb \
-    ./docker-ce-cli_<version>_<arch>.deb \
-    ./docker-compose-plugin_<version>_<arch>.deb
-    ```
+        ```bash
+        sudo dpkg -i ./containerd.io_<version>_<arch>.deb \
+        ./docker-ce_<version>_<arch>.deb \
+        ./docker-ce-cli_<version>_<arch>.deb \
+        ./docker-compose-plugin_<version>_<arch>.deb
+        ```
 
     5. Verify the docker.
 
@@ -229,9 +229,167 @@ Inspect the environment variables with docker inspect:
 docker inspect larva_image
 ```
 
-### docker command vs entry point
+### 25. Command vs entry point
+
+Docker `CMD` vs `ENTRYPOINT`
+
+When we run a docker image, for example: `docker run ubuntu` the docker run an instance of `ubuntu` image. The command is `/bin/bash`. When the task (the command `/bin/bash`) is complete, the container exits.
+
+For example, in the `nginx` dockerfile the command to run image is `CMD ["nginx"]`.
+
+the `CMD` stands for command that defines the program that will run within the container.
+
+However, if you add an argument while starting a container, it overrides the `CMD` instructions given in Dockerfile. `ENTRYPOINT` is the another instruction used to specify the behavior of container once started. Just like with CMD, we need to specify a command and parameters. However, in the case of `ENTRYPOINT` we cannot override the `ENTRYPOINT` instructions by adding command-line parameters to the `docker run` command. By opting for this instruction method, you imply that the container is specifically built for certain use-cases where command should not be overridden.
+
+The first param in JSON list of the `CMD` or `ENTRYPOINT` should be executable:
+
+```dockerfile
+ENTRYPOINT ["sleep", "5"]
+# Do NOT
+ENTRYPOINT ["sleep 5"]
+```
+
+Because, we can specific params `:1` from the `docker run` command. For example:
+
+```bash
+docker run ubuntu 10
+# instead of
+docker run ubuntu sleep 10
+```
 
 ## V. Docker compose
 
-Docker compose: [All document](https://docs.docker.com/compose/compose-file/)
+### 27. Docker compose
 
+Compose is a tool for defining and running multi-container Docker applications. With Compose, you use a `YAML` file to configure your application's services. Then with a single command, you create and start all the services from your configuration.
+
+Compose works in all environments: production, staging, development, testing as well as CI workflows. It also has commands for managing the whole lifecycle of your application:
+
+* Start, stop and rebuild services.
+* View the status of running services.
+* Stream log output of running services.
+* Run a one-off command on a service.
+
+Docker compose - build:
+
+```docker-compose.yml
+redis:
+  build: ./redis.dockerfile
+```
+
+This time when you run the docker-compose, it will first build the images, and then use those images to run containers.
+
+Docker compose file versions and upgrade:
+
+* version 1
+  * This is specified by omitting a version key at the root of the YAML.
+  * Compose does not take advantage of networking when you use version 1: every container is placed on the default `bridge` network and is reachable from every other container at its IP address.
+  * You need to use `links` to enable discovery between containers.
+
+    ```yml
+    web:
+      build: .
+      ports:
+      - "8000:5000"
+      volumes:
+      - .:/code
+      links:
+      - redis
+    redis:
+      image: redis
+    ```
+
+* version 2
+
+  * Compose files using the version 2 syntax must indicate the version number at the root of the document. All `services` must be declared under the `services` key.
+  * Named `volumes` can be declared under the `volumes` key, and networks can be declared under the `networks` key.
+  * By default, every container joins an application-wide default network, and is discoverable at a hostname that’s the same as the service name. This means `links` are largely unnecessary.
+  * Version 1 to 2.x In the majority of cases, moving from version 1 to 2 is a very simple process:
+    * Indent the whole file by one level and put a `services`: key at the top.
+    * Add a `version: '2'` line at the top of the file.
+    * `dockerfile`: This now lives under the `build` key:
+
+        ```yml
+        build:
+          context: .
+          dockerfile: Dockerfile-alternate
+        ```
+
+    * `log_driver`, `log_opt`: These now live under the `logging` key:
+
+        ```yml
+        logging:
+          driver: syslog
+          options:
+            syslog-address: "tcp://192.168.0.42:123"
+        ```
+
+    * `net`: This is now replaced by `network_mode`:
+
+        ```yml
+        net: host    ->  network_mode: host
+        net: bridge  ->  network_mode: bridge
+        net: none    ->  network_mode: none
+        ```
+
+  * For example:
+
+    ```yml
+    version: "2.4"
+    services:
+      web:
+        build: .
+        ports:
+        - "8000:5000"
+        volumes:
+        - .:/code
+        networks:
+        - front-tier
+        - back-tier
+      redis:
+        image: redis
+        volumes:
+        - redis-data:/var/lib/redis
+        networks:
+        - back-tier
+    volumes:
+      redis-data:
+        driver: local
+    networks:
+      front-tier:
+        driver: bridge
+      back-tier:
+        driver: bridge
+    ```
+
+* version 3
+  * Designed to be cross-compatible between Compose and the Docker Engine’s swarm mode, version 3 removes several options and adds several more.
+  * Removed: `volume_driver`, `volumes_from`, `cpu_shares`, `cpu_quota`, `cpuset`, `mem_limit`, `memswap_limit`, `extends`, `group_add`.
+  * Added: `deploy`
+
+    ```docker-compose.yml
+    ```
+
+## VI. Docker Registry
+
+### 35. Docker Registry
+
+* For example, when we run: `docker run nginx` actually the image get:
+  * image: docker.io/nginx/nginx
+  * `image: <registry>/<user/account>/<image/repository>`
+  * For example: `gcr.io/kubernetes-e2e-test-images/dnsutils`
+
+* Private registry:
+  * Docker hub, Google Registry or internal private registry.
+  * You first log into your private registry using `docker login your_registry` command and put your credentials.
+
+* Deploy Private Registry
+  * `docker run -d -p 5000:5000 --name registry registry:2`
+  * Tag your image: `docker image tag my-image localhost:5000/my-image`
+  * push your image: `docker push localhost:5000/my-image`
+  * Pull your image from local: `docker pull localhost:5000/my-image`
+  * Pull your image from another host: `docker pull 192.168.56.100:5000/my-image`
+
+## VII. Docker Engine, Storage and Networking
+
+### 37. Docker engine
