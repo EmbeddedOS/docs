@@ -393,3 +393,45 @@ Docker compose file versions and upgrade:
 ## VII. Docker Engine, Storage and Networking
 
 ### 37. Docker engine
+
+When you install Docker in your host, you are actually installing three different competence:
+
+* Docker Daemon: is a background process that manages Docker objects: images, containers, volumes, networks, etc.
+* Docker Rest API: is the API interface that programs can use to talk to the daemon and provide instructions.
+* Docker CLI: command line. CLI uses REST API to communicate with docker daemon.
+  * Remote docker engine address: `docker -H=remote-docker-engine:2375`
+    * example: `docker -H=10.123.2.1:2375 run nginx`
+
+* containerization:
+  * docker uses `namespace` to isolate workspace process:
+    * process ID.
+    * Network.
+    * InterProcess.
+    * Mount.
+    * Unix timesharing.
+
+* Namespace - PID:
+  * Linux system:
+    PID: 1 ------- PID: 2
+              |--- PID: 3
+              |--- PID: 4
+
+  * Child System (Container)
+    PID: 1 ------- PID: 2
+              |--- PID: 3
+    * It is an independent system on its own and it has its own set of processes originating from a root process.
+    * But we know that there is no hard isolation between the containers and the underlying host. So the process running inside the container are in fact processes running on the underlying host.
+    * Each process can have multiple process ideas associated with it. For example, when the processes start in the container it is actually just another set of processes on the base Linux system and it gets the available process I.D.
+    PID: 1 ------- PID: 2
+              |--- PID: 3
+              |--- PID: 4
+              |--- PID: 5 <---- Child system (container) PID: 1
+              |--- PID: 6 <---- Child system (container) PID: 2
+              |--- PID: 7 <---- Child system (container) PID: 3
+
+* `cgroups`:
+  * Containers shared the same system resources such as CPU and memory.
+  * By default, there is no restriction as to how much of a resource a container can use and hence a container may end end utilizing all of the resources on the underlying host.
+  * But there is a way to restrict the amount of CPU or memory a container can use Docker using `cgroups` or control groups to restrict the amount of hardware resources allocated to each container.
+  * For example: `docker run --cpus=.5 ubuntu` this will ensure that the container does not take up more than 50 percent of the host CPU at any given time.
+  * With memory, for example: `docker run --memory=100m ubuntu`.
