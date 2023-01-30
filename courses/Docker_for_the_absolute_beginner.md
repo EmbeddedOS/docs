@@ -1,4 +1,4 @@
-# Docker for the Absolute Beginner 
+# Docker for the Absolute Beginner
 
 ## I. Introduction
 
@@ -431,7 +431,191 @@ When you install Docker in your host, you are actually installing three differen
 
 * `cgroups`:
   * Containers shared the same system resources such as CPU and memory.
-  * By default, there is no restriction as to how much of a resource a container can use and hence a container may end end utilizing all of the resources on the underlying host.
+  * By default, there is no restriction as to how much of a resource a container can use and hence a container may end utilizing all of the resources on the underlying host.
   * But there is a way to restrict the amount of CPU or memory a container can use Docker using `cgroups` or control groups to restrict the amount of hardware resources allocated to each container.
   * For example: `docker run --cpus=.5 ubuntu` this will ensure that the container does not take up more than 50 percent of the host CPU at any given time.
   * With memory, for example: `docker run --memory=100m ubuntu`.
+
+### 39. Docker storage
+
+* How a docker stores data on the local File system when you install Docker on a system?
+  * It create this folder structure at `/var/lib/docker/` you have multiple folders under it called.
+    * `/var/lib/docker/`
+      * `aufs`
+      * `containers`
+      * `image`
+      * `volumes`
+
+* Docker Layered Architecture.
+  * Example
+    Dockerfile1:
+
+    ```Dockerfile
+    FROM Ubuntu
+    RUN apt-get update && apt-get -y install python
+    RUN pip install flask flask-mysql
+    COPY . /opt/source-code
+    ENTRYPOINT FLASK_APP=/opt/source-code/app.py flask run
+    ```
+
+    `docker build Dockerfile1 -t larva/custom-app`
+
+    * Image Layers (read only):
+      * Layer 1: base Ubuntu Layer - 120M
+      * Layer 2: Changes in apt packages - 306M
+      * Layer 3: changes in pip packages - 6.3M
+      * Layer 4: Source code - 229B
+      * Layer 5: Update Entrypoint - OB
+    * Container layer (read-write):
+      `docker run larva/custom-app`
+      * Layer 6: Container layer.
+  * Docker can reuse image layers. For example:
+    Dockerfile2
+
+    ```Dockerfile
+    FROM Ubuntu
+    RUN apt-get update && apt-get -y install python
+    RUN pip install flask flask-mysql
+    COPY app2.py /opt/source-code
+    ENTRYPOINT FLASK_APP=/opt/source-code/app2.py flask run
+    ```
+
+    `docker build Dockerfile2 -t larva/custom-app-2`
+
+    * Image Layers (read only):
+      * Layer 1: base Ubuntu Layer - 0M (reuse)
+      * Layer 2: Changes in apt packages - 0M (reuse)
+      * Layer 3: changes in pip packages - 0M (reuse)
+      * Layer 4: Source code - 229B
+      * Layer 5: Update Entrypoint - OB
+
+  * Who is responsible for doing all of these operations: Maintaining the layered architecture, creating a writable layer moving files across layers to enable copy and write etc. It's the storage drivers.
+  * Docker uses storage drivers to enable layered architecture.
+  * Common storage drivers:
+    * AUFS
+    * ZFS
+    * BTRFS
+    * Overlay
+    * Overlay2
+    * Device Mapper
+  * Docker will choose the best storage driver available automatically based on the OS.
+
+### 42. Docker Networking
+
+* Default networks:
+  * bridge.
+  * none.
+  * host.
+
+* When you install docker, it creates three networks automatically `bridge`, `none`, `host`.
+* `bridge` is the default network a container gets attached to.
+
+* The `bridge` network is a private internal network created by docker on the host.
+  * All containers attached to this network by default and they get internal IP address usually in the 172.17.x.x series.
+  * the containers can access each other using this internal Ip if required.
+  * docker0: `172.17.0.1`
+    * web container 1: `172.17.0.2`
+    * web container 2: `172.17.0.3`
+    * web container 3: `172.17.0.4`
+    * etc.
+  * To access any of these containers from outside world map the ports of these containers to ports on the docker host.
+
+* Another way to access the containers externally is to associate the container to the `host` network.
+  * This takes out any network isolation between the docker host and the docker container.
+  * Meaning if you were run a web server on Port 5000 in a web container, it is automatically as accessible on the same port externally without requiring any port mapping as the web container uses the host network.
+
+* With the `none` network, the containers are not a test to any network and doesn't have any access to the external network or other containers they run in an isolated network.
+
+* User-defined networks:
+  * By default, Docker only creates one internal bridge network. We could create our own internal network using the command:
+  `docker network create --drive bridge --subnet 182.18.0.0/16 custom-isolated-network`
+  * Run `docker network ls` command to list all networks.
+
+* Inspect networks:
+  * How do we see the network settings and the Ip address assigned to an existing container run the `docker inspect` command with ID or name of container.
+
+* Embedded DNS:
+  * containers can reach each other using their names.
+  * docker0: `172.17.0.1`
+    * web container 1: `172.17.0.2`
+    * Mysql 2: `172.17.0.3`
+
+    * How can I get my web server to access the database on the database container?
+      * One thing I could do is to uses the internal Ip address assigned to the `MySQL`.
+        * which in this case is 172.17.0.3.
+      * But that is not very ideal because it is not guaranteed that the container will get the same IP address when the system reboots the right way to do it is to use the `container name`.
+      * All containers in a docker host can resolve each other with the name of the container.
+      * Docker has a built in a DNS server that helps the containers to resolve each other using the container name.
+      * NOTE that the built in DNS server ALWAYS runs at address `127.0.0.11`.
+
+* Docker uses network namespace, that creates a separate namespace for each container.
+* It then uses virtual Ethernet pairs to connect containers together.
+
+## IX. Container Orchestration - Docker Swarm & Kubernetes
+
+### 48. Container Orchestration
+
+* Why Orchestration?
+  * To run a node JS based application, you are on the `docker run nodejs` command.
+  * But that is just one instance of your application on one docker host.
+  * What happens when the number of uses increase and that instance is no longer able to handle the load you deploy additional instance of your application by running the docker run command multiple times.
+  * You have to keep a close watch on the load and performance of your application and deploy additional instance yourself.
+  * And if a container was to fail, you should be able to detect that and run the docker run command again to deploy another instance of that application.
+  * What about the health of the docker host itself?
+  * What if the host crashes and is inaccessible, the containers hosted on that host become inaccessible too?
+  * So what do you do in order to solve these issues?
+
+* Container Orchestration is just a solution for that.
+  * It is a solution that consists of a set of tools and scripts that can help host containers in a production environment.
+  * Container Orchestration solution consist of multiple dockers hosts that can host containers. That way, if a container application run fail, the application is still accessible though the others a container orchestration.
+  * Help you to deploy hundreds or thousands of instances of your application with a single command.
+
+  ```bash
+  docker service create --replicas=100 nodejs
+  ```
+
+  * some solutions can help to scale up the number of instances when users increase and scale down the number of instance when the demand decreases.
+
+  * some of them also provide support for advanced networking between these containers across different hosts as well.
+  * provide support for sharing storage between the host as well as support for configuration, security.
+
+* common tools:
+  * Docker Swarm.
+  * Kubernetes.
+  * MESOS.
+
+### 49. Docker Swarm
+
+* Docker Swarm could combine multiple Docker machines together into a single cluster Docker.
+* We will take care of distributing your services or your application instances into separate hosts for high availability and for load balancing across different systems and hardware to set up a Docker swarm.
+
+* in master host:
+  `docker swarm init`
+
+* in worker hosts:
+  `docker swarm join --token <token>`
+
+* docker service with replica to increase instances of containers on the docker cluster:
+
+`docker service create --replicas=3 my-app`
+
+### 50. Kubernetes
+
+* With kubernetes using CLI know as Kube control, you can run a thousand instance of the same application with a single command.
+`kubectl run --replicas=1000 my-app`
+
+* can be scale up to two thousand instances with another command:
+`kubectl scale --replicas=2000 my-app`
+
+* POD Auto-scalers.
+* Cluster Auto-scalers.
+* Roll-back these with a single command:
+`kubectl rolling-update my-app --image=web-server:2`
+`kubectl rolling-update my-app --rollback`
+
+* Can help you test new features of your application by only upgrading a percentage of these.
+* Network.
+* Storage.
+* Security.
+
+* consists set of nodes (machine physical or virtual).
