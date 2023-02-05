@@ -179,3 +179,99 @@
   - Docker has a built-in DNS server that helps the containers to resolve each other using the container name.
   - Note that the built-in DNS server always runs at address 127.0.0.11.
 
+### 18. Docker stacks
+
+- We have seen running individual containers with `docker run`.
+- Instead of running multiple docker run commands, we were able to put together the application stack in a *Docker compose file* and bring our stack up with a single `docker-compose up` command.
+
+- So how does it work when it comes to a swarm?
+  - With docker swarm, we do the same thing with little difficult.
+  - As we could run multiple instance of each service:
+    - `docker service create mongodb`
+    - `docker service create redis`
+    - `docker service create ansible`
+    - And orchestrate their deployment with services and stack.
+  - We could convert the `docker service` command into a docker compose file.
+
+    ```docker-compose.yml
+    version: 3
+    services:
+      database:
+        image: "mongodb"
+      messaging:
+        image: "redis:alpine"
+    ```
+
+  - Once we have that ready, we run `docker stack deploy` command to deploy the entire application stack all at once.
+
+- STACK
+  - A container, as we know is a packaged form of an application that has its own dependencies and run in its own environment.
+  - A service is one or more instances of the same container that runs on a single node or across multiple nodes in a swarm cluster.
+  - The next level on the hierarchy is a stack.
+  - A stack is a group of interrelated services, that together forms an entire application.
+         ^
+        / \
+       /   \
+      /Stack\
+     /Service\
+    /Container\
+
+    Stack ( Service web-server (container),Service db (container.redis.1, container.redis.2)).
+  - This configuration makes my application distributed, easy to manage and easily scalable by component.
+
+- Sample application swarm:
+  - We have 3 nodes - 2 worker and 1 manager.
+  - We would like to have one instance of Redis Running. So docker swarm places it anywhere in the cluster, say a worker node.
+  - We would like to have one instance of Postgres db running. However, we would prefer it to be placed on the manager node. No particular reason, just to show some use case scenarios.
+  - We would like two instances of voting application. as we expect high user traffic on that application.
+  - One instance for result application.
+  - And another instance for the worker.
+  - Docker Swarm will place containers on an appropriate node unless we provide a preference.
+  - And finally, we also would like to limit usage of underlying hardware resources by these services.
+  - For example, we would like the Redis service to not consume more than 5% of the CPU resources or more than 50MB memory on the underlying host.
+  - So to summarize, we have high expectations from running an application stack on Swarm.
+  - We would like to run:
+    - multiple instances of services.
+    - Placement Preferences.
+    - Resource Constrains.
+  - Let's see how we do this in a stack configuration file, is defined in a YAML format.
+
+- Stack definition - replica
+  - New property for docker swarm: `deploy`
+
+  ```docker-compose.yml
+  version: 3
+  services:
+    redis:
+      image: redis
+      deploy:
+        replicas: 1
+        resources:
+          limits:
+            cpus: 0.01
+            memory: 50M
+    database:
+      image: "postgres:9.4"
+      deploy:
+        replicas: 1
+        placement:
+          constrains:
+            - node.hostname == node1
+            - node.role == manager
+    vote:
+      image: voting-app
+      deploy:
+        replicas: 2
+    result:
+      image: result
+      deploy:
+        replicas: 1
+    worker:
+      image: worker
+      deploy:
+        replicas: 1
+  ```
+
+  - For Placement Preferences, If we don't specify, docker swarm will place the containers on any worker nodes.
+  - To place the database service on a specific node, we could use the placement property under `deploy`, under `placement`, use a `constraint`. `constraints` are like conditions. for example, you could say things like: `node.hostname == node1`. This will ensure that the service gets placed on a node with its hostname node 1. And `node.role == manager` this will place the service on a node that has a role of a manager, which is what our requirement is in this case. You could specify multiple `constraints` for placing a service and it will attempt to match all of them to place a service on a node.
+  - There are many more constraints available on the docker documentation page: [link](https://docs.docker.com/engine/swarm/services/#placement-constraints).
