@@ -39,6 +39,7 @@
       - `docker swarm join --token <token>`
     - Copy the command and run it on the worker nodes to join the manager.
     - And you are now ready to create services and deploy them on the Swarm cluster.
+    - If you forgot to save the command, run: `docker swarm join-token worker` to get join command.
 
 - Docker Manager node
   - Is the master node where the swarm cluster is initiated.
@@ -63,9 +64,118 @@
       - If we could not do it, the only way to recover is to force create a new cluster.
       - When we run the `docker swarm init --force-new-cluster` command. a new cluster is created with the current node as the only manager and we get a healthy cluster with a single manager node. Since this manager already has information about the services and tasks, the worker nodes are still part of the swarm and services continue to run.
       - You may later add more manager nodes or promote existing workers to become manager nodes.
-      - To promote an existing worker to become a manager node run `docker node promote` command.
+      - To promote an existing worker to become a manager node run `docker node promote` command on the manager node.
 
 - Can manager work?
   - By default, all manager nodes also worker nodes. Meaning, when you create a service the instances are also spread across manager node.
   - You can disable that and dedicate a node for management purpose alone. This can be done by running the command `docker node update --availability drain <node>`.
   - Docker recommends dedicating manager nodes for management tasks only in the production environment. However, if you simply need to set up a test or development environment and play around with Docker Swarm feel free to create a single node swarm cluster with the same node acting as both a manager and a worker.
+
+## 4. Docker Service
+
+### 14. Docker service in depth
+
+- The key component of a swarm orchestration is Docker service.
+- Docker services are one or more instance of a single application or service that runs across the Swarm cluster.
+- For example, I could create a Docker service running multiple instances of my web server application across worker nodes in my Swarm cluster.
+- We run: `docker service create --replicas=3 my-web-server` on the manager nodes. Use the option `replicas` to specify the number of instances of `my-web-server` I would like to run across the cluster.
+  - `docker service create --replicas=3 -p 8080:80 my-web-server` with port mapping.
+  - `docker service create --replicas=3 --network frontend my-web-server` to specify to a particular network.
+
+- Tasks
+  - When we run `docker service create` to create three instances of my-web-server. The orchestrator on the manager node decides how many tasks to create, and then the scheduler schedules that many tasks on each worker node.
+
+  Manager node---> (|Task- web server| - node 1)
+              ---> (|Task- web server| - node 2)
+              ---> (|Task- web server| - node 3)
+
+  - The task on the worker node is a process that kicks off the actually container instances. The task has a one-to-one relationship with each container. The task is responsible for updating the status of the container to the manager node so the manager node can keep track of the workers and instances running on them.
+  - In case the container was to fail, the tasks fails as well, and if the task fail, the manager node becomes aware of it and it automatically reach a deals a new task to run a new container instance to replace the failed container.
+
+- Replicas
+  - Let's say you have only two worker node and you would like to create three replicas of an instance running the Docker service. `create` command will create three containers spread across two worker nodes.
+  - The ultimate goal is to ensure that the requested number of instances running at all times.
+  - If one of the worker node was to fail it will redeploy a new instance of that container on the other worker to ensure number of replicas of the service are available.
+
+- Replicas vs global
+  - There are two types of services replicated and global.
+  - If you simply want one instance of a service placed on all nodes in the cluster.
+  - A good example would be a monitoring agent or a lot collection agent or an antivirus scanner that you might want to run on every node in the cluster. Just one instance but on every node.
+  - This is called **Global Services**.
+  - For example, to place a monitoring agent on all my nodes, I will create a new service and using the command:
+    - `docker service create --mode global my-monitoring-agent` to indicate that this service is a global service. And so one instance of my monitor agent gets placed on all the nodes in the cluster.
+
+- Service name:
+  - `docker service create --replicas=2 --name web-server my-web-server`
+  - If you don't specify the service name, docker will automatically generate a random name.
+  - If you specify service name, docker will generate `web-server.1`, `web-server.2`.
+
+
+- Service update:
+  - let's say we start with three services, so we run the command `docker service create` to create a service with three replicas. At a later point in time, we decide that we must have four instances running and so we must update the service to add a new instance.
+  - To do this, run the `docker service update --replicas=4 web-server`.
+
+### 15. Demo
+
+- Get all service with: `docker service ls`
+- If we do not specify the `replicas` option, default `replicas` is 1.
+- Publish service ports externally to the swarm (-p, --publish)
+  - You can publish service ports to make them available externally to the swarm using the --publish flag. The --publish flag can take two different styles of arguments. The short version is positional, and allows you to specify the published port and target port separated by a colon (:).
+  - `docker service create --name my_web --replicas 3 --publish 8080:80 nginx`
+- Add or remove published service ports (--publish-add, --publish-rm):
+  - `docker service update --publish-add published=8080,target=80 my-service`
+
+- Can manager work?
+  - There is a way if you want to not host any containers on the master:
+    - `docker node update --availability drain <node>`
+
+## 5. Advanced Networking
+
+### 17. Advanced Networking
+
+- We discussed about three types of networks available in Docker:
+  - Bridge (Default network mode): Is a private internal network. All containers get an internal IP address (usually 172.17.x.x series). To access to the containers, we need to map ports of these containers to ports on the Docker host.
+  - None.
+  - Host.
+
+- With `docker swarm` you could create a new network of type overlay which  will create an internal network private network that spans across all the nodes.
+  - `docker network create --driver overlay --subnet 10.0.9.0/24 my-overlay-networking`
+- We could then attach the containers or services to this network using the network options.
+  - `docker service create --replicas 2 --network my-overlay-networking`
+  - And so we can get them to communicate with each other though the overlay network.
+
+- ingress network:
+  - In a single host, we can use publish - port mapping to access the container from host.
+    - `docker run -p 80:5000 my-web-server`
+  - But what happens when we are working with a swarm cluster?. For example, think of the host as single node swarm cluster. Say we were to create a web-server service with two replicas and a port mapping of port 80 to 5000.
+    - `docker service create --replicas=2 -p 80:500 my-web-server`.
+    - Since this is a single node cluster both the instances are deployed on the same node, this will result in two web-service containers both trying to map their 5000 ports to the common port 80 on the Docker host.
+    - But we can have two mappings to the same port.
+    - This is where increased networking comes into picture.
+  - When you create a Docker Swarm it automatically creates an *ingress network*. The ingress network has a built-in load balancer that redirects traffic from the published port which in this case is port 80 to all the mapped ports which are the ports 5000 in on each container.
+    external access-->(host-80)--> built-in load-balancer |---> my-web-server.1 - 5000
+                                                          |---> my-web-server.2 - 5000
+  - Since the ingress network is created automatically, there is no configuration that you have to do. You simply have to create the service you need by running the service:
+    - `docker service create` and publish the ports you would like to publish.
+    - But it is important for us to know how it really works when there are multiple nodes in the docker swarm cluster.
+  - How this might work without the ingress networking?
+      external access-->(192.168.1.5:80)|---> my-web-server.1 - 5000
+                        (192.168.1.6:80)|---> my-web-server.2 - 5000
+                        (192.168.1.7:80)|
+    - First of all, how do we expect the user to access our services in a swarm cluster of multiple nodes? Since this is a cluster, we expect the users to be able to access services from any node in our cluster, meaning any user should be able to access the web server using the IP address of any of these containers since they are all part of the same cluster.
+    - Without ingress networking, A user could access the web-server on nodes one and two but not on three because there is no web service instance running on node three.
+  - With ingress networking, is in fact a type of overlay network meaning it's a single network that spans across all the nodes in the cluster.
+    external-->LB-(192.168.1.5:80)|                                   ->|my-web-server.1 - 5000
+               LB-(192.168.1.6:80)|--->(ingress network)(routing mesh)->|my-web-server.2 - 5000
+               LB-(192.168.1.7:80)|
+  - The way the load balancer works is it receives request from any node in the cluster and forwards that request to the respective instances on any other node, essentially creating a routing mesh. The routing mesh helps in routing the user traffic that is received on a node that isn't even  running an instance of the web service to other nodes where the instances are actually running.
+  - *All of this is the default behavior of Docker Swarm* And you don't need to do any additional configurations. Simply create your service, specify the number of replicas and publish the port.
+  - Docker swarm will ensure that the instances are distributed equally across the cluster the ports are published on all the nodes and the users can access the services using the IP of any nodes and when they do the traffic is routed to the right services internally.
+
+- Embedded DNS
+  - For example, I have a web service and a MySQL db service running on the same node or worker. How can I get my web service to access the database on the database container?
+    - One thing I can do is to use the internal IP address that assigned to the MySQL container (For-example, 172.17.0.3), But that is not very ideal. Because it is not guaranteed that the container will get the same IP when the system reboots.
+    - The right way to do it is to use the container name. All containers in the Docker host can resolve each other with the name of the container.
+  - Docker has a built-in DNS server that helps the containers to resolve each other using the container name.
+  - Note that the built-in DNS server always runs at address 127.0.0.11.
+
