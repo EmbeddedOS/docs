@@ -110,7 +110,6 @@
   - If you don't specify the service name, docker will automatically generate a random name.
   - If you specify service name, docker will generate `web-server.1`, `web-server.2`.
 
-
 - Service update:
   - let's say we start with three services, so we run the command `docker service create` to create a service with three replicas. At a later point in time, we decide that we must have four instances running and so we must update the service to add a new instance.
   - To do this, run the `docker service update --replicas=4 web-server`.
@@ -275,3 +274,43 @@
   - For Placement Preferences, If we don't specify, docker swarm will place the containers on any worker nodes.
   - To place the database service on a specific node, we could use the placement property under `deploy`, under `placement`, use a `constraint`. `constraints` are like conditions. for example, you could say things like: `node.hostname == node1`. This will ensure that the service gets placed on a node with its hostname node 1. And `node.role == manager` this will place the service on a node that has a role of a manager, which is what our requirement is in this case. You could specify multiple `constraints` for placing a service and it will attempt to match all of them to place a service on a node.
   - There are many more constraints available on the docker documentation page: [link](https://docs.docker.com/engine/swarm/services/#placement-constraints).
+
+### 21. Docker visualizer
+
+- run command: `docker run -it -d -p 8080:8080 -v /var/run/docker.sock:/var/run/docker.sock dockersamples/visualizer`
+- Open web browser and access to port 8080.
+
+## 7. CI/CD integration
+
+### 22. CI/CD introduction
+
+- How docker integrates with CI/CD pipeline?
+
+- CI - Continuous integration
+
+  Developer 1: Feature #1 \
+  Developer 2: Feature #2  |--(Pushing their code into the same code repo)--> (Version control)
+  Developer 3: Fix bug #1 /
+
+  - When a developer pushes a code to the repo, it is linked to a build management system (like Jenkins for instance), that takes the code and builds it.
+  - If your application is based on Java, then you can think of this as a `jar` file.
+    (Version control - github)--trigger build-->(Build system - jenkins)
+  - When the developers push your code into the same application, we would like to make sure that it builds correctly and does not introduce any new issues into the application. For this, we could configure the build system to run:
+    - Test on the build package:
+      - Unit test.
+      - Web UI test.
+      - Integration test.
+      - etc.
+  - Once the tests pass successfully, we can confirm that the build cycle is complete.
+  - This whole process of enabling multiple developers to work seamlessly on the same application without stepping on each other's toes and at the same time ensuring, that these new changes integrate into the application without introducing any new issues. Is know as `Continuous integration`.
+
+- CD - Continuous delivery/deployment
+  - So far, we have coded our application, built and tested it all though automated pipeline using the code repositories and built and test systems.
+  - What do we do once the testing is successful?
+  - The next step is to release our new version of the application.
+  - Now, that could be packaging the build application, an executable or an RPM package, ios, etc. And so make it online so users can download and deploy the application in their environments.
+  - Release the software this way automatically though a pipeline is known as `Continuous Delivery`. (SERENA tool, for example)
+  - So the next step would be to take the packaged application and automatically deploy it in a target environment. (Pivotal CF, Google Cloud Platform, AWS)
+    - This process of automatically updating our production environment with the changes in the application is referred to as `Continuous Deployment`.
+
+- All integrated and automated without requiring any manual intervention. This is referred to as CI/CD.
