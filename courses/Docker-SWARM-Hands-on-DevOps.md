@@ -314,3 +314,11 @@
     - This process of automatically updating our production environment with the changes in the application is referred to as `Continuous Deployment`.
 
 - All integrated and automated without requiring any manual intervention. This is referred to as CI/CD.
+
+### 23. CI/CD - Docker integration
+
+- How Docker integrates with CI/CD pipeline?
+  - Build systems -docker support:
+    - Each project has a Docker file checked into its code repository along with the rest of code, for the application.
+    - The dockerfile as we have learned before, has instructions on building the Docker image. Once checked in to GitHub, Jenkins pulls the code, uses the Dockerfile path of the code to build the docker image.
+    - You may use a supported Docker plugin for this purpose. On building the new docker image, jenkins will tag the image with a new build number.
