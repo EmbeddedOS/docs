@@ -322,3 +322,26 @@
     - Each project has a Docker file checked into its code repository along with the rest of code, for the application.
     - The dockerfile as we have learned before, has instructions on building the Docker image. Once checked in to GitHub, Jenkins pulls the code, uses the Dockerfile path of the code to build the docker image.
     - You may use a supported Docker plugin for this purpose. On building the new docker image, jenkins will tag the image with a new build number.
+    - On successfully, this image can then be used to run tests. Once the tests are successful, it can then be pushed to the image repositories, known as Docker registries either to a repository, internal to the company or external Docker Hub.
+    - The image repository can then be integrated into a container hosting platform like Amazon ECS, to host our application.
+    - This entire cycle of automated actions, from making a change in the application, to building, testing, releasing, and finally, deploying in production, completes CI/CD pipeline.
+
+- Public cloud - docker support
+  - The next step is to deploy this image in production.
+  - Major cloud service providers like Amazon, Google, Azure, all supported containers.
+  - Google Container Engine supports running containers, in production, on Kubernetes Clusters. Kubernetes is a container orchestration technology which is an alternate solution to Docker Swarm that we learned earlier.
+  - AWS has ECS, which stands for EC2 Container Service. It provides another mechanism to run containers in production.
+  - Pivotal Cloud Foundry, has PKS which stands for Pivotal Container Service which again uses Kubernetes underneath.
+  - Finally, Docker's own container hosting platform, Docker Cloud, uses Docker Swarm underneath to orchestrate containers.
+
+### 24. Docker Registry
+
+- When we run the `docker build . -t larva/my-app`, docker creates an image of your application using the instructions specified in the Docker file.
+- Once built, we could push the image to a repository called Docker Hub by running the docker push command: `docker push larva/my-app`.
+- Docker hub is known as is the publicly-hosted repo for all docker images. The repository is known as Docker Registry.
+- By default, `docker push` command push the images to Docker Hub. But you might not want to do that all the time. For example, enterprises may want to store their images in their local data center. To do that, you can setup your own Docker Registry internally.
+- To setup an internal Docker registry, you can either install docker registry software on a server or an easier way to do it, run: `docker run -d -p 5000:5000 registry:2` and it is available on Docker Hub. You can build your image, and push it to private registry: `docker push localhost:5000/larva/my-app`.
+
+## 8. Docker on CLoud
+
+### 26. Docker Cloud
