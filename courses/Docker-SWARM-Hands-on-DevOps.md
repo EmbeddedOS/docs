@@ -345,3 +345,10 @@
 ## 8. Docker on CLoud
 
 ### 26. Docker Cloud
+
+- Docker Cloud:
+  - Docker Cloud is Docker's own cloud based container hosting platform.
+  Build images -> Infrastructure (clusters) -> configure docker (install, init docker swarm, etc.) -> configure swarm (joining nodes) -> manage nodes -> manage services (app stack).
+  - With Docker Cloud, you could now simply log on to the Docker Cloud portal and create a stack with your stack configuration file. And Docker Cloud does the rest. It provisions the necessary number of hosts, sets up Docker and Docker swarm on those hosts, sets up networking creates services and runs containers as specified in the stack file.
+  - However, Docker Cloud does not host the infrastructure on its own, so you must link one of the cloud providers to its backend such as AWS, Azure, Digital Ocean, etc. Docker Cloud provisions resources on those providers to host our application.
+  - Similarly, you may also link source providers such as Github or Bitbucket to integrate Docker Cloud with a CI/CD pipeline. Once you link your Github account to Docker Cloud, every time a developer pushes the code, the Docker Cloud internal build system reads the code and builds the Docker image. Once the image is built successfully, it is then pushed to Docker Hub where it is made available for the public.
