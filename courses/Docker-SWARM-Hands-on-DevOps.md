@@ -352,3 +352,100 @@
   - With Docker Cloud, you could now simply log on to the Docker Cloud portal and create a stack with your stack configuration file. And Docker Cloud does the rest. It provisions the necessary number of hosts, sets up Docker and Docker swarm on those hosts, sets up networking creates services and runs containers as specified in the stack file.
   - However, Docker Cloud does not host the infrastructure on its own, so you must link one of the cloud providers to its backend such as AWS, Azure, Digital Ocean, etc. Docker Cloud provisions resources on those providers to host our application.
   - Similarly, you may also link source providers such as Github or Bitbucket to integrate Docker Cloud with a CI/CD pipeline. Once you link your Github account to Docker Cloud, every time a developer pushes the code, the Docker Cloud internal build system reads the code and builds the Docker image. Once the image is built successfully, it is then pushed to Docker Hub where it is made available for the public.
+
+### 29. Introduction to Kubernetes
+
+- Kubernetes was built by Google based on their experience running containers in production.
+- Now, it is now an open source project and is arguably one of the best most popular container orchestration technologies out there.
+- Objective:
+  - Introduction.
+  - Architecture Basics.
+  - Services.
+  - Deployment.
+  - GCP(Google Cloud Platform) Kubernetes.
+
+- With Docker Swarm, we could create a cluster of docker hosts and run docker containers on them.
+- Docker Swarm allowed us to run multiple instances of containers for high availability and load balancing purposes. So in case a running container or host fails, Docker Swarm automatically turns on another instance of container to meet our needs. This is known as `orchestration`.
+- Container orchestration provides a framework for integration and managing a large number of containers.
+  - Docker Swarm is one such container orchestration technology, and so is Kubernetes.
+
+- Cluster:
+  - Docker Swarm:
+    - A Docker clusters is formed by a swarm manager node and multiple worker nodes all running Docker on them.
+    - The master node is responsible for orchestration, which is scheduling tasks to run containers on the worker nodes, monitoring the status of containers, restarting containers on failure, and scaling containers as required.
+
+  - KUbernetes:
+    - Kubernetes clusters is formed by a master node and multiple worker nodes that obey the master node. The worker nodes were previously known as Minions.
+    - The Kubernetes master node is responsible for all orchestration tasks that we just talked about.
+
+- PODS:
+  - Unlike Docker Swarm, Kubernetes does not run containers directly on the worker nodes. Kubernetes wraps the containers inside a virtual block known as PODS.
+  - As described in the Kubernetes documentation, a POD is the smallest and simplest unit in Kubernetes that you can create.
+  - With Kubernetes, you cannot run a container by itself or you cannot create a service with just containers.
+  - All containers have to be encapsulated in a unit of deployment known as `pods`.
+  - We have a one to one relationship between a pod and a container, and that is perfectly fine and works well with the simple applications.
+  - However, pods have another use case that support complex application architectures. A single pod can have multiple containers within it. It is usually not multiple containers of the same type. If your intention is to scale your application, you would deploy multiple instances of the pod itself.
+  - In Kubernetes, an IP address is assigned at a pod level and node at a container level, as in Docker Swarm. In this case, all containers with the same pod share the same network namespace and can communicate with each other using the hostname, localhost. They also share the same storage volumes allowing the different containers to access the same shared data.
+  - So a pod is thus another layer of abstraction that Kubernetes provides to group together different containers, their network and storage into a virtual container.
+  - This allows all of the elements and containers within the pod to easily interact with each other, share the same data, and share the same life cycle. As in, they are powered up together and destroyed together.
+  - Also, your application is scaled at the pod level, meaning when loading increase, you deploy multiple such pods themselves. You can have multiple pods within the same Kubernetes worker or have them separated onto different workers.
+
+- Kubernetes - deployment:
+  - Docker Swarm services:
+    - Services, in docker swarm, are multiple instances of a container run across the swarm cluster for high availability and load balancing purposes.
+  - In Kubernetes, it's known as a `Deployment`.
+    - A deployment creates a `Replica Sets` to create multiple instances of pods.
+    - Replica sets ensure that the specified number of pod instances are running at any given time.
+
+- Kubernetes Services:
+  - In Docker Swarms, we use `link` and `network` to enable communication between containers. We had ingress networking to enable external access to the services.
+  - In Kubernetes, this is implemented with the help of services. Note the differences in terminology.
+    POD 1 <-----service-----> POD 2
+  - In Kubernetes, we use services to enable communication between pods, and to enable external access to the application.
+  - There are different types of services, such as internal and external. We will create internal facing services for connectivity between the components, such as the web service and the database, and external facing services, using load balancer, to expose ports to the external world so users can access our application.
+
+- Kubectl
+  - How do you create pods, services, deployments in Kubernetes?
+    - Kubernetes provides the `kubectl` command-line interface.
+    - We can use it to:
+      - create configurations: `kubectl create`
+      - get the current status: `kubectl get`
+      - get detailed information about these services: `kubectl describe`
+      - Create with a pod configuration file: `kubectl create -f pod-definition.yml`
+      - Get a list of pods and their statuses: `kubectl get pods`
+      - Get detailed information about the pods: `kubectl describe pods`
+
+- Kubernetes definition file:
+  - kubernetes pods, deployments and services, are all created using YAML based definition file.
+  - The format of the file is a bit different than the Docker compose file.
+
+    ```pod-definition.yml
+    apiVersion: v1
+
+    kind: pod
+
+    metadata:
+      name: my-nginx
+
+    spec:
+      containers:
+        - name: nginx
+          image: nginx
+          ports:
+            - containerPort: 80
+
+    ```
+
+  - These are four major sections in the file:
+    - Version: The version describes the versions of schema we are using: v1.
+    - Kind: the type of resource we are defining in the YAML file: Pod, Deployment, Service.
+    - Metadata: Providing additional information about our configuration, such as its name, custom labels and many other things: Name, Labels, etc.
+    - Specification: specifying the actual deployment definition, such as the type of containers that form the ports: containers, ports, etc.
+  - Once done, run the `kubectl create -f pod-definition.yml` command.
+
+### 30. Demo
+
+1. Setup a Google Container Engine Environment.
+2. Create Kubernetes PODs.
+3. Create Services - ClusterIp - Internal.
+4. Create Services - LoadBalancer - External.
