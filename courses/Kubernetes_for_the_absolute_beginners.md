@@ -113,3 +113,10 @@
   - And that is Kubernetes, that orchestrate the deployment and management of hundreds and thousands of containers on a clustered environment.
 
 ### 10. Kubernetes Architecture
+
+- Nodes:
+  - A node is a machine, physical, or virtual on which Kubernetes is installed. A node is a worker machine and that is where containers will be launched by Kubernetes. It was also known as `minions` in the past.
+  - If the node which your application is running fails? So you need to have more than one nodes. A `cluster` is a set of nodes grouped together. This way even if one node fails you your application still accessible from other nodes. Moreover having multiple nodes helps in sharing load as well.
+
+- Master:
+  - Now we have a cluster. But who is responsible for managing the cluster?
