@@ -128,3 +128,33 @@
   - The master is another node with Kubernetes installed in it and is configured as a Master. The master watches over the nodes in the cluster and is responsible for the actual orchestration of containers on the worker nodes.
 
 - Components:
+  - When you install Kubernetes on a system, you are actually installing the following components:
+    - An API server: Acts as the front end for Kubernetes: users, management devices, command line interfaces, all talk to the API server to interact with Kubernetes cluster.
+    - `etcd` service: Key-value store. `etcd` is a distributed reliable key-value store used by Kubernetes to store all data used to manage the cluster. `etcd` is responsible for implementing locks within the cluster to ensure that there are no conflicts between the Masters.
+    - `kubelet` service: is the agent that runs on each node in the cluster. Is responsible for making sure the containers are running on the nodes as expected.
+    - Container Runtime: software is used to run containers, In our case it happens to be Docker.
+    - Controllers: The controllers are the brain behind orchestration. They are responsible for noticing and responding when nodes, containers or end points goes down.
+    - Schedulers: is responsible for distributing work or containers across multiple nodes. It looks for newly created containers and assigns them to node.
+
+- Masters vs Worker Nodes:
+  - How are these components distributed across different types of servers?
+  - In other words, how does one server become a master and the other the slave?
+  - The worker node or minion as it is also know is where the containers are hosted.
+  - There are many container runtime engine: `rkt`, `CRI-O`, `docker`. In most case, we are going to use Docker as our container runtime engine.
+  - The master server has the Kube API server and that is what makes it a master.
+  - Similar, the worker nodes have `Kubelet` agent that is responsible for interacting with a master. To provide health information of the worker node and carry out actions requested by the Master on the worker nodes.
+  - All the information gathered are stored in a key value store on the master.
+  - The key value store is based on the popular `etcd` framework as we just discussed.
+  - The master also has the control manager and the Scheduler.
+
+    |</>Kube-APIserver|<------------------------>|</>Kubelet        |
+    |       etcd      |                          |Container runtime |
+    |    controller   |                          |                  |
+    |    scheduler    |                          |                  |
+    |-----------------|                          |------------------|
+    |      Master     |                          |    Worker node   |
+
+- `kubectl`
+  - command line utilities know as the kube command line tool.
+  - Is used to deploy and manage applications on a Kubernetes cluster.
+  - Get cluster info, status of other nodes, manage many other things.
