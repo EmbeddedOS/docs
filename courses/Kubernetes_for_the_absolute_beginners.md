@@ -158,3 +158,42 @@
   - command line utilities know as the kube command line tool.
   - Is used to deploy and manage applications on a Kubernetes cluster.
   - Get cluster info, status of other nodes, manage many other things.
+
+## 3. Setup Kubernetes
+
+### 12. Kubernetes Setup - introduction and MiniKube
+
+### 13. Setup
+
+link install `kubectl`: [link](https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/)
+
+Install `minikube`: [link](https://minikube.sigs.k8s.io/docs/start/)
+
+Kubernetes tools: [link](https://kubernetes.io/docs/tasks/tools/)
+
+## 4. Kubernetes Concepts
+
+### 16. PODs
+
+- Assumptions:
+  - The application is already developed and built into Docker Images and it is available on a Docker repository like Kubernetes can pull it down.
+  - We also assume that the Kubernetes cluster has already been setup and is working.
+
+- POD:
+  - The containers are encapsulated into a Kubernetes object known as pods.
+  - A pod is a single instance of an application.
+  - A pod is a smallest object that you can create in Kubernetes.
+
+  - To scale up, you create new pods and to scale down you delete existing pod. You do not add additional containers to an existing pod to scale your application.
+
+- Multi-Container PODs:
+  - Pods usually have a one to one relationship with the containers.
+  - But are we restricted to having a single container in a single pod? NO. A single pod can have multiple containers expect for the fact that they are usually not multiple containers of the same kind. If our intention was to scale our application, then we would need to create additional pods.
+  - But sometimes you might have a scenario where you helper container that might be doing some kind of supporting task for our web application, such as processing a user, enter data, processing a file uploaded by the user, etc. and you want these helper containers to live along side your application container. In that case, you can have both of these containers part of the same pod, so that when a new application container is created, the helper also created, and when it dies, the helper also die since they are part of the same pod.
+  - The two containers can also communicate with each other directly by referring to each other as local hosts since they share the same network space. Plus they can easily share the same storage space as well.
+
+- `kubectl`:
+  - `kubectl run nginx` this command deploy a container by creating a pod. It first creates a pod automatically and deploys an instance of the nginx docker image.
+    - But where does it get the application image from ?
+      - For that, you need to specify the image name using the image parameter. In this case, the nginx image is downloaded from the Docker Hub Repository. You could configure Kubernetes to pull the image from the public Docker hub or a private repository within the organization. `kubectl run nginx --image nginx`
+  - `kubectl get pods` help us see the list of pods in our cluster.
