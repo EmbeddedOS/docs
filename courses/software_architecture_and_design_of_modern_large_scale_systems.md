@@ -169,3 +169,69 @@
 
 - Quality Attributes / Non-Functional Requirements
   - System properties that `the system much have`.
+  - Examples:
+    - Scalability
+    - Availability
+    - Reliability
+    - Security
+    - Performance
+
+- Quality attributes and SA
+  - The `Quality attributes` dictate the SA of our system.
+
+- System constraints - examples:
+  - Time constraints - strict deadlines
+  - Financial constraints - Limited budget
+  - Staffing Constraints - Small number of available engineers.
+
+- Summary:
+  - Importance of system requirements
+  - Challenges:
+    - High Scope and Abstraction.
+    - Ambiguity.
+  - Risks of not getting the requirements correctly up front.
+  - Requirements classification/Architectural drivers:
+    - Features - Functional requirements.
+    - Quality Attributes - Non functional requirements.
+    - Constraints - Limitations and boundaries.
+
+### 4. Feature Requirements - Step by step Process
+
+- Requirements Gathering - Native way
+  - Ask the client to describe everything they need.
+  - For complex systems - Not a good app approach.
+
+- Methods of Gathering Requirements
+  - More powerful method of gathering requirements:
+    - Use cases:
+      - Situation / Scenario in which our system is used.
+    - User flows:
+      - A step by step / Graphical representation of each use case.
+- Requirement Gathering Steps
+  1. identify all the actors/users in our system.
+  2. Capture and describe all the possible use-cases/scenarios.
+  3. User flow - expand each use case though flow of events.
+     - Each event contains:
+       - Action
+       - Data
+
+- For example:
+  - Hitchhiking Service - actors:
+    - "Allow people to join drivers on a route, who are willing to take passengers for a fee."
+  - Hitchhiking Service - Rider Use Cases:
+    - Rider first time registration.
+    - Driver registration.
+    - Rider login.
+    - Driver login.
+    - Successful match and ride.
+    - Unsuccessful ride.
+
+- Example with a Sequence Diagram:
+  - Unified Modeling Language - Sequence Diagram.
+    - Sequence Diagram - Diagram that represents interactions between actors and objects.
+    - Part of the UML - Standard for visualizing system design.
+    - IN Practice:
+      - UML diagram are used mostly for software design.
+      - No real standard diagrams representing SA in the industry.
+      - UML is not strictly followed in the industry.
+      - Sequence Diagrams are frequently used to represent interactions between entities.
