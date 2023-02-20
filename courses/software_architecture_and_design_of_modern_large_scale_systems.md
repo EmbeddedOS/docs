@@ -153,3 +153,19 @@
     - Non-functional requirements.
   - System Constraints:
     - Limitations and boundaries.
+
+- Features / Functional Requirements
+  - Describe the system behavior - what `the system must do`
+  - Easily tied to the objective of our system.
+    User action--->|        |
+                   | System |---->Result/Outcome--->
+    Events-------->|        |
+
+  - Functional requirements do not determine its architecture.
+  - Generally, any architecture can achieve any feature.
+  - Examples:
+    - "When `a rider logs into the service mobile app`, the `system must` `display a map with nearby drivers within 5 miles radius.`"
+    - "`When a rider is completed`, `the system will` `charge the rider's credit card and credit the driver, minus service fees.`"
+
+- Quality Attributes / Non-Functional Requirements
+  - System properties that `the system much have`.
