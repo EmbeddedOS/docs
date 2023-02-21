@@ -235,3 +235,62 @@
       - No real standard diagrams representing SA in the industry.
       - UML is not strictly followed in the industry.
       - Sequence Diagrams are frequently used to represent interactions between entities.
+
+### 5. System Quality Attributes Requirements
+
+- Quality Attributes:
+  - Systems are frequently redesigned NOT because of functional requirements
+  - But because the system as it stands:
+    - Isn't `fast` enough
+    - Doesn't `scale`
+    - Slow to `develop`
+    - Hard to `maintain`
+    - Not `secure` enough
+  - Quality attributes are non functional requirements
+  - They describe:
+    - The `qualities` of the `functional` requirements.
+    - The overall `properties` of the `system`.
+  - Provide a `quality measure` on how well our system performs on a `particular dimension`.
+  - They have direct correlation with the architecture of our system.
+  - Example:
+    - "`When a user clicks on a search button after they typed in a particular search keyword, the user will be provided with a list of products that closely match the search keyword` `within at most a 100 milliseconds.`"
+      - with `When a user clicks on a search button after they typed in a particular search keyword, the user will be provided with a list of products that closely match the search keyword` is functional requirements.
+      - `within at most a 100 milliseconds.` is **Performance Quality Attribute**.
+
+    - `The online store must be available to user a requests at least 99.9% of time.` is Availability attribute.
+    - `Development team can deploy a new version of the online store at least twice a week` is a Deployability quality attribute.
+
+- Quality Attributes Considerations:
+  - Important 1: `Testability` and `Measurability`
+    - Quality attributes need to be:
+      - Measurable.
+      - Testable.
+    - If we can prove that our system satisfied the required the quality attribute we don't know if our system performs `well` or `poorly`.
+    - Unmeasurable Quality Attribute - Example:
+      - `When I user clicks on the buy button, the purchase confirmation must be displayed quickly to the user.` -- quickly ???
+
+  - Important 2: Tradeoffs
+    - No single software architecture can provide all the quality attributes.
+    - Certain quality attributes contradict one another.
+    - Some combinations of quality attributes are very hard / impossible to achieve.
+    - We (Software Architects) need to make the right `tradeoff`.
+
+    - Trade Off - Login Page Example, we have two conflicting requirements:
+      1. Performance: Login time < 1s
+      2. Security: Username, Password, SSL. -> Slower.
+
+  - Important 3: Feasibility
+    - We need to make sure that the system is capable of delivering with the client asking for.
+    - The client may ask for something that is either:
+      - Technically impossible.
+      - Prohibitively expensive to implement.
+      - for example:
+        - Latency by distance. VN -> US: 200ms, we can not make requests < 100ms.
+        - Our system can never fail:
+          - We never have a chance to take our system down for:
+            - upgrade.
+            - maintain.
+            - etc.
+        - Full protection against hackers.
+        - High resolution video streaming in limited bandwidth areas.
+        - very high storage growth.
