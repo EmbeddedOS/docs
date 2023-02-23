@@ -294,3 +294,40 @@
         - Full protection against hackers.
         - High resolution video streaming in limited bandwidth areas.
         - very high storage growth.
+
+### 6. System constraints in Software architecture
+
+- Once we define what our system must do, we have freedom on how to structure our system.
+- While defining the final architecture, we have to make a lot of decisions.
+- For `quality attributes`, we are expected to make trade-offs.
+
+- System Constraints - Definition:
+  - "A system constraint is essentially a decision that was already either fully or partially made for us, restricting our degrees of freedom."
+  - But this is not always a bad thing.
+  - Instead of looking at a constraints as a choice that was taken away, we look at it as a decision that was already made.
+  - System Constraints are referred as pillars for software architecture because:
+    - They provide us with a SOLID starting point.
+    - The rest of the system need to be designed around them.
+
+- Types of system constraints:
+  - Technical constraints.
+  - Business constraints.
+  - Regulatory/legal constraints.
+
+- Technical constraints:
+  - Example of Technical constraints:
+    - Being locked to a particular `HW/Cloud vendor`.
+    - Having to use a particular `programming language`.
+    - Having to use a particular `database or technology`.
+    - Having to use a particular `platform, browsers, OS`.
+
+  - Technical constraints may seem like they belong to implementation and not to SA.
+  - In practice, they affect the decisions we make in the design phase and put restrictions on our architecture.
+  - Examples:
+    - If our company makes a decision to run on-premise data centers then:
+      - All the cloud architectures and paradigms will become unavailable to us.
+      - We would have to implement a lot of non-trivial infrastructure.
+    - If we have to support some older browsers or low-end mobile devices then:
+      - We have to adapt our architecture to support those platforms and their APIs.
+      - keep providing a different, more high-end experience for newer browsers or high-er devices.
+  
