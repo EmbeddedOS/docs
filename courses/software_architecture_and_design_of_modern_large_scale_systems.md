@@ -330,4 +330,236 @@
     - If we have to support some older browsers or low-end mobile devices then:
       - We have to adapt our architecture to support those platforms and their APIs.
       - keep providing a different, more high-end experience for newer browsers or high-er devices.
-  
+
+- Business constraints
+  - As engineers, we make the right decisions and architectural choices from a technical perspective.
+  - This forces us to make sacrifices in:
+    - Architecture.
+    - Implementation.
+  - Limited budget or a strict deadline will make us have very different choices than if we had an unlimited budget and unlimited time.
+  - Different software architectural patterns are based on suitability between small startups or bigger organizations.
+  - Examples:
+    - Usage of third-party services with their own APIs and architectural paradigms as part of our architecture.
+      - Using third-party shipping/billing providers for an online store.
+      - Integration of different banks/brokers/security/fraud detection services for an investing platform.
+
+- Regulatory/legal constraints:
+  - Regulatory constraints may be:
+  - Global
+  - Specific to a region.
+  - Examples:
+    - In the US, `HIPAA` (Health insurance portability and accountability Act) places constraints on accessing patients' data.
+    - In the European Union, GDPR (General Data Protection Regulation) sets limitations on collecting, storing and sharing users' data.
+
+- System Constraints Considerations
+  - We shouldn't take any given constraint lightly.
+    - Accepting constraints lightly.
+      - There should be a distinction between:
+      - Real constraints.
+      - Self-imposed constraints.
+    - Examples:
+      - External rules regulations may not have room to negotiate.
+      - Internal constraints can be negotiated.
+      - If locked to using a particular:
+        - Hardware
+        - Cloud vendor
+        - Technologies
+      - May be an opportunity to explore other options.
+  - Use Loose Coupled Architecture
+    - Examples:
+      - If limited to a database/third-party service, we need to make sure our system is not tightly coupled to that technology or APIs.
+      - Usage of different technology/service in future should need minimal changes.
+      - Different parts of the system can be decoupled to be easily replaced or updated independently.
+
+## 3. Most Important Quality Attributes in Large Scale Systems
+
+### 7. Performance
+
+- List of Quality Attributes:
+  - Performance.
+  - Scalability.
+  - Availability.
+  - Testability.
+  - Deployability.
+  - Maintainability.
+  - Portability.
+  - Security.
+  - Observability.
+  - Consistency.
+  - Efficiency.
+  - Usability.
+  - Etc.
+
+- Performance:
+  - Performance - Response Time.
+  - Performance - Throughput.
+
+- Performance Definitions - Response Time:
+  - Response Time: `Time between a client sending a request and receiving a response.`
+  - Processing Time: `TIme spent in our system actively process in the request and building/sending the response.`
+  - Waiting Time: `Duration of time request/response spends inactively in our system.`
+  - Response Time = Processing Time + Waiting Time
+  - Response Time Importance:
+    - Response time is an important metric when the request is in the critical path of a user interaction.
+- Performance Definitions - Throughput:
+  - Amount of work performed by our system time.
+    - Measured in tasks/second.
+  - Amount of data processed by our system per unit of time.
+    - Measured in bits/second, Bytes/second, Megabytes/second.
+
+- Importance:
+  - Measuring Response Time Correctly:
+    - Response Time = Processing Time + Waiting Time
+      - NOT ignore Waiting Time
+  - Response Time Distribution:
+    - What is the metric that we should:
+      - Set our goal around.
+      - Measure.
+    - Average?
+    - Median?
+    - Maximum?
+
+- Percentile - Definition
+  - The `xth percentile` is the `value` below which `x%` of the values can be found.
+
+- Tail Latency - Definition
+  - The small percentage of response times from a system, that take the longest in comparison to the rest of values.
+  - Consideration Response Time goals:
+    - Definition response time goals using percentiles.
+    - Measure and compare to our goals using percentile distribution.
+    - Examples:
+      - Example 1: 30ms at 95th percentile of response time.
+        - Set our goal to be 30ms at 95th percentile, mean we only allow our system to exceed that response time only for 5% of our requests.
+
+- Performance Degradation - High Resource Utilization
+  - Potential overly-utilized resources:
+    - High CPU utilization.
+    - High memory consumption.
+    - Too many connections/IO
+    - Message queue is at capacity.
+    - etc.
+
+### 8. Scalability
+
+- Traffic Patterns:
+  - The load/traffic on our system never stays the same.
+  - It can follow different patterns.
+
+- Scalability Formal Definition
+  - `The measure of a system ability to handle a growing amount of work, in an easy and cost effective way, by adding resources to the system.`
+
+- Types of Scalability:
+  - Scale up/Vertical scalability.
+  - Scale out/Horizontal scalability.
+  - Team/Organization Scalability.
+
+- Scale up/Vertical scalability:
+  - `Adding resources or upgrading the existing resources on a single computer, to allow our system to handle higher traffic or load.`
+  - Pros:
+    - Any application can benefit from it.
+    - No code changes are required.
+    - The migration between different machines is very easy.
+  - Cons:
+    - The scope of upgrade is limited.
+    - We are locked to centralized system which CANNOT provide:
+      - High Availability.
+      - Fault Tolerance.
+
+- Scale out/Horizontal scalability:
+  - `Adding more resources in a form of new instances running on different machines, to allow our system to handle higher traffic or load.`
+  - Pros:
+    - No limit on scalability.
+    - It is easy to add/remove machines.
+    - If designed correctly we get:
+      - High Availability.
+      - Fault Tolerance.
+  - Cons:
+    - Initial code changes may be required.
+    - Increased complexity, coordination overhead.
+
+- Team/Organizational Scalability.
+  - `The measure of a systems ability to handle a growing amount of work, in an easy and cost effective way, by adding resources to the system.`
+
+- Reasons for Productivity Degradation:
+  - Many crowded meetings.
+  - Code merge conflict.
+  - Business COmplexity -Longer ramp up time.
+  - Testing is harder and slower.
+  - Releases become very risks.
+  - etc.
+
+- Team scalability:
+  - Software Architecture impacts engineering velocity (team productivity).
+
+### 9. Availability
+
+- Availability is an important attribute when designing a system.
+- It has the greatest impact on:
+  - Our users
+  - Our business
+
+- Importance of Availability - Users
+  - Users try to purchase from online store but:
+    - The page doesn't load.
+    - They get an error at checkout.
+  - Users lose access to their email for considerable time.
+
+- Importance of Availability - Business (B2B)
+  - If we provide services to other companies, the impact of outage is compounded.
+  - AWS simple storage service had an outage in February 2017.
+  - SInce many companies and websites used the service, it almost took down the entire internet.
+
+- Importance of Availability - Mission Critical Services
+  - System downtime is not always just an inconvenience.
+  - Our software can be used for mission-critical service like:
+    - Air traffic control in airports.
+    - Healthcare in hospitals.
+  - If it crashes/becomes unavailable for prolonged periods, people's lives are on line.
+
+- Impact of downtown on the business.
+  - For a business, the consequences of our system going down are:
+    - IF users cannot use system, our profits becomes zero.
+    - if users lose access constantly, they go to our competitors.
+  - Thus, downtime of our system for a business results in a loss of:
+    - Money.
+    - Customer.
+
+- Availability Definition:
+  - `The faction of time/probability that our service is operationally functional and accessible to the user.`
+
+- Formula of Availability
+  - Uptime - Time that our system is operationally functional and accessible to the user.
+  - Downtime - Time that our system is unavailability to the user.
+  - Availability (in %) = Uptime / (Entire time our system is running)
+  - `Availability = Uptime/ (Uptime + Downtime)`
+
+- Alternative Way to Calculate/Estimate Availability
+  - MTBF - Mean Time Between Failures
+    - Represents the average time our system is operational.
+    - Useful when:
+      - Dealing with multiple pieces of hardware.
+      - Each component has its own operational shelf life.
+      - We are not using cloud/third-party API with a given uptime and availability.
+  - MTTR - Mean Time To Recovery
+    - Time average it takes us to detect and recover from a failure.
+    - Average downtime of our system.
+  - Availability = MTBF / (MTBF + MTTR)
+
+  - In practice, MTTR cannot be zero.
+  - Shows that detectability and fast recovery can help us achieve high availability.
+
+- How much is HA?
+  - Users would want 100% availability.
+  - On the engineering side it is:
+    - Extremely hard to achieve.
+    - Leaves no time for maintenance/upgrades.
+
+- Industry Standard of Availability
+  - No strict definition of what constitutes HA.
+  - INdustry standard set by cloud vendors is typically 99.9% or higher.
+
+- The `nines`:
+  - Percentages are referred to by the number of `nines` in their digits.
+  - For example:
+    - `99.9%` - 3 nines.
+    - `99.99%` - 4 nines.
