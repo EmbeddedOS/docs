@@ -654,3 +654,99 @@
 - Rollbacks:
   - Common in Databases.
   - If we get to a state violating some condition/data, we can roll back to the last correct state in the past.
+  - If we detect errors while rolling out new versions of software, we can roll back to the previous version.
+
+### 11. SLA, SLI, SLO
+
+- SLA - Service Level Agreement:
+  - SLA is a agreement between Service Provider and our Clients/USers.
+  - It is a legal contract that represents our quality service such as:
+    - Availability.
+    - Performance.
+    - Data durability.
+    - Time to respond to system failures.
+  - It states the penalties and financial consequences, if we breach the contract.
+  - The penalties include:
+    - Full/Partial refunds.
+    - Subscription/License extension.
+    - Service credits.
+
+- SLA and Users
+  - SLA exists for:
+    - External paying users (always)
+    - Free external users (sometimes)
+    - Internal users within our company (occasionally)
+  - Internal SLAs don't include any penalties.
+  - SLA for free external users makes sense if our system has major issues during a free trial of our service.
+  - We compensate those users with a `trial extension` or `credits of future`.
+  - Companies providing entirely free services don't publish SLA.
+
+- SLO - Service Level Objectives:
+  - Individual goals set for our system.
+  - Each SLO represents a target value/range that our service needs to meet.
+
+  - For example, we can have:
+    - Availability Service Level Objective of 3 nines.
+    - Response Time SLO of `less than 100 milliseconds at the 90th percentile`.
+    - Issue Resolution Time Objective of between 24 and 48 hours.
+  - SLOs include:
+    - Quality attributes from the beginning of the design process.
+    - Other objectives of our system.
+
+- SLO and SLA:
+  - Systems that don't have SLA still must have SLOs.
+  - If we don't set SLOs, our users won't know what to expect from our system.
+
+- SLIs - Service Level Indicators:
+  - Quantitative measure of our compliance with a service-level objective.
+  - It is the actual numbers:
+    - Measured using a monitoring service.
+    - Calculated from our logs.
+  - It can be later compared to our SLOs.
+  - Examples:
+    - Percentage of user requests receiving a successful response can be used as a SLI for availability.
+    - Later it can be compared to the availability SLO of three nines that we set.
+    - The average/percentile distribution of the response time experienced by users can be calculated.
+
+- SLI, SLO and SLA
+  - SLO represent the `target values` for the important quality attributes.
+  - Quality attributes need to be testable and measurable.
+  - If they weren't measurable, we wouldn't find any SLIs to validate that we meet our SLOs.
+  - If we can't prove that we meet the SLOs, we can't say that we meet our SLA.
+  - SLAs are crafted by `the business and the legal team`.
+  - SLOs and SLIs and defined and set by `the software engineers and architects`.
+
+- Important Considerations:
+  - We shouldn't take every SLI that we can measure in our system and define an objective associated with it.
+    - **Metrics that users care about**:
+      - Think about the metrics that users care about the most.
+      - Define the SLOs around those metrics.
+      - From that, right SLIs to track those SLOs can be found.
+  - Promising fewer SLOs is better:
+    - Number of SLOs:
+      - With many SLOs it is hard to prioritize all of them equally.
+      - With few SLOs, it is easier to focus the entire software architecture around them.
+  - Set realistic goals with a budger for error:
+    - We should not commit to five-nines of availability even if we can provide that.
+    - We should commit to a much lower availability than we can provide.
+    - This `saves costs` and `incorporates unexpected issues`.
+    - This is true when our SLOs are represented in an external SLA.
+    - Companies define separate external SLOs which are looser than internal SLOs.
+    - We can strive for better quality internally while committing less to clients.
+  - Create a recovery plan for when the SLIs show that we are not meeting our SLOs.
+    - We need to decide ahead of time what to do if:
+      - The system goes down for long time.
+      - The performance degrades.
+      - Reports about issues/bugs in the system.
+      - The plan should include:
+        - Automatic alerts to engineers/DevOps
+        - Automatic failovers/restarts/rollbacks/auto-scaling policies.
+        - Predefined handbooks on what to do in certain situations.
+
+- Cloud Vendor SLA Examples:
+  - [AWS](https://aws.amazon.com/legal/service-level-agreements/?aws-sla-cards.sort-by=item.additionalFields.serviceNameLower&aws-sla-cards.sort-order=asc&awsf.tech-category-filter=*all)
+  - [Google Cloud](https://cloud.google.com/terms/sla)
+
+## 4. API design
+
+### 13. API design in Software Architect
