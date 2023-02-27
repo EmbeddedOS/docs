@@ -543,7 +543,7 @@
   - MTTR - Mean Time To Recovery
     - Time average it takes us to detect and recover from a failure.
     - Average downtime of our system.
-  - Availability = MTBF / (MTBF + MTTR)
+  - `Availability = MTBF / (MTBF + MTTR)`
 
   - In practice, MTTR cannot be zero.
   - Shows that detectability and fast recovery can help us achieve high availability.
@@ -563,3 +563,94 @@
   - For example:
     - `99.9%` - 3 nines.
     - `99.99%` - 4 nines.
+
+### 10. Fault Tolerance & HA
+
+- Three sources of Failure:
+  1. Human Error:
+     - Pushing a faulty config to production.
+     - Running the  wrong command or script.
+     - Deploying an incompletely tested new version of software.
+  2. Software Error:
+     - Long garbage collections.
+     - Out-of-memory exceptions.
+     - NULL pointer exceptions.
+     - Segmentation faults.
+  3. Hardware failures:
+     - Servers/routers/storage devices breaking down due to limited shelf-lef.
+     - Power outages due to natural disasters.
+     - Network failures because of:
+       - Infrastructure issues.
+       - General congestion.
+
+- Fault Tolerance:
+  - Failures will happen despite:
+    - Improvements to our code.
+    - Review, testing, and release processes.
+    - Performing ongoing maintenance to our hardware.
+  - `Fault Tolerance` is the best way to achieve `HA` in our system.
+  - `Fault Tolerance enables our system to remain operational and available to the users despite failures within one or multiple of its components.`
+  - When failures happens a *fault-tolerant* system will:
+    - continue operation at the same/reduced level of performance.
+    - Prevent the system from becoming unavailable.
+  - Tactics for achieving Fault Tolerance:
+    - Fault Tolerance revolves around 3 major tactics:
+      - Failure Prevention:
+        - To prevent our entire system from going down, eliminate any `single point of failure` in our system.
+        - Examples of `single point of failure` can be:
+          - `One server` where we are running our application.
+          - Storing all our data on the one instance of our database that runs on a `single computer`.
+        - Best way to eliminate a `single point of failure` is through `Replication and Redundancy`.
+
+- Types of Redundancy:
+  - Spatial Redundancy - RUnning replicas of our application on different computers.
+  - Time Redundancy - Repeating the same operation/request multiple times until we succeed/give up.
+
+- Strategies for Redundancy and Replication:
+  - Two strategies which are extensively used in the industry in different systems:
+    - Active-Active architecture.
+    - Active-Passive architecture.
+
+- Advantages of Active-Active architecture:
+  - Load is spread among all the replicas.
+  - Identical to horizontal scalability.
+  - Allows more traffic.
+- Disadvantages of Active-Active architecture:
+  - All the replicas are taking requests.
+  - Additional coordination required to keep active replicas in sync.
+- Disadvantages of Active-Passive architecture:
+  - Ability to scale out system is lost.
+  - All the requests still go to only one machine.
+- Advantages of Active-Passive architecture:
+  - Implementation is easier.
+  - There is a clear leader with up-to-date data.
+  - Rest of the replicas are followers.
+
+- False Positive:
+  - But the issue might be `the network` or `long garbage collection`:
+  - Then the monitoring service is going to have a `false positive`.
+  - It assumed that a healthy host is faulty.
+- False Negative:
+  - The monitoring service shouldn't have `false negative`.
+  - `false negative` mean that:
+    - The servers may have crashed.
+    - The monitoring system did not detect that.
+
+- Monitoring system FUnctions:
+  - Exchange of messages in the form of pings adn heartbeats.
+  - Collect data about the number of errors each host gets per minute.
+    - If the error rate in one of the hosts is high, it can interpret that as `failure of the host`.
+  - Collect information about time taken for each host to respond.
+    - If the time to respond to requests becomes long, it can decide that `host is slow`.
+
+- Recovery from failure:
+  - `Availability = MTBF / (MTBF + MTTR)`
+    - Fast recovery -> MTTR ~ 0 -> HA ~ 100%
+  - Action after detecting faulty instance/server:
+    - Stop sending traffic workload to that host.
+    - Restart the host to make the problem go away.
+    - Rollback - going back to a version that was stable and correct.
+
+- Rollbacks:
+  - Common in Databases.
+  - If we get to a state violating some condition/data, we can roll back to the last correct state in the past.
