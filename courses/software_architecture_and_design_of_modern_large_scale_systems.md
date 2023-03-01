@@ -750,3 +750,37 @@
 ## 4. API design
 
 ### 13. API design in Software Architect
+
+- What is an API?
+  - After capturing all functional requirements, we can think of our system as a `black box`.
+  - The `black box` has:
+    - Behavior.
+    - Well-Defined.
+  - That `interface` is a contract between:
+    - Engineers who implement the system.
+    - Client applications who use the system.
+  - Since this `interface` is called by other applications. it is referred to as Application Programming Interface or API.
+  - In a large-scale system, API is called by other applications remotely through the network.
+
+  - The applications calling our API may be:
+    - `Frontend clients` like mobile applications/web browsers.
+    - `Backend systems` that belong to other companies.
+    - `Internal system` within our organization.
+  - Each component of our system will have its own API.
+
+- Categories of API:
+  - APis are classified into three groups:
+    - Public APIs.
+    - Private/Internal APIs.
+    - Partner APIs.
+
+- Public APIs:
+  - Exposed to the general public.
+  - Any developer can use/call them from their application.
+  - Good practice:
+    - Requiring the users to `register` with us before allowing to send requests and use the system.
+      - This allows:
+        - Control over who uses the system externally.
+        - Control how they use the system.
+        - Better security.
+        - To blacklist users breaking rules.
