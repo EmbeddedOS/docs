@@ -784,3 +784,100 @@
         - Control how they use the system.
         - Better security.
         - To blacklist users breaking rules.
+
+- Private APIs:
+  - Exposed only internal within the company.
+  - They allow other teams/parts of the organization to:
+    - Provide bigger value for the company.
+    - Take advantage of the system.
+    - Not expose the system directly outside the organization.
+
+- Partner APIs:
+  - Similar to Public APIs.
+  - Exposed only to companies/users having business relationship with us.
+  - The business relationship is the form of:
+    - Customer Agreement after buying our product.
+    - Subscribing to our service.
+
+- Benefits of a well designed API:
+  - Client who uses it can immediately and easily enhance their business by using our system.
+  - They do not need to know anything about our system's internal design/implementation.
+  - Once we define and expose our API, clients can integrate with us without waiting for full implementation of our system.
+  - API makes it easier to design and architect the internal structure of our system.
+
+- API best practice and pattern:
+  - Complete Encapsulation:
+    - `Complete Encapsulation` of the internal design and implementation.
+    - Abstracting it away from a developer wanting to use our system.
+    - If client wanting to use our API:
+      - Requires any information about how it is implemented internally.
+      - needs to know our business logic to use it.
+    - API should be `completely decoupled` from our internal design and implementation.
+    - We can `change the design` later without breaking the contract with our clients.
+
+  - Easy to Use:
+    - Easy to use.
+    - Easy to understanding.
+    - Impossible to misuse.
+    - The ways to make an API simple can be:
+      - Only way to `get certain data` or `perform a task`.
+      - `Descriptive names` for actions and resources.
+      - Exposing `only the information` and actions that users need.
+      - keeping things consistent all across our API.
+
+  - Keeping the Operations Idempotent:
+    - `An operation doesn't have any additional effect on the result if it performed more than once.`
+    - For example:
+      - Updating the user's address to a new address is an Idempotent Operation.
+      - The result is the same regardless of performing it any number of times.
+    - Non-Idempotent Operations - Example:
+      - Incrementing a user's balance by a hundred dollars is not an idempotent Operation.
+      - The result will be different depending on the number of times we perform it.
+      - `Operations Idempotent` are preferred for our API as they are going to be through the network.
+      - If the client application sends us a message:
+        - The message can be lost.
+        - The response to that message may be lost.
+        - The message wasn't received as a critical component in our system went down.
+        - Because of `networking decoupling`, the client application has no idea which scenario actually happened.
+        - If our operation is idempotent, they can simply `resend the same message` again without any consequences.
+
+  - API Pagination:
+    - Important when a response from our system to the client request contains a `very large payload or dataset`.
+    - Without `API Pagination` most client applications will:
+      - Not able to handle big responses.
+      - Result in a poor user experience.
+    - Imagine what would happen if:
+      - After opening your email account, you see all the emails you ever received instead of the latest emails.
+      - After searching for an item on online store/search engine, you see too many items that matched your query.
+    - The client application/web browser is unlikely to handle so much data.
+    - It would take an unreasonable time to show all those results.
+    - API Pagination allows the client:
+      - To request only a small segment of the response.
+      - Specify the maximum size of each response from our system.
+      - Specify an offset within the overall dataset.
+    - To receive the next segment we increment the offset.
+
+  - Asynchronous Operations:
+    - Some operations need one big result at the end.
+    - Nothing meaningful can be provided before the entire operation finishes.
+    - Examples:
+      - Running a big report requiring our system to talk to many databases.
+      - Big data analysis that scans a lot of records/log files.
+      - Compression of large video files.
+    - If the operation takes a long time, the client application has to wait for the result.
+    - The pattern used for these situations is an Asynchronous API.
+    - A client application receives a response immediately without having to wait for the final result.
+    - That response includes some kind of identifier that allows:
+      - To track the progress and status of the operation.
+      - Receive the final result.
+
+  - Versioning our API
+    - Best API design allows us to make `changes to the internal design and implementation` without changing the API.
+    - In practice, we may need to make `non-backward compatible API changes`.
+    - If we explicitly version the APIs we can:
+      - Maintain two versions of the API at the same time.
+      - Deprecate the older one gradually.
+
+- Defining Our API:
+  - We can define our API in any way as long as we adhere to these best practices.
+  - A few types of APIs have became more standard in the industry.
