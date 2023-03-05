@@ -981,3 +981,9 @@
   - Other styles of APIs can be better fit when:
     - Designing an API that is more `data-centric`.
     - All the operations needed are simple CRUD (Create, Read, Update, Delete) operations.
+
+### 15. Popular RPC Frameworks and Technologies
+
+- Common languages: [link](https://grpc.io/)
+- Apache Thrift: [Thrift](https://thrift.apache.org/) is a lightweight, language-independent software stack for point-to-point RPC.
+
