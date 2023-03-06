@@ -987,3 +987,42 @@
 - Common languages: [link](https://grpc.io/)
 - Apache Thrift: [Thrift](https://thrift.apache.org/) is a lightweight, language-independent software stack for point-to-point RPC.
 
+### 16. REST API
+
+- REST API - Introduction
+  - A new style that originated from a dissertation published by Roy Fielding in 2000.
+  - REST stand for `Representational State Transfer`.
+  - Set of `architectural constraints` and `best practices` for defining APIs for the web.
+  - It is NOT a `Standard` or a `Protocol`.
+  - It is an architectural style for designing APIs that are easy for our clients to use and understand.
+  - it makes it easy for us to build a system with quality attributes such as:
+    - Scalability.
+    - High availability.
+    - Performance.
+
+- RESTful API
+  - An API that obeys the REST architectural constraints is called a RESTful API.
+
+- RPC vs REST API:
+  - The RPC API style:
+    - Revolves around `methods` that are exposed to the client.
+    - `Methods` are organized in an interface/set of interfaces.
+    - Our system is abstracted away from the client through a set of `methods` the client can call.
+    - API expansion though adding more `methods`.
+  - REST API style:
+    - Takes a more *resource-oriented* approach.
+    - The main abstraction to the user is a `named resource`.
+    - The `resources` encapsulate different entities in our system.
+    - REST API allows the user to manipulate those resources though small number of methods.
+
+- The common REST API protocol to request those resources is HTTP.
+  - NOTE: those resources are **Representational** State Transfer, NOT real resources: File, database, table, etc.
+  - This is what we mean by the resource being an abstraction whose representation can be requested on demand by calling our REST API.
+
+- RPC vs REST API - HATEOAS
+  - Rest API is dynamic in nature.
+  - In RPC, the actions the client can take regardless of its state are statically defined ahead of time by IDL.
+  - In RESTful APIs, this interface is a lot more dynamic though Hypermedia as the Engine of the Application State (HATEOAS).
+  - Achieved by accompanying a state representation response to the client with hypermedia links.
+
+- Hypermedia as the Engine of Application State.
