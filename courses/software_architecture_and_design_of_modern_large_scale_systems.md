@@ -1026,3 +1026,133 @@
   - Achieved by accompanying a state representation response to the client with hypermedia links.
 
 - Hypermedia as the Engine of Application State.
+
+  - Request:
+
+    ```text
+    GET ../users/john-smith
+    ```
+
+  - Response:
+
+  ```json
+  {
+    "accounts_status": {
+      "user_id" : 123,
+      "total_incoming_messages": 1003
+    },
+    "link": {
+      "message": "/users/123/messages",
+      "profile": "/users/123/profile"
+    }
+  }
+  ```
+
+- Rest API quality Attributes:
+  - **Statelessness**:
+    - The server is stateless.
+    - It does NOT maintain any session information about client.
+    - Each message should be served in isolation without any information about previous requests.
+
+  - **Cacheability**:
+    - The server has to either explicitly/implicitly define `each response` as either:
+      - Cacheable.
+      - Non-cacheable.
+
+- Named Resources:
+  - Each resource is named and addressed using a `URI` (Uniform Resource Identifier).
+  - The resources are organized in a hierarchy.
+  - Each resource is either:
+    - Simple resource.
+    - Collection resource.
+
+- Hierarchy of Resources:
+  - The hierarchy is represented using `/`.
+  - A simple resource:
+    - Has a state.
+    - Can contain one/more sub-resources.
+  - A collection resource:
+    - Contains a list of resources of the same type.
+
+- Representation of Resources:
+  - The representation of each resource state can be expressed in a variety of ways such as:
+    - An image.
+    - A link to a movie stream.
+    - An object.
+    - An HTML page.
+    - Binary blob.
+    - Executable code like JavaScript.
+
+- Resources - Best Practices
+  - Naming our resources using `nouns`.
+    - It makes a clear distinction from the actions that we are going to take.
+    - We are going to use `verbs` for the actions on those resources.
+  - Making a distinction between collection resources and simple resources.
+    - The distinction is made by using:
+      - Plural names for `collections`.
+      - Singular names for `simple collections`.
+    - For example:
+
+      ```text
+      .../movies/movie-01/directors
+      .../movies/movie-01/actors/john-smith/profile-picture
+      .../movies/movie-01/actors/john-smith/contact-information
+      ```
+
+  - Giving the resources clear and meaningful names.
+    - The user will find it very easy to use our API.
+    - It will help prevent incorrect usages and mistakes.
+      - Overly generic collection names like:
+        - `elements`.
+        - `entities`.
+        - `items`.
+        - `instances`.
+        - `values`.
+        - `objects`.
+      - Should be AVOIDED.
+
+  - The resource identifiers should be **unique** and URL friendly.
+    - They can used easily and safely on the web.
+
+- REST API operations
+  - Unlike RPCs, the REST API limits the number of methods we can perform on each resource.
+  - These predefined operations are:
+    - **Creating** a new resource.
+    - **Updating** an existing resource.
+    - **Deleting** an existing resource.
+    - **Getting** the current state of the resource (list of sub-resources in case of collection resource.)
+
+- REST Operations to HTTP Methods:
+  - REST API operations are mapped to HTTP methods as  follows:
+    - Creating -> POST
+    - Update -> PUT
+    - DELETE -> DELETE
+    - GET, List -> GET
+  - In some situations, we define additional custom methods.
+
+- HTTP Methods - Guarantees
+  - `GET` method is considered `safe`, applying it it a resource would not change its state.
+  - `GET, PUT, DELETE` methods are **idempotent** - applying them multiple times would result in the same state change as applying them once.
+  - `GET` requests are considered cacheable by default.
+  - Responses to `POST` request can be made cacheable.
+
+- Sending Additional Information
+  - To send additional information to our system as part of a `POST` or `PUT` command use:
+    - JSON
+    - XML
+
+- Defining REST API step by step:
+  - step 1: Identifying entities.
+    - For examples: actors, users, movies, etc.
+  - step 2: Mapping entities to URIs.
+    - For example:
+      - users ---> /users/{user-id}
+      - movies ---> /movies/{movie-id}
+      - reviews ---> /movies/{movie-id}/{review-id}
+  - step 3: Defining Resources' Representations.
+    - For example, using `JSON` format:
+      - `GET /movies` ---> {"lists": {}}
+  - step 4: Assigning HTTP Methods To Operations on Resources.
+    - For example:
+      - `POST /users` ---> Create new user.
+      - `GET /users/{user-id}` ---> Get user information.
