@@ -1165,3 +1165,32 @@
   - Role of Load Balancer: **Balance load among a group of servers.**
 
   - High Availability & Horizontal Scalability - Without a Load Balancer:
+    - The client application may run on our customer's computers will have to know the addresses of those computers, as well as the number of the application instances. -> This tightly couples the client application to our system's internal implementation.
+
+  - Main Purpose of Balancing Load
+    - Load Balancing Abstraction between the client application and our group of servers.
+
+    Client Applications <----> [Single Server Abstraction] <---> Server 1
+                                                            \--> Server 2
+                                                             \-> Server 3
+    - The abstraction makes our entire system look like a single server.
+
+- LB Quality Attributes:
+  - Scalability:
+    - **Scaling up**: By adding additional servers when the load on our system increases or remove unnecessary.
+    - **Auto-scaling**: In a Cloud environment, we can use auto-scaling policies to intelligently add/remove servers based on:
+      - Requests per second.
+      - Network bandwidth.
+  - High Availability.
+    - Most LBs are easy to config to stop sending traffic to servers that cannot be reached.
+  - Performance (Throughput).
+    - When it comes to performance, load balancers may add a little `latency`.
+    - It is an acceptable price to pay for `increased performance` in terms of throughput.
+  - Maintainability.
+    - Easy to down server to maintain or upgrade applications.
+
+- Types of Load Balancers:
+  - DNS load balancing.
+  - Hardware load balancing.
+  - Software load balancing.
+  - Global Server load balancing.
