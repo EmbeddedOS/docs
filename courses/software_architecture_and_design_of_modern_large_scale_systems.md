@@ -1156,3 +1156,12 @@
     - For example:
       - `POST /users` ---> Create new user.
       - `GET /users/{user-id}` ---> Get user information.
+
+## 5. Large Scale Systems Architectural Build Blocks
+
+### 17. DNS, Load Balancing & GSLB
+
+- Load Balancer:
+  - Role of Load Balancer: **Balance load among a group of servers.**
+
+  - High Availability & Horizontal Scalability - Without a Load Balancer:
