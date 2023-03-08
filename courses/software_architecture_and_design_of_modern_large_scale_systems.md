@@ -1194,3 +1194,33 @@
   - Hardware load balancing.
   - Software load balancing.
   - Global Server load balancing.
+
+- DNS - Domain Name System
+  - DNS is part of of the internet infrastructure that **maps** human-friendly URLs to IP addresses.
+  - They can be used by network routers to route requests to individual computers on the web.
+  - DNS is the `phone book of the internet`.
+  
+  - DNS Load Balancing - Multiple IP Addresses:
+    - Usually, DNS will return a list addresses, and client applications simply pick first of them.
+
+  - Advantages:
+    - Simple.
+    - Cheap (Comes for free by purchasing a domain name).
+
+  - Drawbacks:
+    - DNS doesn't monitor the health of our servers.
+    - The balancing strategy is always just a simple round-robin.
+    - The client application gets the direct IP addresses of all our servers.
+
+  - DNS Load Balancing - Longer Time
+    - The list of IP addresses changes based on the TTL configured for that particular DNS record.
+    - This list of addresses can be cached in different locations such as the client's computer.
+
+  - DNS Load Balancing - Round-Robin
+    - Some of our application instances may be running on more powerful servers than others.
+    - One of our servers may be more overloaded than the other.
+
+  - DNS Load Balancing - Less Secure
+    - This exposes some implementation details of our system.
+    - It makes our system less secure.
+    - A malicious client application can pick one Ip address and send requests only to that particular server.
