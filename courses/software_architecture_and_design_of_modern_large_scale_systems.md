@@ -1224,3 +1224,63 @@
     - This exposes some implementation details of our system.
     - It makes our system less secure.
     - A malicious client application can pick one Ip address and send requests only to that particular server.
+
+- Hardware & Software Load balancers:
+  - Hardware Load Balancers:
+    - Run on `dedicated devices` designed and optimized specifically for load balancing.
+  - Software Load Balancers:
+    - Programs that can run on a general-purpose computer and perform a load balancing.
+
+- SW/HW Load balancing strategies
+  - Hardware and Software Load Balancers can balance the load intelligently taking into account:
+    - Different types of HW.
+    - Current load on each server.
+    - Number of open connections.
+
+- SW/HW Load balancing - Internal Use
+  - SW and HW Load Balancers can be used inside our system.
+  - They can create an abstraction between different services.
+
+- Load Balancers - DNS Resolution
+  - Load balancers on their own do not solve the DNS resolution problem.'
+  - We would still need some kind of DNS solution to map a human-readable domain name to an IP address.
+
+- GSLB - Global Sever Load Balancer
+  - GSLB is a hybrid between:
+    - DNS service.
+    - Hardware & Software Load balancers.
+
+Client in Germany ----> |     |     /--------|LB 1|---> |Data center 1 - Europe|
+                        | GSLB|--->|
+Client in Canada -----> |     |     \--------|LB 2|---> |Data center 2 - US East|
+
+- GSLB may return just the address of the most nearby load balancer.
+
+- GSLB - Traffic routine
+  - Most GSLB can be configured to route traffic based on a *variety of strategies* and not just by physical location.
+  - Since they are in constant communication with our data centers, they can be configured to route users based on:
+    - The current traffic.
+    - CPU load in each Data Center.
+    - Best-estimated response time.
+    - Bandwidth between user and the data center.
+
+### 18. Load Balancing Solutions & Cloud Technologies
+
+- Open Source Software Load Balancing Solutions:
+  - HAPROXY
+  - NGINX
+
+- Cloud Based Load Balancing Solutions:
+  - AWS - Elastic Load Balancing (ELB)
+    - It can operate on 4 different modes:
+      - Application (Layer 7) Load Balancer
+      - Network (Layer 4) Load Balancer
+      - Gateway Load Balancer
+      - Classic Load Balancer
+  - GCP - Cloud Load Balancing
+  - Microsoft Azure Load Balancer
+
+- GSLB Solutions:
+  - Amazon Route 53
+  - Google Cloud Platform Load Balancer & Cloud DNS
+  - Azure Traffic Manager
