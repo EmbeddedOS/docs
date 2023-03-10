@@ -1284,3 +1284,37 @@ Client in Canada -----> |     |     \--------|LB 2|---> |Data center 2 - US East
   - Amazon Route 53
   - Google Cloud Platform Load Balancer & Cloud DNS
   - Azure Traffic Manager
+
+### 19. Message Broker
+
+- Synchronous Communication: App 1 --connection--> App 2
+  - Drawbacks:
+    - Both application instances have to remain healthy and maintain this connection to complete the transaction.
+      - It's easy to achieve this when two services exchange small messages that take short time to process and respond.
+      - it can get complex when a service takes a long time to complete its operation and provide a response.
+    - No padding in the system to absorb a sudden increase in traffic or load.
+
+- Message Broker
+  - A software architectural building block that uses the **queue data structure to store messages** between senders and receivers.
+  - A message broker is used **inside our system** and not exposed externally.
+
+- Message Broker - Capabilities:
+  - Basic capabilities:
+    - Storing/temporarily buffering the messages.
+    - Message routing.
+    - Transformation validation.
+    - Load Balancing.
+
+- Loose Coupling Between senders & receivers
+  - Entirely decouple *senders* from *receivers*.
+  - The fundamental building block of asynchronous software architecture.
+
+- Asynchronous Communication
+  - Sender Application --Connection--> |||||||||||---> Receiver Application.
+                                      Message Broker
+
+- Message Broker - Benefits
+  - Most message broker implementations offer the *publish/subscribe pattern* where multiple services can:
+    - Publish messages to a particular channel.
+    - Subscribe to that channel.
+    - Get notified when a new event is published.
