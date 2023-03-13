@@ -1318,3 +1318,23 @@ Client in Canada -----> |     |     \--------|LB 2|---> |Data center 2 - US East
     - Publish messages to a particular channel.
     - Subscribe to that channel.
     - Get notified when a new event is published.
+
+- Quality Attributes:
+  - Fault Tolerance:
+    - A message broker adds a lot of fault tolerance to our system.
+    - It allows different services to communicate with each other while some of them may be unavailable temporarily.
+    - Message brokers prevent messages from being lost.
+  - Availability and Scalability
+    - The additional fault tolerance helps us provide HA to our users.
+    - A message broker can queue up messages when there is a traffic spike.
+    - It allows our system to scale to high traffic.
+  - Performance:
+    - We pay a little in performance when it comes to latency.
+    - A message broker adds significant indirection between two services.
+    - This performance penalty is not too significant for most systems.
+
+### 20. Message Brokers Solutions & Cloud Technologies
+
+- Open Source Message Brokers:
+  - Apache Kafka - [link](https://kafka.apache.org/) The most popular open-source message broker nowadays. Apache Kafka is a distributed event streaming platform used by thousands of companies for high performance data pipelines, streaming analytics, data integration, and mission-critical applications.
+  - RabbitMQ - A widely deployed open-source message broker. It is used worldwide at small startups and large enter
