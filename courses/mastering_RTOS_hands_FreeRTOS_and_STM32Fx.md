@@ -84,3 +84,24 @@
 - Interrupt Latency: RTOS should have this latency as minimal as possible and must be deterministic.
 
 - Both the interrupt latency and scheduling latency of the RTOS is as small as possible and time bounded. But in the case of GPOS, due to increase in system load these parameters may vary significantly.
+
+### 11. RTOS - GPOS: priority inversion
+
+- GPOS: Priority inversion effects are in-significant.
+- RTOS: Priority inversion effects must be solved.
+
+- What are the features that a RTOS has but a GPOS doesn't?
+  - Priority based preemptive scheduling mechanism.
+  - No or very short critical sections which disables the preemption.
+  - Priority inversion avoidance.
+  - bounded interrupt latency.
+  - bounded scheduling latency, etc.
+
+### 12. What is MUlti-tasking?
+
+- How do u run multiple tasks on a processor which has got only one core?
+  - Running multiple tasks on a processor is accomplished by `scheduler`.
+
+## 3. IDE installation and development board
+
+### 20. Adding FreeRTOS kernel source to project
