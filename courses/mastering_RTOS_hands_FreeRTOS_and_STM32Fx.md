@@ -105,3 +105,45 @@
 ## 3. IDE installation and development board
 
 ### 20. Adding FreeRTOS kernel source to project
+
+---------Application Code-----------
+----main, thread, interrupt, etc.---
+                ||
+                \/
+------------CMSIS-RTOS API----------
+                ||
+                \/
+---------Real Time Kernel-----------
+
+- The application code layer only depends on CMSIS-RTOS layer, so any change in architecture, kernel, processor, etc. We must not change the application code.
+
+- The STM32 cubeIDE will add new code of CMSIS-RTOS API layer to our project. If we don't use the CMSIS layer, we will have to work directly with the kernel layer, and our code will be depended on the kernel layer.
+
+- For example:
+
+----------Application---------
+              ||
+      osThreadCreate()
+              ||
+              \/
+----------CMSIS-CORE layer----
+              ||
+        vTaskCreate()
+              ||
+              \/
+------------FreeRTOS----------
+
+- osThreadCreate(): API provided by CMSIS-RTOS layer to create an RTOS task (independent of an underlying RTOS).
+- vTaskCreate(): Actual API provided by FreeRTOS to create a Task (specific).
+
+- CMSIS-RTOS API is a generic RTOS interface for ARm Cortex-M processor-based devices.
+
+- In other hand, the CMSIS-RTOS can work directly with processor architecture.
+
+----------Application---------
+              ||
+              \/
+----------CMSIS-CORE layer----
+              ||
+              \/
+------Cortex-M processor -----
