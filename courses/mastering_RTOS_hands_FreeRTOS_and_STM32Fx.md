@@ -147,3 +147,250 @@
               ||
               \/
 ------Cortex-M processor -----
+
+### 22. FreeRTOSConfig.h and custom settings
+
+- FreeRTOS is customised using a configuration file called FreeRTOSConfig. Every FreeRTOS application must have a `FreeRTOSConfig.h` header file in its preprocessor include path. `FreeRTOSConfig.h` tailors the RTOS Kernel to the application being built. It is therefore specific to the application, not the RTOS, and should be located in application directory, not in one of the RTOS kernel source code directory.
+
+- Template file:
+
+```C
+#ifndef FREERTOS_CONFIG_H
+#define FREERTOS_CONFIG_H
+
+/* Here is a good place to include header files that are required across
+your application. */
+#include "something.h"
+
+#define configUSE_PREEMPTION                    1
+#define configUSE_PORT_OPTIMISED_TASK_SELECTION 0
+#define configUSE_TICKLESS_IDLE                 0
+#define configCPU_CLOCK_HZ                      60000000
+#define configSYSTICK_CLOCK_HZ                  1000000
+#define configTICK_RATE_HZ                      250
+#define configMAX_PRIORITIES                    5
+#define configMINIMAL_STACK_SIZE                128
+#define configMAX_TASK_NAME_LEN                 16
+#define configUSE_16_BIT_TICKS                  0
+#define configIDLE_SHOULD_YIELD                 1
+#define configUSE_TASK_NOTIFICATIONS            1
+#define configTASK_NOTIFICATION_ARRAY_ENTRIES   3
+#define configUSE_MUTEXES                       0
+#define configUSE_RECURSIVE_MUTEXES             0
+#define configUSE_COUNTING_SEMAPHORES           0
+#define configUSE_ALTERNATIVE_API               0 /* Deprecated! */
+#define configQUEUE_REGISTRY_SIZE               10
+#define configUSE_QUEUE_SETS                    0
+#define configUSE_TIME_SLICING                  0
+#define configUSE_NEWLIB_REENTRANT              0
+#define configENABLE_BACKWARD_COMPATIBILITY     0
+#define configNUM_THREAD_LOCAL_STORAGE_POINTERS 5
+#define configUSE_MINI_LIST_ITEM                1
+#define configSTACK_DEPTH_TYPE                  uint16_t
+#define configMESSAGE_BUFFER_LENGTH_TYPE        size_t
+#define configHEAP_CLEAR_MEMORY_ON_FREE         1
+
+/* Memory allocation related definitions. */
+#define configSUPPORT_STATIC_ALLOCATION             1
+#define configSUPPORT_DYNAMIC_ALLOCATION            1
+#define configTOTAL_HEAP_SIZE                       10240
+#define configAPPLICATION_ALLOCATED_HEAP            1
+#define configSTACK_ALLOCATION_FROM_SEPARATE_HEAP   1
+
+/* Hook function related definitions. */
+#define configUSE_IDLE_HOOK                     0
+#define configUSE_TICK_HOOK                     0
+#define configCHECK_FOR_STACK_OVERFLOW          0
+#define configUSE_MALLOC_FAILED_HOOK            0
+#define configUSE_DAEMON_TASK_STARTUP_HOOK      0
+#define configUSE_SB_COMPLETED_CALLBACK         0
+
+/* Run time and task stats gathering related definitions. */
+#define configGENERATE_RUN_TIME_STATS           0
+#define configUSE_TRACE_FACILITY                0
+#define configUSE_STATS_FORMATTING_FUNCTIONS    0
+
+/* Co-routine related definitions. */
+#define configUSE_CO_ROUTINES                   0
+#define configMAX_CO_ROUTINE_PRIORITIES         1
+
+/* Software timer related definitions. */
+#define configUSE_TIMERS                        1
+#define configTIMER_TASK_PRIORITY               3
+#define configTIMER_QUEUE_LENGTH                10
+#define configTIMER_TASK_STACK_DEPTH            configMINIMAL_STACK_SIZE
+
+/* Interrupt nesting behaviour configuration. */
+#define configKERNEL_INTERRUPT_PRIORITY         [dependent of processor]
+#define configMAX_SYSCALL_INTERRUPT_PRIORITY    [dependent on processor and application]
+#define configMAX_API_CALL_INTERRUPT_PRIORITY   [dependent on processor and application]
+
+/* Define to trap errors during development. */
+#define configASSERT( ( x ) ) if( ( x ) == 0 ) vAssertCalled( __FILE__, __LINE__ )
+
+/* FreeRTOS MPU specific definitions. */
+#define configINCLUDE_APPLICATION_DEFINED_PRIVILEGED_FUNCTIONS 0
+#define configTOTAL_MPU_REGIONS                                8 /* Default value. */
+#define configTEX_S_C_B_FLASH                                  0x07UL /* Default value. */
+#define configTEX_S_C_B_SRAM                                   0x07UL /* Default value. */
+#define configENFORCE_SYSTEM_CALLS_FROM_KERNEL_ONLY            1
+#define configALLOW_UNPRIVILEGED_CRITICAL_SECTIONS             1
+#define configENABLE_ERRATA_837070_WORKAROUND   1
+
+/* ARMv8-M secure side port related definitions. */
+#define secureconfigMAX_SECURE_CONTEXTS         5
+
+/* Optional functions - most linkers will remove unused functions anyway. */
+#define INCLUDE_vTaskPrioritySet                1
+#define INCLUDE_uxTaskPriorityGet               1
+#define INCLUDE_vTaskDelete                     1
+#define INCLUDE_vTaskSuspend                    1
+#define INCLUDE_xResumeFromISR                  1
+#define INCLUDE_vTaskDelayUntil                 1
+#define INCLUDE_vTaskDelay                      1
+#define INCLUDE_xTaskGetSchedulerState          1
+#define INCLUDE_xTaskGetCurrentTaskHandle       1
+#define INCLUDE_uxTaskGetStackHighWaterMark     0
+#define INCLUDE_uxTaskGetStackHighWaterMark2    0
+#define INCLUDE_xTaskGetIdleTaskHandle          0
+#define INCLUDE_eTaskGetState                   0
+#define INCLUDE_xEventGroupSetBitFromISR        1
+#define INCLUDE_xTimerPendFunctionCall          0
+#define INCLUDE_xTaskAbortDelay                 0
+#define INCLUDE_xTaskGetHandle                  0
+#define INCLUDE_xTaskResumeFromISR              1
+
+/* A header file that defines trace macro can be included here. */
+
+#endif /* FREERTOS_CONFIG_H */
+```
+
+- `config` Parameters:
+  - `configUSE_PREEMPTION`: Set to 1 use the preemptive RTOS scheduler, or 0 to use the cooperative RTOS scheduler.
+  - `configUSE_PORT_OPTIMISED_TASK_SELECTION`: Some FreeRTOS ports have two methods of selecting the next to execute - a generic method, and a method that is specific to that port.
+
+- For the `stm32f407` MCU, we can use the template file in directory (FreeRTOS project): `reeRTOS/Demo/CORTEX_M4F_STM32F407ZG-SK/FreeRTOSConfig.h`, and copy it to our project.
+
+- We also need to edit the `FreeRTOSConfig.h` file, because of macro `configCPU_CLOCK_HZ`.
+
+```C
+#if defined(__ICCARM__) || defined(__GNUC__) || defined(__CC_ARM)
+  #include <stdint.h>
+  extern uint32_t SystemCoreClock;
+#endif
+```
+
+- Because the `SVC_Handler`, `PendSV_Handler`, `SysTick_Handler` interrupt handlers is generated automatically, so when we add the FreeRTOS code to our project, they will be redefined -> compiler error (FreeRTOS uses them to schedule tasks). So will need to remove them by using STM32CubeIDE -> System core -> NVIC -> Code generation -> disable:
+  - Time base: System tick timer.
+  - Pendable request for system service.
+  - System service call via SWI instruction.
+
+- After that, just press `Ctrl + S`.
+
+- Disable three macros to avoid compiler errors:
+
+```C
+#define configUSE_TICK_HOOK             0
+#define configUSE_MALLOC_FAILED_HOOK    0
+#define configCHECK_FOR_STACK_OVERFLOW  0
+```
+
+### 23. Time base selection for STM32-FreeRTOS project
+
+- Time base source selection
+  - FreeRTOS uses ARM Cortex Mx processor's internal sys-tick timer as its time base (RTOS ticking).
+  - STM32 Cube HAL layer also by default uses sys-tick timer as its time base source.
+  - If you are using both freeRTOS and STM32 Cube HAL layer in your project, there will be a conflict to use time-base source.
+  - To resolve this, it is strongly recommended to use STM32 cube HAL layer time base source other than sys-tick timer (use any timer peripheral of the micro controller).
+
+## 6. FreeRTOS Task Creation
+
+### 24 What is task?
+
+- Application and tasks:
+  - For example, temperature monitoring application includes three main tasks:
+    - Task 1: sensor data gathering.
+    - Task 2: Updating display.
+    - Task 3: User input processing.
+
+- Creating and implementing a Task:
+  - Task creation API:
+
+    ```C
+    BaseType_t xTaskCreate(TaskFunction_t pvTaskCode,
+                            const char * const pcName,
+                            configSTACK_DEPTH_TYPE usStackDepth,
+                            void *pvParameter,
+                            UBaseType_t uxPriority,
+                            TaskHandle_t *pxCreatedTask
+                          );
+    ```
+
+  - Task Implementation:
+
+    ```C
+    void vATaskFunction(void *pvParameters)
+    {
+
+      /* Variables can be declared just as per a normal function. Each instance
+       * of a task created using this function will have its own copy of the
+       * var_example variable. This would not be true if the variable was declared
+       * static - in which case only one copy of the variable would exist and
+       * this copy would be shared by each created instance of the task.
+       */
+      int var_example = 0; // Local variable which will be created in the stack space of this task.
+
+      /* A task will normally be implemented as in infinite loop. */
+      for (;;)
+      {
+        /* Task application code here. */
+      }
+
+      /* Should the task implementation ever break out of the above loop then
+       * the task must be deleted before reaching the end of this function. The
+       * NULL parameter passed to the `vTaskDelete()` function indicates that
+       * the task to be deleted is the calling (this) task.
+       */
+      vTaskDelete(NULL);
+    }
+    ```
+
+### 25. FreeRTOS task creation API
+
+```C
+/* xTaskCreate: this API creates a new FreeRTOS Task using dynamic memory
+ * allocation and adds the newly created task (TCB) to ready queue of the kernel.
+ *
+ * @pvTaskCode: Address of the associated task handler.
+ * @pcName: A descriptive name to identify this task.
+ * @usStackDepth: Amount of stack memory allocated to this task (memory in words not in bytes).
+ * @pvParameter: pointer of the data which needs to be passed to the task handler once it gets scheduled.
+ * @uxPriority: Task priority value.
+ * @pxCreatedTask: Used to save the task handle (an address of the task created).
+ *
+ * Returns: If the task eas created successfully then pdPASS is returned. Otherwise errCOULD_NOT_ALLOCATE_REQUIRED_MEMORY is returned.
+ */
+BaseType_t xTaskCreate(TaskFunction_t pvTaskCode,
+                        const char * const pcName,
+                        configSTACK_DEPTH_TYPE usStackDepth,
+                        void *pvParameter,
+                        UBaseType_t uxPriority,
+                        TaskHandle_t *pxCreatedTask
+                      );
+```
+
+- For more information, refer to: [link](https://www.freertos.org/a00106.html)
+- Word:
+  - It's a max size of the data which can be accessed (load/store) by the processor in a single clock cycle using a single instruction.
+  - Processor design also offers native support (register width, bus width) to load/store word-sized data.
+  - Word size could be 8 bit/16 bit/32 bit or more, depending upon the processor design. For ARM Cortex Mx based micro controllers, word size = 32 bits.
+
+### 26. Task priorities in FreeRTOS
+
+- Task priorities
+  - A priority value comes into the picture when there are 2 or more tasks in the system.
+  - Priority value helps the scheduler to decide which task should run first on the processor.
+  - Lower the priority value, lesser the task priority (urgency).
+  - In FreeRTOS each task can be assigned a priority value from 0 to `(configMAX_PRIORITIES-1)` where `configMAX_PRIORITIES` may be defined in `FreeRTOSConfig.h`.
+  - U must decide `configMAX_PRIORITIES` as per your application need. Using too many task priority values could lead to RAM's over-consumption. If many tasks are allowed to execute with varying task priorities, it may decrease the system's overall performance.
+  - Limit `configMAX_PRIORITIES` to 5, unless u have a valid reason to increase this.
