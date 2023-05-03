@@ -336,3 +336,132 @@ End:
 - Then we can call `int 0x13`, if the services is not supported, the carry flag is set. Se we use `jc` instruction which will jump to label not support if carry flag is set.
 
 - If it passed the test, we compared `bx` with the value ``0xaa55`.
+
+## 4. Loading the loader and switching to long mode
+
+### 14. Loader
+
+- Loader
+  - Loader retrieves information about hardware.
+  - Prepare for 64-bit mode and switch to it.
+  - Loader loads kernel in main memory.
+  - Jump to kernel.
+
+- After disk extension check is passed, we load a new file called `loader` in the memory. The reason we need a loader file is that the MBR is fixed size which is `512` bytes.
+
+- There are spaces reserved for other use such as partition entries, entries which leaves us less than 512 bytes for the boot code.
+
+- The tasks that we should do in the boot process includes load kernel file, get memory map, switch to protected mode and then jump to long mode. Doing all these tasks requires the boot code larger than 512 bytes. -> SO we need a new file: loader file to do all these things. The loader file has no 512 bytes limits.
+
+- Memory map when we load the loader file:
+      Memory
+    |         | Max size
+    |         |
+    | Loader  | 0x7e00
+    | MBR code| 0x7c00
+    |         |
+    |         |
+    |         | 0
+
+  - The boot code is loaded by BIOS in the memory address `0x7c00`. The size of the boot code is 512 bytes which is `0x200` in hexadecimal. So here we simply load the loader file into the location right after the boot code. which is at the location `0x7e00`.
+
+- We will make a label `LoadLoader`:
+
+```assembly
+LoadLoader:
+        mov dl,[DriveID]
+        mov ah,0x42
+        int 0x13
+```
+
+- The disk service we use is interrupt `0x13` the function code is `0x42` is saved in `ah` register, which means we want to use disk extension service. And also, don't forget to save the `driveID` to `dl` register before we call the service.
+
+- The parameter we pass to the service is actually a structure. We call this structure as `ReadPacket` and the size of the structure is 16 bytes. We need to `mov` the address of read packet to `si` register, now si holds the address of read packet.
+
+```assembly
+ReadPacket: times 16 db 0
+```
+
+```assembly
+LoadLoader:
+        mov si,ReadPacket
+        mov dl,[DriveID]
+        mov ah,0x42
+        int 0x13
+```
+
+- `ReadPacket` structure holds:
+  offset    field
+  0         size
+  2         number of sectors
+  4         offset
+  6         segment
+  8         address lo
+  12        address hi
+
+- The first word holds the value of structure length. So we mov `0x10` to it.
+- The second word is the number of sectors we want to read. Because our OS is small file, we simply read 5 sectors, which enough space for the loader.
+
+- The next two words specify the memory location into which we want to read our file. We load the loader file into the memory address `0x7e00`, so we save `0x7e00` in the first word which is the offset. The second word holds the value of segment part of the address. We simply set it to `0`. So the logical address is `0x07e00` and the physical address it points to is `0x7e00`.
+
+- The last two words are the 64-bit logical block address. The loader file will be written into the second sector of the disk. Therefore, we use **lba 1**. Remember logical block address is zero-based address. Meaning that first sector is sector 0, the second sector is sector 1 is so on. So we save 1 to the lower half of the 64-bit address.
+
+- Now with all the parameters prepared, we call interrupt `0x13`:
+
+```assembly
+LoadLoader:
+        mov si,ReadPacket
+        mov word[si],0x10
+        mov word[si+2],0x5
+        mov word[si+4],0x7e00
+        mov word[si+6],0x0
+        mov dword[si+8],0x1
+        mov dword[si+12],0x0
+
+        mov dl,[DriveID]
+        mov ah,0x42
+        int 0x13
+        jc ReadError
+
+        mov dl,[DriveID]
+        jmp 0x7e00
+```
+
+- If it fails to read sectors, the carry flag is set. So we use `jc` instruction and jump to label `ReadError`.
+- And don't forget to pass the `driveID` to the loader, because we need to loader kernel using `driveID`. And finally jump to address `0x7e00`.
+
+- Our loader file `loader.asm`:
+
+```assembly
+start:
+        mov ah,0x13
+        mov al,1
+        mov bx,0xa
+        xor dx,dx
+        mov bp,Message
+        mov cx,MessageLen
+        int 0x10
+
+End:
+        hlt
+        jmp End
+
+Message:        db "Loader is running."
+MessageLen:     equ $-Message
+```
+
+- The loader is supposed to be running at address `0x7e00`, then we define the label `start` of the loader.
+- Also, we need to edit the build system:
+
+```Makefile
+all:
+        nasm -f bin -o boot.bin boot.asm
+        nasm -f bin -o loader.bin loader.asm
+        dd if=boot.bin of=boot.img bs=512 count=1 conv=notrunc
+        dd if=loader.bin of=boot.img bs=512 count=5 seek=1 conv=notrunc
+clean:
+        rm *.bin
+```
+
+- We specify `count=5` to write 5 sectors of data into boot image.
+- The `seek=1` indicates that we will skip the first sector.
