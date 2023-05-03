@@ -500,3 +500,150 @@ clean:
 ```bash
 qemu-system-x86_64 -cpu qemu64,pdpe1gb -hda boot.img
 ```
+
+### 16. Load Kernel file
+
+- After long mode is check is passed, what are going to do next, we are going to load our kernel file. As we have loaded the loader file, loading kernel is pretty much the same except that there are several parameters need to change.
+
+- First off, we take a look at memory map and decide where we load the kernel file into memory.
+
+- Memory map:
+      Memory Map
+    |           | Max size
+    |   Free    |
+    |-----------| 0x100000
+    | Reserved  |
+    |-----------| 0x80000
+    |   Free    |
+    |           |
+    |-----------|
+    |  Loader   |
+    |-----------| 0x7e00
+    |   Boot    |
+    |-----------| 0x7c00
+    |   Free    |
+    |-----------|
+    | BIOS data |
+    |   vectors |
+    |-----------| 0
+
+  - At the bottom, we have the interrupt vectors and bios data.
+  - then small area of free memory.
+  - At address `0x7c00` our boot code is loaded by the BIOS.
+  - And the boot code load the loader file at address `0x7e00`.
+  - Then we get a relatively large area of free memory we can use. Our kernel can be loaded here.
+  - The area above it is reserved for hardware and bios data.
+  - Starting at `0x100000` which is `1MB` we have free memory again.
+
+- NOTE: Memory map may vary among different computers and also gets some space reserved for hardware which is not available for us.
+  - Therefore, we need to get a memory map by calling the BIOS service so that we know which part of memory is available to use.
+
+- WITH THIS IN MIND: we choose to load the kernel at address `0x10000` and when we jump to `64-bit mode`, we copy the kernel into the memory above `1MB`.
+
+- Memory map when we load the kernel:
+      Memory Map
+    |           | Max size
+    |   Free    |
+    |-----------| 0x100000
+    | Reserved  |
+    |-----------| 0x80000
+    |   KERNEL  |
+    |-----------| 0x10000
+    |   Free    |
+    |-----------|
+    |  Loader   |
+    |-----------| 0x7e00
+    |   Boot    |
+    |-----------| 0x7c00
+    |   Free    |
+    |-----------|
+    | BIOS data |
+    |   vectors |
+    |-----------| 0
+
+- To load the kernel into `0x10000`, we will load 100 sectors of data roughly 50KB which is enough for our kernel.
+- The memory address we choose to load the kernel at is `0x10000`.
+- NOTE: We cannot assign `0x10000` to a word variable, because `0x10000` is larger than what a word or two bytes can represent. We will get an overflow and result is not correct if we do it.
+  - Instead, we assign `0x1000` to segment part of the address and leave offset 0. the physical address we get is `0x1000*16 + 0` equals `0x10000`.
+- The boot file resides in the first sector. The loader file occupies the next file sectors. So we will write our kernel from seventh sector.
+
+    ```assembly
+    LoadKernel:
+            mov si,ReadPacket
+            mov word[si],0x10
+            mov word[si+2],0x64
+            mov word[si+4],0x0
+            mov word[si+6],0x1000
+            mov dword[si+8],0x6
+            mov dword[si+12],0x0
+
+            mov dl,[DriveID]
+            mov ah,0x42
+            int 0x13
+            jc ReadError
+    ```
+
+### 17. Get Memory map
+
+- By using the BIOS function, we can get the memory map. The service we use is called `system map service` by interrupt `0x15`, it returns a list of memory blocks to us. Each block us 20 bytes.
+
+- Structure of blocks:
+    Offset    field
+    0         base address
+    8         length
+    16        type
+
+  - The first `qword` is 64-bit physical start address of the memory region.
+  - The second `qword` is length in bytes of the region.
+  - The last dword indicates the type of memory with:
+    - 1 being free memory which we can use.
+    - 2 being not available to us.
+  - We only collect memory region of type 1. After we get the free memory information, the memory module will use the information to allocate memory for our system.
+
+```assembly
+GetMemoryInfoStart:
+        mov eax,0xe820
+        mov edx,0x534d4150
+        mov ecx,0x14
+        mov edi,0x9000
+        xor ebx,ebx
+        int 0x15
+        jc NotSupport
+```
+
+- We pass `0xe820` to `eax` and the ascii code for `smap` to `edx`.
+- Then we save 20 which is the length of memory block to `ecx`.
+- Next save the memory address in which we saved the memory block returned in register `edi`.
+- And clear `ebx` before we call the function.
+- We can call the service through interrupt `0x15`.
+- If it returns the memory successfully, we continue to retrieve the memory info.
+
+```assembly
+GetMemoryInfoStart:
+        mov eax,0xe820
+        mov edx,0x534d4150
+        mov ecx,0x14
+        mov edi,0x9000
+        xor ebx,ebx
+        int 0x15
+        jc NotSupport
+
+GetMemoryInfo:
+        add edi,0x14
+        mov eax,0xe820
+        mov edx,0x534d4150
+        mov ecx,0x14
+        int 0x15
+        jc GetMemoryDone
+
+        test ebx,ebx
+        jnz GetMemoryInfo
+
+GetMemoryDone:
+```
+
+- First off, we adjust `edi` to point to the next memory address to receive the next memory block. Each memory block is 20 bytes, we add 20 to `edi`.
+- Then we pass the same parameters to `eax`, `ecx`, `edx`.
+- NOTE: `ebx` must be preserved for the next call of the function. So we don't change `ebx` value.
+- Call the service again.
+- If carry flag is not set, we test `ebx`, if `ebx` is nonzero, we jump back to label `GetMemoryInfo`.
