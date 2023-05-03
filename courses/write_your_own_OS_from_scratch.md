@@ -465,3 +465,38 @@ clean:
 
 - We specify `count=5` to write 5 sectors of data into boot image.
 - The `seek=1` indicates that we will skip the first sector.
+
+### 15. Long mode support
+
+- The modern processors should support long mode. Since checking it is really simple, another check we need to perform is 1GB page. Our memory module allocates pages this feature. So our kernel requires the processor support 1GB page.
+
+- First of all, we are going to do is we are going to save the `driveID` for later use. We are save it to `dl` late.
+
+- To check long mode, there is a special instruction called `cpuid` which returns processor identification and feature information. We pass the input value `0x80000001` to `eax` and execute `cpuid`.
+  - First, we need to check cpu support input value or not by passing `0x80000000` to eax and execute `cpuid`. If return value less than `0x80000001`, cpu does not support input value.
+  - By passing different number to `eax`, we will get different information about processor returned by `cpuid`.
+  - Pass the `0x80000001` to `eax` will return processor features.
+    - The information about long mode support is saved in `edx`. We test bit 29 in `edx` register. If it is set, it means that long mode is supported. Otherwise long mode is not available and we jump to the label not support.
+
+  - We also check `1GB` page support is at bit 26, so we test `edx` and the bit 26.
+
+    ```assembly
+    start:
+            mov [DriveID],dl
+            mov eax,0x80000000
+            cpuid
+            cmp eax,0x80000001
+            jb NotSupport
+            mov eax,0x80000001
+            cpuid
+            test edx,(1<<29)
+            jz NotSupport
+            test edx,(1<<26)
+            jz NotSupport
+    ```
+
+- NOTE: when you run the OS image with qemu, please specify cpu model which support `1gb page`, for example:
+
+```bash
+qemu-system-x86_64 -cpu qemu64,pdpe1gb -hda boot.img
+```
