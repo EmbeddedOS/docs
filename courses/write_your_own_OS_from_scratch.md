@@ -276,3 +276,63 @@ nasm -f bin -o boot.bin boot.asm
 ```bash
 dd if=boot.bin of=boot.img bs=512 count=1 conv=notrunc
 ```
+
+- See memory layout on the disk image with `hexdump boot.img`
+
+```bash
+0000000 c031 d88e c08e d08e 00bc b47c b013 bb01
+0000010 000a d231 1fbd b97c 000b 10cd ebf4 48fd
+0000020 6c65 6f6c 7720 726f 646c 0000 0000 0000
+0000030 0000 0000 0000 0000 0000 0000 0000 0000
+*
+00001b0 0000 0000 0000 0000 0000 0000 0000 0080
+00001c0 0002 fff0 ffff 0001 0000 4ebf 0000 0000
+00001d0 0000 0000 0000 0000 0000 0000 0000 0000
+*
+00001f0 0000 0000 0000 0000 0000 0000 0000 aa55
+0000200 0000 0000 0000 0000 0000 0000 0000 0000
+*
+09d8000
+```
+
+### 13. Test the disk extension service
+
+- We need to load our kernel from disk to the memory and jump to the kernel. We know that we use BIOS disk services to load our file from disk in boot process. When we read file from disk, we should provide `CHS` value in order to locate the sector we want to read.
+
+- To make our boot file simple, we choose **logical block address** which disk extension service use to access the disk.
+
+- Modern computers should support the extension service, but we will check it anyway.
+
+- To check for this service is really simple. First off, we define a label to called `TestDiskExtension`. The parameters we should pass includes:
+
+```assembly
+TestDiskExtension:
+        mov ah,0x41
+        mov bx, 0x55AA
+```
+
+- The `dl` holds the drive id when BIOS transfers control to our boot code. Since we will call disk service more than once later in the boot process, and we need to pass the drive id to `dl` register before we call the disk service, so we define a variable called `DriveID` and save the value of `dl` to variable `DriveID`. Because we want to write the value into the memory location the `DriveID` represents, so we use the *square brackets* to access the location.
+
+```assembly
+TestDiskExtension:
+        mov [DriveID], dl
+        mov ah,0x41
+        mov bx,0x55AA
+        int 0x13
+        jc NotSupport
+        cmp bx,0xaa55
+        jne NotSupport
+
+; ...
+
+DriveID:  db 0
+
+NotSupport:
+End:
+  hlt
+  jmp End
+```
+
+- Then we can call `int 0x13`, if the services is not supported, the carry flag is set. Se we use `jc` instruction which will jump to label not support if carry flag is set.
+
+- If it passed the test, we compared `bx` with the value ``0xaa55`.
