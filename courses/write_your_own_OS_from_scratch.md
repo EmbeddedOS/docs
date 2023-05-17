@@ -647,3 +647,64 @@ GetMemoryDone:
 - NOTE: `ebx` must be preserved for the next call of the function. So we don't change `ebx` value.
 - Call the service again.
 - If carry flag is not set, we test `ebx`, if `ebx` is nonzero, we jump back to label `GetMemoryInfo`.
+
+### 18. Test A20 line
+
+- The A20 line was introduced from old machine. Back in the day when machines had 20-bit address, we can address memory of 2 to the power of 20 which is 1MB.
+
+- Later machines come with address bus wider than 20 bits. For compatibility purposes, A20 line of the address bus is off. So when the address is higher than 1MB, the address will get truncated as if it starts from 0 again.
+
+- Our system runs on 64-bit processor which has address wider than 20 bits.
+
+- If we try to access memory with A20 line disabled, we will end up only accessing even megabytes, because A20 line is `0` and any address we are gonna access is actually the address with 20 bit cleared. Therefore we need to **TOGGLE** A20 line to access all the memory.
+
+- There are different ways to activate A20 line and each method is not guaranteed to be working across all the different machines. But newer machines seem to have A20 line enabled by default.
+
+- To make our project simple, We assume our machines enabled A20 line. What we are gonna do here is we are going to test to see if A20 line is already enabled.
+
+- The logic for testing A20 line in our project is simple. If A20 line is not enabled, when we try to access address, for example, `0x107C00`. If we look at the value in binary format, u can see bit 20 is `1`. Suppose if A20 line is off, then bit 20 will be `0`.
+
+  - Bit layout look like:
+                20                       0
+  0x107C00 ---> 1 0000 0111 1100 0000 0000 -> A20 is on.
+                0 0000 0111 1100 0000 0000 -> A20 is off.
+
+  - So, if A20 is off, the address we referenced in this case is actually `7c00`.
+
+  - NOTE: the reason we choose this address is that `7c00` is the start address of the boot code. Remember our boot code is loaded at `7xc00`. Since the boot code has done its work, we can reuse that memory area to do the test.
+
+```assembly
+Test20A:
+        mov ax,0xffff
+        mov es,ax
+        mov word[ds:0x7c00],0xa200 ; 0:0x7c00 = 0 * 16 + 0x7c00 = 0x7c00
+        cmp word[es:0x7c10],0xa200 ; 0xfff:0x7c10 = 0xffff * 16 + 0x7c10 = 0x107c00
+        jne SetA20LineDone
+```
+
+- In order to access memory `0x107C00`, we move `ax` with `0xffff` and copy it to `es` register.
+- Next we write a random value, for example, `0xa200` to address `0x7c00`. We will use the `ds` register as a segment register which has been set to `0` by us. So the logical address now points to `0x7c00`. This instruction will copy `0xa200` at the memory `0x7c00`.
+- Then we are gonna compare the content at address `0x107c00` with `0xa200`. So the segment register we use is `es` register. The physical address points to `0x107c00` which is the address we want.
+
+- If the content at address `0x107c00` not equal to `0xa200`, we know that we have accessed the memory address `0x107c00` successfully and we jump to set A20 line done.
+- IF the content at address `0x107c00` is equal to `a200`, it means there is high chance that the address `0x107c00` gets truncated to `0x7c00`, we actually access the same memory location. But maybe content at `0x107c00` happens to be the same value `A200`.
+- So we do the second test. We write random value, for example, `0xb200` to `0x7c00` and then compare the content at `0x107c00` with `0xb200`. If they are still the same, it means that A20 line is not enabled and we jump to the end.
+
+```assembly
+TestA20lLine:
+        mov ax,0xffff
+        mov es,ax
+        mov word[ds:0x7c00],0xa200
+        cmp word[es:0x7c10],0xa200
+        jne SetA20LineDone
+        mov word[0x7c00],0xb200
+        cmp word[es:0x7c10],0xb200
+        je NotSupport
+
+SetA20LineDone:
+        xor ax,ax
+        mov es,ax
+        ; ...
+```
+
+- And don't forget change back es register to `0`.

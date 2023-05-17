@@ -394,3 +394,51 @@ BaseType_t xTaskCreate(TaskFunction_t pvTaskCode,
   - In FreeRTOS each task can be assigned a priority value from 0 to `(configMAX_PRIORITIES-1)` where `configMAX_PRIORITIES` may be defined in `FreeRTOSConfig.h`.
   - U must decide `configMAX_PRIORITIES` as per your application need. Using too many task priority values could lead to RAM's over-consumption. If many tasks are allowed to execute with varying task priorities, it may decrease the system's overall performance.
   - Limit `configMAX_PRIORITIES` to 5, unless u have a valid reason to increase this.
+
+### 28. Scheduling policies
+
+- Scheduling:
+  - Now, u have created 2 tasks, which are in the ready task list of the freeRTOS (READY state).
+  - Tasks will be dispatched to run on the CPU by the scheduler.
+  - Scheduler is nothing but a piece of code that is part of the freeRTOS kernel, which runs in the privileged mode of the processor.
+  - U should invoke the scheduler first by calling the below API provide bt FreeRTOS.
+    - `vTaskStartScheduler()`
+
+- Scheduling policy:
+  - Scheduler schedules tasks to run on the CPU according to the scheduling policy configured:
+    - Pre-emptive scheduling
+    - Co-operative scheduling
+
+- Scheduler:
+  - `#define configUSE_PREEMPTION 1`: Pre-emptive scheduling (default)
+  - `#define configUSE_PREEMPTION 0`: Co-operative scheduling
+
+- Pre-emptive scheduling
+  - What is preemption?
+    - Replace a running task with another task.
+    - During preemption, the running task is made to give up the processor even if it hasn't finished the work. The scheduler does this to run some other tasks of the application.
+    - The task which gave up the processor simply returns to ready state.
+
+- Two type options of Pre-emptive scheduling:
+  - Round robin (cyclic) pre-emptive scheduling.
+  - Priority based pre-emptive scheduling.
+
+- Round-robin pre-emptive scheduling:
+  - Scheduling tasks without priority (aso known as cyclic executive).
+  - Time slices are assigned to each task in equal portions and in circular order.
+  - Ready queue/list of the RTOS:
+
+    READY         READY         READY           READY
+    Task-1        Task-4        Task-2          Task-3
+
+    |S|CPU run task-1|S|CPU run task-4|S|CPU run task-2|S|CPU run task-3|
+    t1<--time-slice->t2               t3               t4
+    |                |                |                 |
+    |------1ms-------|----------------|-----------------|----RTOS ticks--->
+
+    - S: Scheduler run context switch
+      - Context switching save the context of current task and retrieving CPU to context of the next task.
+    - `#define configTICK_RATE_HZ( ( TickType_t ) 1000 )`
+
+- Priority based pre-emptive scheduling
+  - Tasks are scheduled to run on the CPU based on their priority. A task with higher priority will be made to run on the CPU forever unless the task gets deleted/blocked/suspended or leaves voluntarily to give chance for others.
