@@ -708,3 +708,78 @@ SetA20LineDone:
 ```
 
 - And don't forget change back es register to `0`.
+
+## 19. Set Video mode
+
+- Before we switch to long mode, we need to set video mode. Printing on the screen is done by the bios service in real mode. Once we switch to long mode, we are unable to call bios function, so we need to set up video mode and print characters on that mode.
+
+- There are a lot of video mode we can use. Our system choose text mode in which printing characters is really simple. All we need to do is specify the ASCII code for the character we want to print and the attribute for that character such as foreground color and background color.
+
+```assembly
+
+SetVideoMode:
+        mox ax,3
+        int 0x10
+```
+
+- To set up text mode, we use interrupt `0x10` and function code `0` in `ah` register which means we want to set video mode. Then we need to choose video mode, text mode in this case, by copying 3 to `al` register. So we copy `3` to `ax` to set it up.
+
+- And then we have set up text mode and we can print messages on screen without calling BIOS service.
+
+- The base address for text mode is `0xB8000`. The size of screen we can print on is 80 * 25. So we have 25 lines and we can print 80 characters each line.
+
+- Every character takes up 2 bytes of space. The first position on the screen corresponds to the two bytes at `0xb8000`. The second position corresponds to the two bytes at `0xb8002`, and so on.
+
+- Within the two bytes of memory space, the first byte is for ASCII code and the second byte is attribute of the character. The lower half are foreground color and the higher half are background color.
+
+- For example, we print `text mode is set`.
+
+```assembly
+
+SetVideoMode:
+        mox ax,3
+        int 0x10
+
+        mov si,Message
+        mov ax,0xb800
+        mov es,ax
+        xor di,di
+        mov cx,MessageLen
+```
+
+- We move `si` the message, and `di` `0xb8000`. What we do here is save the address of characters to register `si` and text mode address `0xb8000` to `di`.
+
+- NOTE: that the value `0xb8000` is too large for 16 bit register `di` to store. So we save `0xb800` to `es` and `0` to `di`. When we reference the memory address `0xb8000`, we use `es`, `di` which points to the same memory location.
+
+- We also save the message length to the `cx` register.
+
+- And then we print characters one at a time.
+
+```assembly
+SetVideoMode:
+        mov ax,3
+        int 0x10
+
+        mov si,Message
+        mov ax,0xb800
+        mov es,ax
+        xor di,di
+        mov cx,MessageLen
+
+PrintMessage:
+        mov al,[si]
+        mov [es:di],al
+        mov byte[es:di+1],0xa
+        add di,2
+        add si,1
+        loop PrintMessage
+```
+
+- We copy the data in memory pointed to by `si` which is the first character of message at this point. And copy the data to the memory addressed by `di` which is `0xb8000`.
+
+- Next we specify the attribute of character in the next byte, we use color index a which is bright green `0xa`.
+
+- We continue the same process until all the characters have been printed.
+- So we add `di` by `2` and `si` by `1`. Because the character takes up two bytes and the character stored in message takes up 1 byte.
+
+- The last instruction is loop which use `cx` register as a counter so that we can continue the process.
