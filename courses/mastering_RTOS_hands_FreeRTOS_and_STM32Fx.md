@@ -442,3 +442,37 @@ BaseType_t xTaskCreate(TaskFunction_t pvTaskCode,
 
 - Priority based pre-emptive scheduling
   - Tasks are scheduled to run on the CPU based on their priority. A task with higher priority will be made to run on the CPU forever unless the task gets deleted/blocked/suspended or leaves voluntarily to give chance for others.
+
+- Co-operative scheduling
+  - A Task cooperates with other tasks by explicitly giving up the processor (Processor yielding).
+  - There is no `pre-emption` of the tasks by the scheduler. that is, the running task will never be interrupted by the scheduler.
+  - The RTOS tick interrupt doesn't cause any pre-emption, but the tick interrupts are still needed to keep track of the kernel's real-time tick value.
+  - Tasks give up the CPU when they are done or periodically or blocked/suspended waiting for a resource.
+
+### 31. Behind scene task creation
+
+- WHat happens when you create a TASK?
+  - Total RAM = SRAM1 + SRAM2 = 112 + 16 = 128KiB
+
+  |<-------HEAP (configTOTAL_HEAP_SIZE)------------>|                                             |
+  |TCB1 |STACK1 |TCB2 |STACK2 |SCB|ITEM LIST|       | This RAM space is used for                  |
+  |     |       |     |       |   |         |       | Global data, arrays, static variables, etc. |
+  |     |       |     |       |   |         |       | Kernel stack                                |
+  Low------------------------------------------------------------------------------------------->High
+
+- We can config heap size in FreeRTOS with the config `configTOTAL_HEAP_SIZE`.
+
+- When we use `xTaskCreate()` to create a task, the memory for TCB (Task control block `TCB1`) will be allocated from the HEAP section of the RAM. And stack memory (STACK1) for this task is also allocated from the HEAP section of the RAM (This size is specified by `usStackDepth` parameter).
+
+- If you create a semaphore by `xSemaphoreCreateBinary()`, this also creates a control block called semaphore control block (`SCB`) in HEAP section of the RAM.
+
+- When you use `xQueueCreate()`, this is an API to create a queue. The queue control block will be created in the heap and also it's `ITEM LIST`, Queue item list will be maintained in HEAP section of the RAM.
+
+- All These APIs are called as APIs which create the `kernel objects` dynamically. And memory for them is allocated dynamically if you use such APIs.
+
+- Summary of Task Creation:
+  - When we use `xTaskCreate()`, three important things will happen:
+    - **TCB**: TCB (Task Control Block) will be created in RAM (Heap section) and initialized. TCB is basically a C structure, and it has got various member elements and those member elements will be initialized. One of important member of TCB is `pxTopOfStack`, this actually holds a **Top of Stack** information of task private stack.
+    - **Stack**: Dedicated Stack memory will be created for a task and initialized. This stack memory will be tracked using PSP register of the ARM Cortex Mx Processor. This stack memory will be tracked using PSP register of the ARM Cortex Mx Processor. It has two stack pointers: One is `PSP` which stands for **Process Stack Pointer** and another one is `MSP` which stands for **Main Stack Pointer**.
+
+    - **Task Ready list Maintained by freeRTOS kernel**: Task will be put under `READY` list for scheduler to pick.
