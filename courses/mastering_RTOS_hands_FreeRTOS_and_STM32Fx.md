@@ -476,3 +476,108 @@ BaseType_t xTaskCreate(TaskFunction_t pvTaskCode,
     - **Stack**: Dedicated Stack memory will be created for a task and initialized. This stack memory will be tracked using PSP register of the ARM Cortex Mx Processor. This stack memory will be tracked using PSP register of the ARM Cortex Mx Processor. It has two stack pointers: One is `PSP` which stands for **Process Stack Pointer** and another one is `MSP` which stands for **Main Stack Pointer**.
 
     - **Task Ready list Maintained by freeRTOS kernel**: Task will be put under `READY` list for scheduler to pick.
+
+## 38. IDLE Task
+
+- The Idle task is created automatically when the RTOS scheduler is started to ensure there is *always at least one task that is able to run*.
+
+- It is created at the **lowest possible priority** to ensure it does not use any CPU time of there are higher priority application tasks in the ready state.
+
+- Some facts about Idle Task:
+  - It is a lowest priority task which is automatically created when the scheduler is started.
+  - The idle task is responsible for freeing memory allocated by the RTOS to tasks that have been deleted.
+  - When there are no tasks running, idle task will always run on the CPU.
+  - You can give an application hook function in the idle task to send the CPU to low power mode when there are no useful tasks are executing.
+
+- Idle Task hook function:
+  - Idle task hook function implements a callback from idle task to your application.
+  - You have to enable the idle task hook function feature by setting this config item `configUSE_TICK_HOOK` to `1` within `FreeRTOSConfig.h`.
+  - Then implement the below function in your application: `void vApplicationIdleHook(void);`.
+  - That's it, whenever idle task is allowed to run, your hook function will get called, where you can do some useful stuffs like sending the MCU to lower mode to save power.
+
+```C
+void vTaskStartScheduler( void )
+{
+BaseType_t xReturn;
+
+    /* Add the idle task at the lowest priority. */
+    #if( configSUPPORT_STATIC_ALLOCATION == 1 )
+    {
+        StaticTask_t *pxIdleTaskTCBBuffer = NULL;
+        StackType_t *pxIdleTaskStackBuffer = NULL;
+        uint32_t ulIdleTaskStackSize;
+
+        /* The Idle task is created using user provided RAM - obtain the
+        address of the RAM then create the idle task. */
+        vApplicationGetIdleTaskMemory( &pxIdleTaskTCBBuffer, &pxIdleTaskStackBuffer, &ulIdleTaskStackSize );
+        xIdleTaskHandle = xTaskCreateStatic(    prvIdleTask,
+                                                configIDLE_TASK_NAME,
+                                                ulIdleTaskStackSize,
+                                                ( void * ) NULL, /*lint !e961.  The cast is not redundant for all compilers. */
+                                                portPRIVILEGE_BIT, /* In effect ( tskIDLE_PRIORITY | portPRIVILEGE_BIT ), but tskIDLE_PRIORITY is zero. */
+                                                pxIdleTaskStackBuffer,
+                                                pxIdleTaskTCBBuffer ); /*lint !e961 MISRA exception, justified as it is not a redundant explicit cast to all supported compilers. */
+
+        if( xIdleTaskHandle != NULL )
+        {
+            xReturn = pdPASS;
+        }
+        else
+        {
+            xReturn = pdFAIL;
+        }
+    }
+    #else
+    {
+        /* The Idle task is being created using dynamically allocated RAM. */
+        xReturn = xTaskCreate(    prvIdleTask,
+                                configIDLE_TASK_NAME,
+                                configMINIMAL_STACK_SIZE,
+                                ( void * ) NULL,
+                                portPRIVILEGE_BIT, /* In effect ( tskIDLE_PRIORITY | portPRIVILEGE_BIT ), but tskIDLE_PRIORITY is zero. */
+                                &xIdleTaskHandle ); /*lint !e961 MISRA exception, justified as it is not a redundant explicit cast to all supported compilers. */
+    }
+    #endif /* configSUPPORT_STATIC_ALLOCATION */
+
+    // ...
+```
+
+- Timer Services Task (Timer_svc):
+  - This is also called as timer daemon task.
+  - The timer daemon task deals with `Software timers`.
+  - This task is created automatically when the scheduler is started and if `configUSE_TIMERS=1` in `FreeRTOSConfig.h`.
+  - The RTOS uses this daemon to manage FreeRTOS software timers and nothing else.
+  - If you don't use software timers in your FreeRTOS application then u need to use this timer daemon task. For that just make `configUSE_TIMERS=0` in `FreeRTOSConfig.h`.
+  - All software timer call back functions execute in the context of timer daemon task.
+
+```C
+    // ...
+    #if ( configUSE_TIMERS == 1 )
+    {
+        if( xReturn == pdPASS )
+        {
+            xReturn = xTimerCreateTimerTask();
+        }
+        else
+        {
+            mtCOVERAGE_TEST_MARKER();
+        }
+    }
+    #endif /* configUSE_TIMERS */
+    // ...
+```
+
+### 40. FreeRTOS Scheduler
+
+- FreeRTOS Scheduler Implementation
+  - In FreeRTOS the scheduler code is actually combination of: FreeRTOS Generic code + Architecture specific codes.
+    - FreeRTOS Generic Code found in: `tasks.c`
+    - Arch specific codes of: `port.c`
+
+- Architecture specific codes responsible to achieve scheduling of tasks.
+  - All architecture specific codes and configurations are implemented in `port.c` and `portmacro.h`.
+  - If u are using ARM Cortex Mx Processor then u should be able locate the below interrupt handlers in `port.c` which are part of the scheduler implementation of freeRTOS.
+  - Three important kernel interrupt handlers responsible for scheduling of tasks:
+    - `vPortSVCHandler()`: Used to launch the very first task. Triggered by SVC instruction.
+    - `xPortPendSVHandler()`: Used to achieve the context switching between tasks triggered by pending the PendSV System exception of ARM.
+    - `xPortSysTickHandler()`: This implements the RTOS Tick management. Triggered periodically by Sys-tick timer of ARM cortex Mx processor.
