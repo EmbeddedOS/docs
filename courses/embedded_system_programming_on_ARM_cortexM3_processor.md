@@ -147,7 +147,7 @@ __attribute__((weak)) int _write(int file, char *ptr, int len)
 
 - We can use *Interrupt Program Status Register* to check mode that CPU is running on. The bit 0 is `0` means CPU is running on Thread mode, and `1` means CPU is run on Handler mode.
 
-### Access level of the processor
+### 22. Access level of the processor
 
 - Processor offers two access level:
   - Privileged Access level (PAL).
@@ -164,3 +164,66 @@ __attribute__((weak)) int _write(int file, char *ptr, int len)
 - `Handler mode` code execution is always with PAL.
 
 - USe the *CONTROL* register of the processor if you want to switch between the access level.
+
+### 23. Cortex M core registers
+
+- The processor core registers are:
+  - General-purpose registers (13 registers): R0-R7 (Low register), R8-R12 (High register)
+  - Stack pointer: SP (R13) - PSP (Process Stack pointer) - MSP (Main stack pointer)--> banked version of SP
+  - Link register: LR (R14)
+  - Program counter: PC (R15)
+  - Program status register: PSR                                          |
+  - Exception mask registers (3 registers): PRIMASK, FAULTMASK, BASEPRI   |===> Special registers
+  - CONTROL register: CONTROL                                             |
+
+- These registers actually reside in  Cortex-M4 core (core of processor).
+- All the core registers are 32 bits wide.
+
+- *Link register*: stores the return information for subroutines, function calls, and exceptions. On Reset, the processor sets the LR value to `0xFFFFFFFF`.
+
+- For example:
+
+```C
+// caller:
+void main (void)
+{
+  func(); // -> PC jumps to func() address.
+
+  instruction_1; // LR = return address (address of next instruction, so PC can jump back to the caller).
+
+}
+
+// callee:
+void func (void)
+{ // func() address is here.
+
+  // Do some things
+
+} // -> FUnction return PC = LR, PC jump back to resume main() run instruction `instruction_1`.
+  // LR contains address of `instruction_1` so when PC finish func(), it can back to caller.
+
+```
+
+- *Program counter*: contains the current program address (address of next instruction to be executed). On reset the processor loads the PC with the value of the reset vector, which is at address `0x00000004`. Bit[0] of value is loaded into the `EPSR` T-bit at reset must be `1`.
+
+- *Program Status Register*: combines:
+  - *Application Program Status Register* (APSR): The APSR contains the current state of the condition flags from previous executions. For example, the bit assignments are: bit[31] is `Negative flag`, bit[30] is `Zero flag`.
+  - *Interrupt Program Status Register* (IPSR): contains  the exception type of the current `Interrupt Service Routine (ISR)`. bit[0] is `thread mode` state, bit[2] is `NMI`, bit[5] is `BusFault` and more.
+  - *Execution Program Status Register* (EPSR): contains the Thumb state bit, and the execution state bits for either the:
+    - *If-then (IT)* instruction.
+    - *Interruptible-Continuable Instruction (ICI)* field for an interrupted load multiple or store multiple instruction.
+
+  - These registers are mutually exclusive bit-fields in the 32-bit PSR.
+  - Access these registers individually or as a combination of any two or all threes, using the register name as an argument to the MSR or MRS instructions. For example:
+    - Read all of the registers using PSR with the MRS instruction.
+
+### 24. Memory map and non-memory map register
+
+- Non-memory mapped registers (Processor core registers):
+  - The registers do not have unique addresses to access them. Hence there are not part of the processor memory map.
+  - You cannot access these registers in a `C` program using address dereferencing.
+  - To access these registers, you have to use assembly instruction.
+
+- Memory mapped registers (Registers of the processor specific peripherals (NVIC, MPU, SCB, DEBUG, etc) + Registers of the Micro-controller specific peripherals (RTC, I2C, TIMER, CAN, USB, etc)):
+  - Every register has its address in the processor memory map.
+  - U can access these registers in `C` program using address dereferencing.
