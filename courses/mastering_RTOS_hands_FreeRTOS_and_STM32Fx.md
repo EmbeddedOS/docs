@@ -581,3 +581,23 @@ BaseType_t xReturn;
     - `vPortSVCHandler()`: Used to launch the very first task. Triggered by SVC instruction.
     - `xPortPendSVHandler()`: Used to achieve the context switching between tasks triggered by pending the PendSV System exception of ARM.
     - `xPortSysTickHandler()`: This implements the RTOS Tick management. Triggered periodically by Sys-tick timer of ARM cortex Mx processor.
+
+### 41. Understanding implementation of `xPortStartScheduler()` of `port.c`
+
+- `vTaskStartScheduler()`
+  - This is implemented in `task.c` of FreeRTOS kernel and used to start the RTOS scheduler.
+  - Remember that after calling this function only the scheduler code is initialized and all the Arch. Specific interrupts will be activated.
+  - This function also creates the timer daemon task.
+  - This function calls `xPortStartScheduler()` to do the Arch. Specific initializations.
+
+- Generic code for all ARCH:`vTaskStartScheduler()` ------> Arch. specific code: `xPortStartScheduler()`
+  - `xPortStartScheduler()`
+    - ----> Configuring the `Sys-tick` timer to issue interrupts at desired rate (as configured in the config item `configTICK_RATE_HZ` in `FreeRTOSConfig.h`)
+    - ----> Configures the priority for `PendSV` and `Sys-tick` interrupts.
+    - ----> Starts the first task by executing the `SVC` instruction.
+
+```C
+#define configTICK_RATE_HZ                       ((TickType_t)1000)
+```
+
+- The `1000` means, 1000 interrupts in one second. THat means, interrupt will trigger one millisecond a part. So, for every one millisecond one interrupt will be triggered.
