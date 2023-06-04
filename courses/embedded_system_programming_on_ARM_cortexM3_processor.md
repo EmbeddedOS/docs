@@ -227,3 +227,135 @@ void func (void)
 - Memory mapped registers (Registers of the processor specific peripherals (NVIC, MPU, SCB, DEBUG, etc) + Registers of the Micro-controller specific peripherals (RTC, I2C, TIMER, CAN, USB, etc)):
   - Every register has its address in the processor memory map.
   - U can access these registers in `C` program using address dereferencing.
+
+## 6. ARM GCC inline assembly coding
+
+- ARM GCC inline assembly code usage
+  - Inline assembly code is used to write pure assembly code inside a `C` program.
+  - GCC inline assembly code syntax as shown below:
+    - Assembly instruction: `MOV R0,R1`
+    - inline assembly statement: `__asm volatile("MOV R0,R1");`
+
+  - For multiple ASM instructions, you can use format with two characters `\n\t` are end of each line. For example:
+
+    ```C
+    __asm volatile (
+      "LDR R0, [R1]\n\t"
+      "LDR R1, [R2]\n\t"
+      "ADD R1, R0\n\t"
+      "STR R1, [R3]\n\t"
+    );
+    ```
+
+- `C` variable and inline assembly
+  - Move the content of `C` variable `data` to ARM register R0.
+  - Move the content of the CONTROL register to the `C` variable `control_reg`.
+
+- General form of an inline assembly statement:
+
+```C
+__asm volatile (code : output operand list : input operand list : clobber list);
+```
+
+- With:
+  - `volatile` is attribute to the asm statement to instruct the compiler not to optimize the assembler code.
+  - `code` assembly mnemonic defined as a single string.
+  - `output operand list` A list of output operands, separated by commas.
+  - `input operand list` A list of input operands, separated by commas.
+  - `clobber list` is mainly used to tell the compiler about modifications done by the assembler code.
+
+- For example:
+  `__asm volatile ("MOV R0,R1");` is same as `__asm volatile("MOV R0,R1":::);`.
+
+- For example load two values from memory, add them and store the result back to the memory using inline assembly statements.
+
+```C
+    // Load 1 to R1 and 2 to R2.
+    __asm volatile ("LDR R1, =#0x00000001");
+    __asm volatile ("LDR R2, =#0x00000002");
+
+    // Add R1 with R2 and store result to the R0 register.
+    __asm volatile ("ADD R0,R1,R2");
+
+    // Store the result back to address that is hold by R1 (0x20000000).
+    __asm volatile ("LDR R1, =#0x20000000");
+    __asm volatile ("STR R0, [R1]");
+
+```
+
+- Input/output operands and constraint string
+  - Each input and output operand is described by a constraint string followed by a C expression in parentheses.
+  - Input/output operand format: `"<Constraint string>" (<'C' expression>)`
+    - Constraint string = constraint character + constraint modifier
+
+## 7. Reset sequence of the processor
+
+### 31. Reset sequence of the processor
+
+- Reset sequence of the Cortex M processor
+  - 1. When u reset the processor, the PC is loaded with the value `0x00000000`.
+  - 2. Then processor reads the value @ memory location `0x00000000` in to MSP.
+    - MSP = value@0x00000000
+    - MSP is a Main Stack Pointer register.
+    - This means, processor first initializes the Stack Pointer point to stack memory.
+  - 3. After that processor reads the value @ memory location `0x40000000` in to PC.
+    - That value is actually address of the reset handler.
+  - 4. PC jumps to the reset handler.
+  - 5. A reset handler is just a C or assembly function written by you to carry out any initializations required.
+  - 6. From reset handler you call your `main()` function of the application.
+
+- For example, in file `startup_xxx.s`, we have reset handler function:
+
+```assembly
+Reset_Handler:
+  ldr   r0, =_estack
+  mov   sp, r0          /* set stack pointer */
+/* Call the clock system intitialization function.*/
+  bl  SystemInit
+
+/* Copy the data segment initializers from flash to SRAM */
+  ldr r0, =_sdata
+  ldr r1, =_edata
+  ldr r2, =_sidata
+  movs r3, #0
+  b LoopCopyDataInit
+
+CopyDataInit:
+  ldr r4, [r2, r3]
+  str r4, [r0, r3]
+  adds r3, r3, #4
+
+LoopCopyDataInit:
+  adds r4, r0, r3
+  cmp r4, r1
+  bcc CopyDataInit
+
+/* Zero fill the bss segment. */
+  ldr r2, =_sbss
+  ldr r4, =_ebss
+  movs r3, #0
+  b LoopFillZerobss
+
+FillZerobss:
+  str  r3, [r2]
+  adds r2, r2, #4
+
+LoopFillZerobss:
+  cmp r2, r4
+  bcc FillZerobss
+
+/* Call static constructors */
+  bl __libc_init_array
+/* Call the application's entry point.*/
+  bl main
+
+LoopForever:
+    b LoopForever
+```
+
+- So, what does reset handler do?
+  - 0. Initialize sp point to begin stack memory.
+  - 1. Initialize data section.
+  - 2. Initialize bss section.
+  - 3. Initialize `C` std library `__libc_init_array()`.
+  - 4. `main()`.
