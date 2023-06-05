@@ -601,3 +601,52 @@ BaseType_t xReturn;
 ```
 
 - The `1000` means, 1000 interrupts in one second. THat means, interrupt will trigger one millisecond a part. So, for every one millisecond one interrupt will be triggered.
+
+## 10. FreeRTOS and ARM Cortex Mx Arch. Specific details
+
+### 42. FreeRTOS Kernel Interrupts
+
+- FreeRTOS Kernel Interrupts
+
+- When FreeRTOS runs on ARM Cortex Mx Processor based MCU, below interrupts are used to implement the Scheduling of Tasks.
+  - 1. `SVC Interrupt` (SVC handler will be used to launch  the very first Task).
+  - 2. `PendSV Interrupt` (PendSV handler is used to carry out context switching between tasks).
+  - 3. `SysTick Interrupt` (SysTick Handler implements the RTOS Tick Management).
+
+- If SysTick interrupt is used for some other purpose in your application, then you may use any other available timer peripheral.
+
+- All interrupts are configured at the lowest interrupt priority possible.
+
+### 43. RTOS Tick and Sys-tick timer explanation
+
+- Sys-tick is *heart beat* of FreeRTOS.
+
+- The RTOS Tick:
+
+```C
+#define configTICK_RATE_HZ                       ((TickType_t)1000)
+```
+
+- Interrupt fired by Sys-tick timer for every 1ms.
+
+- RTOS Ticking is implemented using timer hardware of the MCU:
+
+- Architecture ARM cortex M |--->Atmel SAMxx AT91 --->|
+                            |--->STM STM32Fxx ------->|===> Sys-tick timer
+                            |--->LPC LPCxx ---------->|
+                            |--->xxxxxxxxx ---------->|
+
+- The RTOS Tick -Why it is needed?
+  - Task-1 ----------> `vTaskDelay(100);` | Task is going to sleep for 100ms.
+  - That means, the kernel has to wake up this task and schedule it on the CPU after 100ms.
+  - So, How do you think freeRTOS kernel tracks the completion of 100ms?
+    - Its because of maintaining the global tick count and incrementing it for every tick interrupt from Sys-tick timer.
+
+  - **Used for Context Switching to the next potential Task**.
+
+  - Each timer Tick interrupt makes scheduler to run:
+    - 1. The tick ISR runs.
+    - 2. All the ready state tasks are scanned.
+    - 3. Determines which is the next potential task to run.
+    - 4. if found, triggers the context switching by pending the PendSV interrupt.
+    - 5. The `PendSV` handler takes care of switching out of old task and switching in of new task.
