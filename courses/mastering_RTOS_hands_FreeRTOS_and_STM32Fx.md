@@ -567,6 +567,40 @@ BaseType_t xReturn;
     // ...
 ```
 
+## 7. Trace tool integration
+
+### 32. Trace tool download
+
+- Download below tools:
+  - 1. SEGGER SystemView software: [link](https://www.segger.com/downloads/systemview/SystemView_Windows_V350a_x64.exe) -> install in host.
+  - 2. SEGGER SystemView target source files: [link](https://www.segger.com/downloads/systemview/systemview_target_src) -> install in target.
+  - 3. SystemView User manual.
+
+### 33. What is segger system view software?
+
+- SystemView is a software toolkit which is used to analyze the embedded software behavior running on your target.
+- The embedded software may contain embedded OS or RTOS or it could be non-OS based application.
+
+- For example: In the case of FreeRTOS application:
+  - You can analyze how many tasks are running and how much duration they consume on the CPU.
+  - ISR entry and exit timings and duration of run on the CPU.
+  - U can analyze other behavior of tasks: like blocking, unblocking, notifying, yielding, etc.
+  - U can analyze CPU idle time so that you can think of sending CPU to speed mode.
+  - Total runtime behavior of the application.
+
+- It sheds light on what exactly happened in which order, which interrupt has triggered which task switch, which interrupt and task has called which API function of the underlying RTOS.
+
+- SystemView should be used to verify that embedded system behaves as expected and can be used to find problems and inefficiencies, such as superfluous and spurious interrupts, and unexpected task changes.
+
+- SEGGER SystemView Toolkit come in 2 parts:
+  - 1. PC visualization software: SystemView Host software (WIndow, Linux, MAC).
+  - 2. SystemView target codes (this is used to collect the target events and sending back to PC visualization software).
+
+### 34. Segger SystemView recording mode
+
+- 1. Real time recording: need to SEGGER J-lInk and Realtime Transfer (RTT) technology. Need to JLINK or STLINK.
+- 2. Single-shot recording: You need not to have JLINK or STLINK debugger.
+
 ### 40. FreeRTOS Scheduler
 
 - FreeRTOS Scheduler Implementation
@@ -647,6 +681,52 @@ BaseType_t xReturn;
   - Each timer Tick interrupt makes scheduler to run:
     - 1. The tick ISR runs.
     - 2. All the ready state tasks are scanned.
+      - `xPortSysTickHandler()` ->  `xTaskIncrementTick()` -> `if (listCURRENT_LIST_LENGTH( &( pxReadyTasksLists[ pxCurrentTCB->uxPriority ] ) ) > ( UBaseType_t ) 1) {}`
+
     - 3. Determines which is the next potential task to run.
     - 4. if found, triggers the context switching by pending the PendSV interrupt.
+
+      ```C
+      void xPortSysTickHandler( void )
+      {
+        /* The SysTick runs at the lowest interrupt priority, so when this interrupt
+        executes all interrupts must be unmasked.  There is therefore no need to
+        save and then restore the interrupt mask value as its value is already
+        known. */
+        portDISABLE_INTERRUPTS();
+        {
+          /* Increment the RTOS tick. */
+          if( xTaskIncrementTick() != pdFALSE )
+          {
+            /* A context switch is required.  Context switching is performed in
+            the PendSV interrupt.  Pend the PendSV interrupt. */
+            portNVIC_INT_CTRL_REG = portNVIC_PENDSVSET_BIT;
+          }
+        }
+        portENABLE_INTERRUPTS();
+      }
+      ```
+
     - 5. The `PendSV` handler takes care of switching out of old task and switching in of new task.
+
+### 44. Who configures the RTOS Tick Timer?
+
+- `vTaskStartScheduler()` in `task.c` call `xPortStartScheduler()` in `port.c`, this function do:
+  - First initialize the Sys tick interrupt priority to be lowest possible: `vPortSetupTimerInterrupt()`
+  - Loads the rate value to Sys-tick timer: `configTICK_RATE_HZ`
+  - Enables the sys-tick timer interrupt and starts the timer.
+
+- The RTOS Tick Configuration:
+  - `configSYSTICK_CLOCK_HZ = configCPU_CLK_HZ`
+  - If `configCPU_CLK_HZ = 25000000` (i.e 25MHz) and `configTICK_RATE_HZ = 1000 Hz`.
+  - Then `portSYSTICK_NVIC_LOAD_REG = (25000000/1000) - 1 = 24999`
+  - The Sys-tick timer when started, down counts from 24999 to 0.
+  - It generates an interrupt when the count value reaches 0 and again reloads the load count value.
+  - So, 24999 is the sys-tick load value required to generate interrupt for every 1ms (1000Hz).
+
+### 45. What RTOS tick ISR does? : summary
+
+- 1. Sys-Tick interrupt ----> TickISR runs `xPortSysTickHandler()` ---> `portDISABLE_INTERRUPTS();` ---> `xTaskIncrementTick() == TRUE` ---> 2
+- 2. `xTaskIncrementTick()` --> `xTickCount++` --> Check to see if the new tick value will cause any tasks to be unblocked. ----> Calls application hook function if enabled ----> Returns `TRUE if` context switch is required. --> 3
+- 3. If `xTaskIncrementTick() == TRUE`--> pend the PendSV ---> `portENABLE_INTERRUPTS();`
+- 4. Exit from ISR.
