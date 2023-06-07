@@ -83,4 +83,60 @@
     }
     ```
 
-  - After init the logging system for debug purpose, we need to init RTC module `sl_rtc_init();` this function first select clock source for FSM low frequency clock `RSI_PS_FsmLfClkSel(KHZ_RC_CLK_SEL)`, we use RC clock for FSM (Clock source can be RO or RC or XTAL).
+  - After init the logging system for debug purpose, we need to init RTC module `sl_rtc_init();` this function first select clock source for FSM low frequency clock `RSI_PS_FsmLfClkSel(KHZ_RC_CLK_SEL)`, we use RC clock for FSM (Clock source can be RO or RC or XTAL). and then, it initialize Realtime Clock RTC module:. What does `sl_rtc_init()` do ?
+    - First it select clock source: `sl_config_fsm_low_frequency_clock();`
+    - Init RTC using RSI API: `RSI_RTC_Init(RTC);`
+    - Set datetime for RTC: `RSI_RTC_SetDateTime(RTC, &rtc_time);`
+    - Enable RTC second interrupt: `sl_rtc_enable_sec_interrupt();`
+    - Enable RTC millisecond interrupt: `sl_rtc_enable_msec_interrupt();`
+    - Initialize RTC Calibration: `RSI_RTC_CalibInitilization()`'
+      - To make very accurate RTCs, calibration and compensation mechanisms must be implemented.
+    - Calibrate the RTC with RSI API: `RSI_RTC_ROCLK_Calib(TIME_PERIOD, 1, 1, 3, 1, 1, 0);`
+      - with params:
+        - `rtc`: TIME_PERIOD
+        - `enable`: 1 to start rc calibration.
+        - `periodic_en`: 1 to start periodically calibrate.
+        - `trigger_time`: 3 - 30 sec.
+        - `ro_enable`: 1 to enable ro calibration.
+        - `periodic_en`: 1 to enable periodic ro calibration.
+        - `trigger_time`: 0 - 1 timer in sec.
+    - Set priority for RTC Alarm interrupt: `NVIC_SetPriority(SL_NVIC_RTC_ALARM, 8);`
+    - Enable RTC second and RTC millisecond interrupts in NVIC: `NVIC_EnableIRQ(SL_NVIC_RTC);`
+    - Enable RTC Alarm interrupt in NVIC: `NVIC_EnableIRQ(SL_NVIC_RTC_ALARM);`
+    - Start RTC module: `RSI_RTC_Start(RTC);`
+
+  - Next the schedule structure is initialized `sl_sched_init();` this function set memory of `sched` object to zero. And set state of all scheduler to invalid:
+  
+  ```C
+  static sl_sched_t sched[SL_SCHED_MAX + 1] = { 0 };
+  
+  void sl_sched_init(void)
+  {
+    SL_CLEAR_DATA(sched, sizeof(sched));
+    for (int i = 0; i < SL_SCHED_MAX + 1; i++) {
+      sched[i].state = SL_SCHED_INVALID;
+    }
+
+    /* TODO: Reload sched data from nvm */
+  }
+  ```
+
+  - Schedule structure:
+
+  ```C
+  /**
+   * Schedule structure.
+   */
+  typedef struct {
+    uint8_t state;                /**< State */
+    uint8_t hour;                 /**< Hours */
+    uint8_t minute;               /**< Minutes */
+    uint8_t second;               /**< Seconds */
+    uint8_t repeat;               /**< Repeat day mask */
+    sl_sched_callback_t callback; /**< Callback function */
+    void *arg;                    /**< Callback function arguments */
+  } sl_sched_t;
+
+  ```
+
+  - This structure maintain a schedule for some task, callback it when it's time. For example, we can use structure for define some BLE task that going to setup and control the motor.
