@@ -140,3 +140,214 @@
   ```
 
   - This structure maintain a schedule for some task, callback it when it's time. For example, we can use structure for define some BLE task that going to setup and control the motor.
+
+  - Next, the `main()` function initialize `tmc2300_init()`, TMC2300 chip control the motor. We need to initialize a UART pipeline to communicate with the TMC2300: `sl_uart_init(SL_UART_MOTOR, 19200);`
+
+  - Next step, we need to init the SNTP server for time synchronization (timezone, time offset): `sl_sntp_set_offset_time()`
+
+  - Finally, we initialize Soft-timer task and the main task and start scheduler for run our tasks: `rsi_start_os_scheduler();`
+
+## UART peripherals interface
+
+- UART is one of digital peripherals of siwx917 chip.
+- `siwx917` SoC have two UARTs and one USART controllers.
+- 9-bit serial support.
+- Multi-drop `RS485` interface support.
+- 5, 6, 7, and 8-bit character encoding with even, odd and no parity.
+- 1, 1.5 (only with 5 bit character encoding) ans 2 stop bits.
+- Hardware Auto flow control (RTS, CTS).
+
+- The UART controllers also support additional features listed below, which help in achieving `better performance` and reduce the burden on the processor:
+  - Programable fractional baud rate support.
+  - Programable baud rate supporting up to 7.3 M-bps.
+  - Programable FIFO thresholds with maximum FIFO depth of 16 and support for DMA.
+  - Prioritized interrupt identification.
+
+- The UART controller in MCU ULP subsystem (`ULP_UART`) supports the following additional power-save features:
+  - After the DMA is programmed in `PS2` state for UART transfer, the MCU can switch to `PS1` state (Processor shutdown) while the UART controller continues with the data transfer.
+  - In `PS1` state (ULP Peripheral mode) the UART controller completes the data transfer and, triggered by the Peripheral Interrupt, shifts either to the sleep state (without processor intervention) or the active state.
+
+### How do we initialize UART controllers?
+
+- UART configuration structure:
+
+```C
+typedef struct {
+  uint8_t irq_num;    /**< Interrupt number */
+  uint8_t irq_prio;   /**< Interrupt priority */
+  USART0_Type *usart; /**< UART base address */
+  USART_IO io;        /**< UART GPIO pinout */
+  USART_CLOCK clock;  /**< UART clock */
+} sl_uart_config_t;
+
+```
+
+- This structure contains UART properties such as: IO pin structure, IRQ number, IRQ priority, Clock and type. We need to define three interface for `UART0`, `UART1` and `ULP_UART`. For example, initialization of UART0 look like:
+
+```C
+static const sl_uart_config_t uart0_config = {
+  .irq_num = USART0_IRQn,
+  .irq_prio = 8,
+  .usart = UART0,
+  .io.clock = NULL,
+  .io.tx = &usart0_tx,
+  .io.rx = &usart0_rx,
+  .clock.uart_clock_src = RTE_USART0_CLK_SRC,
+  .clock.ulp_uart_source = ULP_UART_REF_CLK,
+  .clock.divfact = RTE_USART0_CLK_DIV_FACT,
+  .clock.frac_div_en = RTE_USART0_FRAC_DIV_EN,
+};
+```
+
+- With `USART0_IRQn`, `UART0`, `RTE_USART0_CLK_SRC`, etc. are defined in Siw SDK.
+
+- UART context structure:
+
+```C
+typedef struct {
+  uint8_t uart;                   /**< UART index */
+  uint8_t initialize;             /**< UART initialize */
+  rsi_mutex_handle_t tx_lock;     /**< UART tx mutex lock */
+  rsi_mutex_handle_t rx_lock;     /**< UART rx mutex lock */
+  QueueHandle_t tx_queue;         /**< UART TX queue */
+  QueueHandle_t rx_queue;         /**< UART RX queue */
+  const sl_uart_config_t *config; /**< UART configuration */
+} sl_uart_context_t;
+```
+
+- For each uart interface, we need one UART context to manage them.
+- This structure contains:
+  - `initialize`: context is initialize or not.
+
+- We use array of `sl_uart_context_t` structure to manage `UART0`, `UART1` and `ULP_UART` controller:
+
+```C
+static sl_uart_context_t uart_context[SL_UART_NUM] = {
+  { .uart = SL_UART0, .initialize = 0, .config = &uart0_config, },
+  { .uart = SL_UART1, .initialize = 0, .config = &uart1_config, },
+  { .uart = SL_UART_ULP, .initialize = 0, .config = &uart_ulp_config, },
+};
+```
+
+- For logging and motor driving purpose, we will use UART1 and UART_ULP for them:
+
+```C
+#define SL_UART0    0 /**< UART0 index */
+#define SL_UART1    1 /**< UART1 index */
+#define SL_UART_ULP 2 /**< ULP UART index */
+
+#define SL_UART_NUM 3 /**< Number of UARTs */
+
+#define SL_UART_LOG                  SL_UART1
+#define SL_UART_MOTOR                SL_UART_ULP
+```
+
+### Initialize UART controller
+
+- To initialize a UART interface we use:
+
+```C
+int sl_uart_init(uint8_t uart, uint32_t baud);
+```
+
+- With first param `uart` is UART index and second param `baud` is baud rate.
+
+- This function do:
+  - 1. Check context is init or not: `if (ctx->initialize) {}` if is already initialized, we don't need to do it again.
+  - 2. Create Rx and Tx Queue:
+    - `ctx->tx_queue = xQueueCreate(SL_UART_TX_BUFFER_SIZE, sizeof(uint8_t));`
+    - `ctx->rx_queue = xQueueCreate(SL_UART_RX_BUFFER_SIZE, sizeof(uint8_t));`
+  - 3. Create mutexes for Rx and Tx:
+    - `rsi_mutex_create(&ctx->tx_lock);`
+    - `rsi_mutex_create(&ctx->rx_lock);`
+
+  - 4. Config uart clock: `uart_clockconfig(uart, true);`
+  - 5. Config uart IO pin: `uart_ioconfigure(uart);`
+  - 6. Config baud-rate, stop bit, parity , nbits: `uart_config(uart, baud, 0, 8, 1);`
+
+  - 7. Set interrupt priority and enable the interrupt:
+
+    ```C
+    NVIC_SetPriority(config->irq_num, config->irq_prio);
+    // Enable interrupt
+    NVIC_ClearPendingIRQ(config->irq_num);
+    NVIC_EnableIRQ(config->irq_num);
+    ```
+
+  - 8. Mark the context as initialized: `ctx->initialize = 1;`
+
+### UART function interfaces
+
+- `int sl_uart_init(uint8_t uart, uint32_t baud);`: This function initializes an UART context with params:
+  - uart: UART index.
+  - baud: Baud rate.
+
+- `int sl_uart_deinit(uint8_t uart);`: This function de-initialize an UART context.
+- `int sl_uart_putc(uint8_t uart, uint8_t ch);`: put one character to an UART context.
+- `int sl_uart_send_bytes(uint8_t uart, uint8_t *bufs, uint16_t length);`: send a buffer data stream to an UART context.
+- `int sl_uart_read_bytes(uint8_t uart, uint8_t *bufs, uint16_t length);`: receive a buffer data stream from an UART context.
+
+### UART for logging
+
+- Logging system use UART interface to send log info. This system provide three functions:
+  - `void sl_log_init();`: This function initializes log module.
+  - `void sl_log_printf(const char *format, ...);`
+  - `void sl_log_println(const char *str);`
+
+### UART for TMC2300 Motor driver
+
+- TMC2300 controller use the UART interface to set value to registers and read value from them. Via this function we can control the Motor system:
+  - `int tmc2300_write_reg(uint8_t address, uint32_t value);`
+  - `int tmc2300_read_reg(uint8_t address, uint32_t *value);`
+
+## Soft-timer system
+
+- To make a task that could be run after specify time. We need to make a `sl_softtimer_data_t` object and add it to the soft-timer list:
+
+```C
+typedef struct {
+  uint32_t start;                   /**< Time start in milliseconds */
+  uint32_t time;                    /**< Timeout in milliseconds */
+  sl_softtimer_callback_t callback; /**< Callback function */
+  void *params;                     /**< Arguments for callback */
+} sl_softtimer_data_t;
+```
+
+- The soft-timer list is maintains by the object:
+
+```C
+#define SL_SOFTTIMER_MAX 12 /**< Maximum number of Software Timers */
+
+static sl_softtimer_data_t softtimer_list[SL_SOFTTIMER_MAX] = { 0 };
+```
+
+- After make an soft-timer object and add it to the list. The task that is made by calling `sl_softtimer_init()` ( This function create a real-time task using `rsi_task_create()` API that based on FreeRTOS library)will check all callback functions in the list every 10 milliseconds. And call them `callback(param);` if the time of them is expired:
+
+```C
+#define SL_TIMER_EXPIRED(timer) \
+  ((uint32_t)(sl_get_ms() - timer.start) >= timer.time)
+
+static void softtimer_task(void *arg)
+{
+  SL_UNUSED(arg);
+  uint32_t index;
+  void *param = NULL;
+  sl_softtimer_callback_t callback = NULL;
+
+  while (1) {
+    for (index = 0ul; index < SL_SOFTTIMER_MAX; index++) {
+      if (( softtimer_list[index].callback != NULL )
+          && SL_TIMER_EXPIRED(softtimer_list[index])) {
+        callback = softtimer_list[index].callback;
+        param = softtimer_list[index].params;
+        sl_softtimer_cancel(callback);
+        callback(param);
+        // softtimer_list[index].callback = NULL;
+      }
+    }
+    sl_delay_ms(10);
+  }
+}
+```
+
+## The main app task main_app_task()
