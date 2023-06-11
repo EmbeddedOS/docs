@@ -147,7 +147,7 @@
 
   - Finally, we initialize Soft-timer task and the main task and start scheduler for run our tasks: `rsi_start_os_scheduler();`
 
-## UART peripherals interface
+## 1. UART peripherals interface
 
 - UART is one of digital peripherals of siwx917 chip.
 - `siwx917` SoC have two UARTs and one USART controllers.
@@ -167,7 +167,7 @@
   - After the DMA is programmed in `PS2` state for UART transfer, the MCU can switch to `PS1` state (Processor shutdown) while the UART controller continues with the data transfer.
   - In `PS1` state (ULP Peripheral mode) the UART controller completes the data transfer and, triggered by the Peripheral Interrupt, shifts either to the sleep state (without processor intervention) or the active state.
 
-### How do we initialize UART controllers?
+### 1.1. How do we initialize UART controllers?
 
 - UART configuration structure:
 
@@ -242,7 +242,7 @@ static sl_uart_context_t uart_context[SL_UART_NUM] = {
 #define SL_UART_MOTOR                SL_UART_ULP
 ```
 
-### Initialize UART controller
+### 1.2. Initialize UART controller
 
 - To initialize a UART interface we use:
 
@@ -276,7 +276,7 @@ int sl_uart_init(uint8_t uart, uint32_t baud);
 
   - 8. Mark the context as initialized: `ctx->initialize = 1;`
 
-### UART function interfaces
+### 1.3. UART function interfaces
 
 - `int sl_uart_init(uint8_t uart, uint32_t baud);`: This function initializes an UART context with params:
   - uart: UART index.
@@ -287,20 +287,20 @@ int sl_uart_init(uint8_t uart, uint32_t baud);
 - `int sl_uart_send_bytes(uint8_t uart, uint8_t *bufs, uint16_t length);`: send a buffer data stream to an UART context.
 - `int sl_uart_read_bytes(uint8_t uart, uint8_t *bufs, uint16_t length);`: receive a buffer data stream from an UART context.
 
-### UART for logging
+### 1.4. UART for logging
 
 - Logging system use UART interface to send log info. This system provide three functions:
   - `void sl_log_init();`: This function initializes log module.
   - `void sl_log_printf(const char *format, ...);`
   - `void sl_log_println(const char *str);`
 
-### UART for TMC2300 Motor driver
+### 1.5. UART for TMC2300 Motor driver
 
 - TMC2300 controller use the UART interface to set value to registers and read value from them. Via this function we can control the Motor system:
   - `int tmc2300_write_reg(uint8_t address, uint32_t value);`
   - `int tmc2300_read_reg(uint8_t address, uint32_t *value);`
 
-## Soft-timer system
+## 2. Soft-timer system
 
 - To make a task that could be run after specify time. We need to make a `sl_softtimer_data_t` object and add it to the soft-timer list:
 
@@ -350,4 +350,118 @@ static void softtimer_task(void *arg)
 }
 ```
 
-## The main app task main_app_task()
+## 3. The main app task main_app_task()
+
+- The main task is responsible for:
+  - 1. Initialize event queue: `main_app_init_event_queue();`
+    - That function create a queue that contains the events which is received from FreeRTOS CLI.
+
+      ```C
+      typedef void* sl_queue_t;
+      static sl_queue_t main_app_event_queue = NULL;
+
+      static void main_app_init_event_queue(void)
+      {
+        main_app_event_queue = (void *)xQueueCreate(SL_EVENT_QUEUE_LEN, sizeof(sl_queue_message_t));
+      }
+      ```
+
+  - Put init main event to the `main_app_event_queue`.
+
+### 3.1. Infinite loop that handle events
+
+- We use the `while(1){}` to catch all event from user. This while loop get new event from the queue `main_app_event_queue` every time it finish handling a event before.
+  - `main_app_get_event(&event, &data, &data_len);` will block task until the queue is pushed a new item or the `portMAX_DELAY` timeout. This function based on `xQueueReceive()` FreeRTOS API.
+
+- After get new event, we use switch case to handle it. The main app event includes:
+
+```C
+typedef enum {
+  SL_MAIN_EVENT_INIT                 = 0, /**< Initiation event */
+  SL_MAIN_EVENT_WAKEUP_ALARM         = 1, /**< Wake-up by RTC Alarm event */
+  SL_MAIN_EVENT_DIRECT_SHADE_CONTROL = 2, /**< Direct shade control event */
+  SL_MAIN_EVENT_LOCAL_SHADE_CONTROL  = 3  /**< Local shade control event */
+} sl_main_app_state_e;
+```
+
+- Events maybe have commands to control something. The `SL_MAIN_EVENT_DIRECT_SHADE_CONTROL` `SL_MAIN_EVENT_LOCAL_SHADE_CONTROL` events also carry on some messages that indicates some commands that the user want to perform. for example, these events have many commands to control shade directly or locally.
+
+```C
+typedef enum {
+  SL_SHADE_COMMAND_STOP              = 0x10,
+  SL_SHADE_COMMAND_JOG               = 0x11,
+  SL_SHADE_COMMAND_MOVE_UP           = 0x12,
+  SL_SHADE_COMMAND_MOVE_DOWN         = 0x13,
+  SL_SHADE_COMMAND_MOVE_PERCENT      = 0x14,
+  SL_SHADE_COMMAND_MOVE_PRESET       = 0x15,
+  SL_SHADE_COMMAND_MOVE_HOME         = 0x16,
+  SL_SHADE_COMMAND_STORE_PRESET      = 0x17,
+  SL_SHADE_COMMAND_BATTERY_PERCENT   = 0x22,
+  SL_SHADE_COMMAND_ENTER_LIMIT_MODE  = 0x30,
+  SL_SHADE_COMMAND_EXIT_LIMIT_MODE   = 0x31,
+  SL_SHADE_COMMAND_CANCEL_LIMIT_MODE = 0x32,
+  SL_SHADE_COMMAND_SET_HOME          = 0x33,
+  SL_SHADE_COMMAND_START_INCLUSION   = 0x34,
+  SL_SHADE_COMMAND_STOP_INCLUSION    = 0x35
+} sl_shade_command_e;
+```
+
+### 3.2. Main Initialization Event
+
+- The event will be pushed one time before our program join to the infinity loop. What does it do?
+  - 1. First of all, initialize the Bluetooth stack with Low Energy Mode using `intialize_bt_stack(STACK_BTLE_MODE);` API of the sdk.
+  - 2. Make BLE task: `sl_ble_app_task`.
+  - 3. Make Wireless Driver task: `rsi_wireless_driver_task`.
+    - This API is provided by the SDK. It handle driver events. Called in application main loop for non-OS platform. With OS, this API is blocking and with bare-metal this API is non-blocking.
+  - 4. Make WLAN task: `sl_wlan_app_task`.
+  - 5. Initialize WiSeConnect:
+    - `rsi_wireless_init(uint16_t opermode, uint16_t coex_mode);` With WLAN Operating mode is `Client mode` and Coexistence mode is `WLAN + BLE`
+      - Initialize WiSeConnect or Module features. This is a blocking API.
+      - `rsi_driver_init()` followed by `rsi_device_init()` API needs to be called before this API.
+
+  - 6. Initialize BLE app: `sl_ble_app_init();`
+  - 5. Init FreeRTOS CLI to handle user command: `sl_cli_init();`
+
+## 4. BLE app
+
+### 4.1. Initialize BLE app
+
+## 5. WLAN app
+
+## 6. Command line interface
+
+### 6.1. Initialize CLI
+
+- To initialize CLI, we need to register command with the OS:
+
+```C
+  cli_register_cmd(&reset_command);
+  cli_register_cmd(&heap_command);
+  cli_register_cmd(&time_command);
+  cli_register_cmd(&sntp_command);
+  cli_register_cmd(&wlan_scan_command);
+  cli_register_cmd(&wlan_connect_command);
+  cli_register_cmd(&wlan_disconnect_command);
+  cli_register_cmd(&sched_list_command);
+  cli_register_cmd(&sched_add_command);
+  cli_register_cmd(&sched_remove_command);
+  cli_register_cmd(&sched_enable_command);
+  cli_register_cmd(&sched_disable_command);
+```
+
+- Every command have the name, help, param and callback function:
+
+```C
+typedef struct {
+  char *name;                         /**< Command name string */
+  char *help;                         /**< Command help string */
+  sl_cli_command_callback_t callback; /**< Command callback function */
+  int nb_param;                       /**< Number of parameters */
+} sl_cli_command_t;
+``
+
+- Every command is managed by an object:
+
+```C
+static sl_cli_int_cmd_t sl_cli_cmd_registered[SL_CLI_NB_MAX_CMD] = { 0 };
+```
