@@ -730,3 +730,74 @@ BaseType_t xReturn;
 - 2. `xTaskIncrementTick()` --> `xTickCount++` --> Check to see if the new tick value will cause any tasks to be unblocked. ----> Calls application hook function if enabled ----> Returns `TRUE if` context switch is required. --> 3
 - 3. If `xTaskIncrementTick() == TRUE`--> pend the PendSV ---> `portENABLE_INTERRUPTS();`
 - 4. Exit from ISR.
+
+## 11. Context switch
+
+### 46. Introduction to context switching
+
+- What is Context Switching?
+  - Context switching is a process of switching out of one task and switching in of another task on the CPU to execute.
+  - In RTOS, Context Switching is taken care by the **Scheduler**.
+  - In FreeRTOS, Context Switching is taken care by the `PendSV` handler found in `port.c`.
+  - Whether context switch should happen or not depends upon the scheduling policy of the scheduler.
+
+- If the scheduler is priority based pre-emptive scheduler, then for every RTOS tick interrupt, the scheduler will compare the priority of the running task with the priority of ready tasks list. If there is any ready task whose priority is higher than the running task then context switch will occur.
+
+- On FreeRTOS you can also trigger context switch manually using `taskYIELD()` macro.
+
+```C
+/**
+ * task. h
+ *
+ * Macro for forcing a context switch.
+ *
+ * \defgroup taskYIELD taskYIELD
+ * \ingroup SchedulerControl
+ */
+#define taskYIELD()       portYIELD()
+```
+
+```C
+/* Scheduler utilities. */
+#define portYIELD()                               \
+{                                                 \
+  /* Set a PendSV to request a context switch. */ \
+  portNVIC_INT_CTRL_REG = portNVIC_PENDSVSET_BIT; \
+                                        \
+  /* Barriers are normally not required but do ensure the code is completely  \
+  within the specified behaviour for the architecture. */             \
+  __asm volatile( "dsb" ::: "memory" );                               \
+  __asm volatile( "isb" );                                            \
+}
+```
+
+- Context switch also happens immediately whenever new task unblocks and if its priority is higher than the currently running task.
+
+### 47. Context Switching: understanding `State` of a task
+
+- When a task executes on the Processor it utilizes.
+  - Processor core registers.
+  - If a Task wants to do any push and pop operations (during function call) then it uses its own dedicated stack memory.
+
+  - **Contents of the processor core registers** + **stack contents** = **State of the task**.
+
+- ARM Cortex Mx Core registers: R0-R15, PSR,
+- User tasks use PSP as their Stack Pointer and the kernel use the MSP as its stack pointer.
+
+- Stacks:
+  - There are mainly 2 different Stack Memories during run time of FreeRTOS based application:
+    - **Task's Private stack**: process stack
+      - SP (PSP) -> PUSH and POP to this stack area is tracked by PSP register of ARM.
+      - When Task executes it does PUSH and POP here.
+    - **Kernel stack**: main stack
+      - SP (MSP) -> PUSH and POP to this stack area is tracked by MSP register of ARM.
+      - When ISR executes it does PUSH and POP here.
+
+- RAM:
+
+|END-----------------------------------------------------------------START|
+|--------configTOTAL_HEAP_SIZE------|---Kernel stack---|--Global Space----|
+|TCB-1|TCB-2|TCB-3|-----------------|This stack area is|Global space to   |
+|                                   |utilized when     |hold Global       |
+|                                   |interrupt handlers|variables, static |
+|                                   |do PUSH and POP   |variables, etc.   |
