@@ -601,6 +601,18 @@ BaseType_t xReturn;
 - 1. Real time recording: need to SEGGER J-lInk and Realtime Transfer (RTT) technology. Need to JLINK or STLINK.
 - 2. Single-shot recording: You need not to have JLINK or STLINK debugger.
 
+## 35. Segger System overview
+
+## 36. Segger SystemView Target Integration
+
+- STEP 1: Adding SEGGER SystemView target sources to the project
+  - Download SystemView target sources and extract it: [link](https://www.segger.com/downloads/systemview/systemview_target_src)
+  - Create the folders as shown below in your FreeRTOS Project: Create `SEGGER/` dictionary in folder `Third_Party/` of our project.
+  - Do the path settings for the include files of SEGGER in the IDE.
+
+- STEP 2: Patching FreeRTOS files
+  - You need to patch some of the FreeRTOS files with patch.
+
 ### 40. FreeRTOS Scheduler
 
 - FreeRTOS Scheduler Implementation

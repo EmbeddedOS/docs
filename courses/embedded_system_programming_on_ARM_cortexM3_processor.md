@@ -283,10 +283,124 @@ __asm volatile (code : output operand list : input operand list : clobber list);
 
 ```
 
+### 29. Input/output operands and constraint string: Input example
+
 - Input/output operands and constraint string
   - Each input and output operand is described by a constraint string followed by a C expression in parentheses.
   - Input/output operand format: `"<Constraint string>" (<'C' expression>)`
     - Constraint string = constraint character + constraint modifier
+
+- Example 1: Move the content of C variable `val` to ARM register `R0`:
+  - Instruction -> MOV
+  - Source      -> a C variable `val` (INPUT)
+  - Destination -> R0 (ARM core register)
+
+  - We have the C instruction: `__asm volatile ("MOV R0, %0": : "r"(val));`
+    - NOTE: we don't have output operand in this instruction, so we need to empty entry.
+    - We have one input operand: `"r"(val)` with:
+      - `"r"` is a constraint string with only constraint character `r`, does not contains constraint modifier.
+      - `val` is a 'C' expression (variable).
+
+    - In the code section, we have: `"MOV R0, %0"`
+      - `%0`: operand indexing using `%` sign followed by a digit:
+        - `%0` refers to the first operand.
+        - `%1` refers to the second operand.
+        - and so on.
+
+- For ARM processors, GCC 4 provides the following constraints:
+
+|Constraint |Usage in ARM state                   |Usage in Thumb state     |
+|-----------|-------------------------------------|-------------------------|
+|f          |floating point registers f0..f7      |Not available            |
+|r          |general register r0..r15             |Not available            |
+|I          |Immediate value in data processing   |Constant in the range    |
+|           |instructions. eg: ORR R0,R0,#operand |0..255. eg: SWI operand  |
+|...        |...                                  |...                      |
+
+- constraint modifier:
+
+|Modifier |Specifies                                                  |
+|---------|-----------------------------------------------------------|
+|=        |Write-only operand, usually used for all output operands   |
+|+        |Read-write operand, must be listed as an output operand    |
+|&        |A register that should be used for output only             |
+
+- For example:
+
+```C
+int val = 50;
+__asm volatile ("MOV R0, %0": : "r"(val));
+```
+
+```disassembly
+39            int val = 50;
+08000200:   movs    r3, #50 ; 0x32
+08000202:   str     r3, [r7, #4]
+40            __asm volatile ("MOV R0, %0": : "r"(val));
+08000204:   ldr     r3, [r7, #4]
+08000206:   mov     r0, r3
+```
+
+- For the inline assembly statement, compile took these actions:
+  - 1. First variable(val) value is read from the memory in to `r3`.
+  - 2. Then `r3` is used as source register in the final data copy instruction (mov).
+
+- If we use the `I` constraint character we can push value immediately. for example, that equal to the previous example:
+
+```C
+__asm volatile ("MOV R0, %0": : "I"(0x32));
+```
+
+```disassembly
+41            __asm volatile ("MOV R0, %0": : "I"(0x32));
+08000208:   mov.w   r0, #50 ; 0x32
+```
+
+- So this example means, the `r` constraint character forced the compiler to use an register in `%0`'s place of the instruction.
+
+### 30. Input/output operands and constraint string: Output + Input example
+
+- Example: Move the content of the CONTROL register to C variable `control_reg`
+  - CONTROL register is a special register of the ARM core.
+  - To read CONTROL register u have to use `MRS` instruction.
+    - `MRS`: Move from special register to register.
+  - Instruction: MRS
+  - Source: CONTROL register
+  - Destination: A C variable `control_reg` (OUTPUT operand)
+
+```C
+uint32_t control_reg;
+__asm volatile ("MRS %0, CONTROL":"=r"(control_reg)::);
+```
+
+```disassembly
+44            __asm volatile ("MRS %0, CONTROL":"=r"(control_reg)::);
+0800020c:   mrs     r3, CONTROL
+08000210:   str     r3, [r7, #0]
+```
+
+- In this example, we use the `=` constraint modifier tell to the compiler that operation is **write only**.
+
+- Next example, we will the assembly inline instruction to copy two C variable:
+  - Copy the content of `C` variable `var1` to `var2`:
+  - Instruction: MOV
+  - Source: a C variable `var1` (INPUT operand)
+  - Destination: a C variable `var2` (OUTPUT operand)
+
+```C
+int var1 = 10, var2;
+__asm volatile ("MOV %0, %1": "=r"(var2): "r"(var1)); // var2 = var1
+```
+
+- Next example, copy the contents of a pointer into another example:
+
+```C
+int p1, *p2;
+p2 = (int *) 0x20000008;
+__asm volatile ("LDR %0, [%1]": "=r"(p1): "r"(p2)); // p1 = *p2
+```
+
+- Load the value of address is pointed by p2 to the p1 variable.
 
 ## 7. Reset sequence of the processor
 
