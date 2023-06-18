@@ -533,6 +533,66 @@ void change_access_level_unprivileged()
     - So, if u try to load a invalid address (0th bit as 0) to the CPU, it will emit some system exception: Usage Fault, etc.
   - 8. This is reason why you see all vector addresses and incremented by 1 in the vector table.
 
+## 9. Memory map and bus interfaces of ARM Cortex Mx Processor
+
+### 35. Memory map
+
+- Memory map explains mapping of different peripheral registers and memories in the processor addressable memory location range.
+- The processor, addressable memory location range, depends upon the size of the address bus.
+- The mapping of different regions in the addressable memory location range is called `memory map`.
+
+- The processor has a *fixed default memory map* that provides up to `4GB` of addressable memory.
+  ARM Cortex M4 CPU <---32 bit address channel<--AHB--->|---> Data memory
+                        32 bit data channel             |---> Code memory
+                                                        |---> GPIO
+                                                        |---> Timers
+                                                        |---> etc
+
+  - For example, we need to load data from ADC, so processor will be load data from ADC via bus with 32bit channel, next it store the data into data memory via bus.
+
+- The bus interface provides 32 bit address and 32 bit data channels, so processor can access up to 2^32 = 4GB addressable memory.
+
+- Memory map of the Cortex Mx processor 0x00000000 -> 0xFFFFFFFF:
+                                0xFFFFFFFF
+  |Vendor-specific memory 511MB|0xE0100000
+  |----------------------------|0xE00FFFFF
+  |Private peripheral bus   1MB|0xE0000000
+  |----------------------------|0xDFFFFFFF
+  |External device          1GB|0xA0000000
+  |----------------------------|0x9FFFFFFF
+  |External RAM             1GB|0x60000000
+  |----------------------------|0x5FFFFFFF
+  |Peripheral             0.5GB|0x40000000
+  |----------------------------|0x3FFFFFFF
+  |SRAM                   0.5GB|0x20000000
+  |----------------------------|0x1FFFFFFF
+  |CODE                   0.5GB|0x00000000
+
+- CODE region - 512MB (0x00000000 -> 0x1FFFFFFF):
+  - This is region where the MCU vendors should connect CODE memory.
+  - Different type of CODE memories are: Embedded flash, ROM, OTP, EEPROM, etc.
+  - Processor by default fetches vector table information from this region right after reset.
+
+- SRAM region:
+  - The SRAM (Static-RAM) region is in the next 512 MB of the memory space after the CODE region.
+  - It is primarily for connecting SRAM, mostly on-chip SRAM.
+  - The first 1MB of the SRAM region is bit addressable.
+    - Bit band region: 0x20000000 -> 0x20100000
+    - Bit band address alias: 0x22000000 -> 0x23FFFFFF
+  - You can also execute program code from this region.
+
+- Peripherals region:
+  - The region is also 512 MB.
+  - Used almost for on-chip peripherals.
+  - Like the SRAM, the first 1MB of the peripheral region is bit addressable if the bit optional bit band feature is included.
+  - This is an eXecute Never (XN) region.
+  - Trying to execute code from this region will trigger fault exception.
+
+- External RAM region:
+  - This region is intended for either on-chip or off-chip memory.
+  - You can execute code in this region.
+  - E.g, connecting 
+
 ## 11. Exception model of ARM Cortex Mx Processor
 
 ### 47. Exception model
