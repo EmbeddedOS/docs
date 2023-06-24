@@ -585,13 +585,114 @@ void change_access_level_unprivileged()
   - The region is also 512 MB.
   - Used almost for on-chip peripherals.
   - Like the SRAM, the first 1MB of the peripheral region is bit addressable if the bit optional bit band feature is included.
-  - This is an eXecute Never (XN) region.
+  - This is an **eXecute Never** (`XN`) region.
   - Trying to execute code from this region will trigger fault exception.
 
 - External RAM region:
   - This region is intended for either on-chip or off-chip memory.
   - You can execute code in this region.
-  - E.g, connecting 
+  - E.g, connecting external SDRAM.
+
+- External Device Region
+  - This region is intended for external devices and/or shared memory.
+  - This is an **eXecute Never** (`XN`) region.
+
+- Private peripheral bus
+  - This region includes the NVIC, system timer, and system control block.
+  - This is an **eXecute Never** (`XN`) region.
+
+### 36. Bus protocols and bus interfaces
+
+- In Cortex Mx Processors the bus interfaces are based on advanced micro-controller bus architecture (`AMBA`) specification.
+- `AMBA` is a specification designed by ARM which governs standard for on-chip communication inside the system on chip.
+- `AMBA` specification supports several bus protocols.
+  - `AHB` Lite (`AMBA` High performance Bus).
+  - `APB` (`AMBA` Peripheral Bus).
+
+- AHB and APB:
+  - AHB Lite bus is mainly used for the main bus interfaces.
+  - APB bus is used for PPB access and some on-chip peripheral access using an AHB-APB bridge.
+  - AHB Lite bus majorly used for *high-speed communication* with peripherals that demand high operation speed.
+  - APB bus is used for *low-speed communication* compared to AHB. Most of the peripherals which don't require high operation speed are connected to this bus.
+
+- Processor provides 4 bus interface: PPB, System, D-Core, I-Core. By using other interfaces, you can access to different memory region.
+
+ARM cortex Mx Processor |
+                        |
+                    PPB |<-----AHB 32 bit---->|PPB|
+                        |
+                  System|<-AHB (access read/write)--->|SRAM, Peripheral |
+                        |        \                    |Ext RAM, Device  |
+                        |         \
+                        |          \--------->|MCU vendor specific region|
+                        |
+                  D-Core|<--AHB (Data access)------------->|CODE region    |
+                  I-Core|<-AHB(instruction fetch)/         |(Program Image)|
+
+- PPB: Private peripheral bus
+  - This region includes the NVIC, system timer, and system control block.
+  - This is an **eXecute Never** (`XN`) region.
+
+- Actually, the APB bus (low performance) is connected to Processor via a conversation bridge APB to AHB: Peripherals <---> APB/AHB bridge <---> Processor.
+
+### 37. Bit banding
+
+- What is bit-banding?
+  - It is the capability to address a single bit of a memory address.
+  - This feature is optional. i.e, MCU manufacturer supports it or many not support this feature.
+  - For example, let say u have memory of 1kB, how is the memory organize?
+      Memory of 1KB
+    |               |
+    |1024 locations |
+    |               |0x20000001
+    |               |0x20000000
+    <-----8 bits---->
+
+    - If the processor want read one bytes, it access memory via the byte's address.
+    - What if you only want read the bit 7 of the byte, for example? what if u only want to read just one bit?
+      - You need to using operands: or, and, to evaluate the bit.
+    - Bit banding mean, you can address the only one bit. Use The unique address for them.
+
+  - For example, if you want to read the bit you can using the its address:
+
+    ```asm
+    LDRB R0, [R1] #R1 hold the address of the bit.
+    ```
+
+- Bit band and bit band alias addresses:
+  - 1MB Bit band region need to 32 * 1MB = 32MB bit band address.
+  - We can use the bit band alias addresses to access to Bits in bit band region.
+  - For example:
+    Bit-band region                     Alias Equivalent
+    0x20000000 bit[0] <---------------->0x22000000 bit[0]
+    0x20000000 bit[1] <---------------->0x22000004 bit[0]
+    0x20000000 bit[2] <---------------->0x22000008 bit[0]
+    0x20000000 bit[3] <---------------->0x2200000C bit[0]
+    ...
+    0x20000000 bit[31] <--------------->0x2200007C bit[0]
+
+  - The regions for SRAM and peripherals include optional bit-band regions.
+  - Bit-banding provides atomic operations to bit data.
+
+- For example, Calculation of bit band alias address:
+  - Calculate the band alias address for given bit band memory address and bit position.
+  - 7th bit position of the memory location 0x2000_0200 using its alias address.
+  - General formula: `alias_address = alias_base + 32 * (bit_band_memory_addr - bit_band_base) + bit * 4`
+    - For example: `alias_address = 0x22000000 + 32 * (0x20000200 - 0x20000000) + 7 * 4`
+
+```C
+  // point to byte at address 0x20000200
+  uint8_t *ptr = (uint32_t *)0x20000200;
+
+  // Set all bits of the byte
+  *ptr = 0xff;
+
+  // Clear 7th bit position.
+  *ptr &= ~(1 << 7);
+
+  // Point to the alias address to read the bit.
+  uint8_t *alias_addr = ALIAS_BASE + (32 * (0x20000200 - 0x20000000)) + 7 * 4;
+```
 
 ## 11. Exception model of ARM Cortex Mx Processor
 
