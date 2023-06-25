@@ -694,6 +694,94 @@ ARM cortex Mx Processor |
   uint8_t *alias_addr = ALIAS_BASE + (32 * (0x20000200 - 0x20000000)) + 7 * 4;
 ```
 
+## 10. Stack memory and placement
+
+### 39. Introduction to stack memory
+
+- Stack memory is part of the main memory (Internal RAM or external RAM) reserved for the temporary storage of data (transient data).
+- Mainly used during function, interrupt/exception handling.
+- Stack memory is accessed in *Last In First Out* fashion (LIFO).
+- The stack can be accessed using PUSH and POP instructions or using any memory manipulation (LD, STR).
+- The stack is traced using a stack pointer (SP) register. PUSH and POP instructions affect (decrement or increment) stack pointer register (SP, R13).
+
+- Stack memory uses:
+  - The temporary storage of processor register values.
+  - The temporary storage of local variables of the function.
+  - During system exception or interrupt, stack memory will be used to save the context (some general-purpose registers, processor status register, return address) of the currently executing code.
+
+- SRAM will be used for: Global data, Heap, stack, etc.
+  - Even you can store instructions in RAM reserved for `global data` and execute it.
+
+### 40. Different stack model operation
+
+- Different stack model operation:
+  - 1. Full ascending stack:
+    - Memory usage increase from lower to higher: 0x00000000-> 0xffffffff
+    - Stack increase following the increasing of the memory address:
+      - PUSH: SP increase to next address, for example: sp:0x00002000 -> sp:0x00002004
+  - 2. Full descending stack:
+    - Memory usage increase from higher to lower: 0xffffffff -> 0x00000000
+    - Stack increase following the increasing of the memory address:
+      - PUSH: SP increase to next address, for example: sp:0x00002004 -> sp:0x00002000
+  - 3. Empty ascending stack:
+    - Memory usage increase from lower to higher: 0x00000000-> 0xffffffff
+    - The stack pointer is placed on an empty location that is the next address of current stack.
+    - Stack increase following the increasing of the memory address:
+    - For example, PUSH data to 0x00002000,  sp will be pointed to next empty location on address: 0x00002004
+  - 3. Empty descending stack:
+
+### 41. Stack placement
+
+- Stack placement in an application:
+  - type 1:
+    RAM
+    |Unused space |
+    |-------------|
+    |Stack        |  ||
+    |             |  \/
+    |-------------|
+    |Heap         |  /\
+    |             |  ||
+    |-------------|
+    |Data         |
+  - type 2:
+    RAM
+    |Stack        |  ||
+    |             |  \/
+    |-------------|
+    |Unused space |
+    |-------------|
+    |Heap         |  /\
+    |             |  ||
+    |-------------|
+    |Data         |
+
+- This defined by linker script. We will type-2 model.
+
+### 42. Banked stack pointer registers of the ARM Cortex Mx
+
+- Banked stack pointers:
+  - 1. Cortex M Processor physically has 3 stack pointers: SP (R13), MSP and PSP.
+    - MSP: Main stack pointer.
+    - PSP: Process stack pointer.
+    - SP is called as current stack pointer.
+  - 2. After processor reset, by default, MSP will be selected as current stack pointer. That means, SP copies the contents of MSP.
+  - 3. Thread mode can change the current stack pointer to PSP by configuring the CONTROL register's `SPSEL` bit.
+  - 4. Handler mode code execution will always use MSP as the current stack pointer. Thats also means that, changing the value of `SPSEL` bit being in the handler mode doesn't make any sense. The write will be ignored.
+  - 5. MSP will be initialized automatically by the processor after reset by reading the content of the address `0x00000000`.
+  - 6. If you want to use the PSP then make sure that you initialize the PSP to valid stack address in your code.
+
+- For example:
+  - SPSEL = 0: current SP (R13)|0x20000034| ----> MSP |0x20000034|
+                                                  PSP |0x200000D4|
+
+  - SPSEL = 1: current SP (R13)|0x200000D4|       MSP |0x20000034|
+                                          \-----> PSP |0x200000D4|
+
+- `SPSEL` bit: Defines the currently active stack pointer: In handler mode this bit reads as *zero* and ignores writes. The Cortex-M4 updates this bit automatically on exception return:
+  - 0 - MSP is the current stack pointer.
+  - 1 - PSP is the current stack pointer.
+
 ## 11. Exception model of ARM Cortex Mx Processor
 
 ### 47. Exception model
