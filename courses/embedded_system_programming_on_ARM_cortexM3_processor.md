@@ -469,6 +469,20 @@ LoopForever:
 
 - So, what does reset handler do?
   - 0. Initialize sp point to begin stack memory.
+
+    ```asm
+    Reset_Handler:
+      ldr   r0, =_estack
+      mov   sp, r0          /* set stack pointer */
+      //...
+
+    g_pfnVectors:
+      .word _estack
+      .word Reset_Handler
+      .word NMI_Handler
+      //...
+    ```
+
   - 1. Initialize data section.
   - 2. Initialize bss section.
   - 3. Initialize `C` std library `__libc_init_array()`.
@@ -769,6 +783,27 @@ ARM cortex Mx Processor |
   - 3. Thread mode can change the current stack pointer to PSP by configuring the CONTROL register's `SPSEL` bit.
   - 4. Handler mode code execution will always use MSP as the current stack pointer. Thats also means that, changing the value of `SPSEL` bit being in the handler mode doesn't make any sense. The write will be ignored.
   - 5. MSP will be initialized automatically by the processor after reset by reading the content of the address `0x00000000`.
+
+    ```asm
+    Reset_Handler:
+      ldr   r0, =_estack
+      mov   sp, r0          /* set stack pointer */
+      /*...*/
+
+    g_pfnVectors:
+      .word _estack
+      .word Reset_Handler
+      .word NMI_Handler
+      /*...*/
+    ```
+
+    - In linker file:
+
+    ```C
+    /* Highest address of the user mode stack */
+    _estack = ORIGIN(RAM) + LENGTH(RAM); /* end of "RAM" Ram type memory */
+    ```
+
   - 6. If you want to use the PSP then make sure that you initialize the PSP to valid stack address in your code.
 
 - For example:
@@ -781,6 +816,53 @@ ARM cortex Mx Processor |
 - `SPSEL` bit: Defines the currently active stack pointer: In handler mode this bit reads as *zero* and ignores writes. The Cortex-M4 updates this bit automatically on exception return:
   - 0 - MSP is the current stack pointer.
   - 1 - PSP is the current stack pointer.
+
+### 43. Stack exercise: change to use the PSP stack
+
+- We need to make valid memory for the PSP to point to.
+
+```C
+#define SRAM_START 0x20000000U
+#define SRAM_SIZE (128 * 1024)
+#define SRAM_END (SRAM_START + SRAM_SIZE)
+#define STACK_START SRAM_END
+
+#define STACK_MSP_START STACK_START
+#define STACK_MSP_END (STACK_MSP_START - 512)
+#define STACK_PSP_START STACK_MSP_END
+```
+
+- Load the address to the PSP to make it point to it and enable PSP:
+
+```C
+/*
+ * This attribute allows the compiler to construct the requisite function declaration,
+ * while allowing the body of the function to be assembly code.
+ */
+__attribute__((naked)) void change_sp_to_psp(void)
+{
+  // Set PSP stack point to the valid memory region.
+  uint32_t psp_start_address = STACK_PSP_START;
+  __asm volatile("MOV R0, %0"::"r"(psp_start_address):);
+  __asm volatile("MSR PSP, R0");
+  // Set 1th bit in control register to use the PSP register.
+
+  __asm volatile("MOV R0, #0x02");
+  __asm volatile("MSR CONTROL, R0");
+
+  // Return instructions.
+  __asm volatile("BX LR");
+}
+```
+
+- Summary:
+  - 1. Physically there are 2 stack pointer registers in Cortex-M Processors.
+  - 2. Main stack pointer (MSP): This is the default stack pointer used after reset, and is used for all exception/interrupt handlers and for codes which run in thread mode.
+  - 3. Process Stack pointer (PSP): This is an alternate stack pointer that can only be used in thread mode. It is usually used for application task in embedded systems and embedded OS.
+  - 4. After power-up, the processor automatically initializes the MSP by reading the first location of the vector table.
+  - 5. Changing SP:
+    - To access MSP and PSP in assembly code, u can use the MSR and MRS instructions.
+    - In a `C` program u can write a **naked** function ('C' like assembly function which doesn't have epilogue and prologue sequences) to change the current selected stack pointer.
 
 ## 11. Exception model of ARM Cortex Mx Processor
 
