@@ -864,6 +864,101 @@ __attribute__((naked)) void change_sp_to_psp(void)
     - To access MSP and PSP in assembly code, u can use the MSR and MRS instructions.
     - In a `C` program u can write a **naked** function ('C' like assembly function which doesn't have epilogue and prologue sequences) to change the current selected stack pointer.
 
+### 45. Function call and AAPCS standard
+
+- Caller vs Callee
+
+```C
+void func_x(void)
+{ // This is caller that calls func_y()
+  int ret;
+  ret = func_y(1, 2);
+}
+
+void func_y(int a, int b)
+{ // This is callee function.
+  return a + b;
+}
+```
+
+- The AAPCS standard describes Procedure Call Standard used by the application binary interface (ABI) for ARM architecture.
+
+- SCOPE:
+  - The AAPCS defines how subroutines can be **separately written compiled**, and **separately assembled** to work together. It describes a called routine that defines:
+    - Obligations on the caller to create a program state in which the called routine may start to execute.
+    - Obligations on the called routine to preserve the program state of the caller across the call.
+    - The rights of the called routine to alter the program state of its caller.
+
+- When a `C` compiler compiles code for the ARM arch, it should follow the AAPCS specification to generate code.
+
+- According to this standard, a `C` function can modify the registers R0, R1, R2, R3, R14 (LR) and PSR and it's not the responsibility of the function to save these registers before any modification. -> Caller should be save them before call a function (should be push to stack before call and pop when the callee exit).
+
+- If a function wants to make use of R4 to R11 registers, then it's the responsibility of the function to save its previous contents before modifying those registers and retrieve it back exiting the function. -> Callee should restore them before exit it's function body. (Should be push to stack when start routine and pop before exit routine).
+
+- R0, R1, R2, R3, R12, R14 (LR) registers are called **caller saved registers**, it's the responsibility of the caller to save these registers on stack before calling the function if those values will still be needed after the function call and retrieve it back once the called function returns. Register values that are not required after the function call don't have to be saved.
+
+- R4->R11 are called `callee saved registers`. This function or subroutine being called needs to make sure that, content of these registers will be unaltered before exiting the function.
+
+- According to this standard, caller functions uses R0, R1, R2, R3 registers to send input arguments to the callee function.
+
+- The callee function uses registers R0 and R1 to send the result back to the caller function.
+
+- For example:
+
+```C
+void func_x(void)
+{ // This is caller that calls func_y()
+  int ret;
+  ret = func_y(1, 2, 3, 4);  // set R0 = 1, R1 = 2, R2 = 4, R3 = 4
+                             // Get Ret = R0 = (a + b + c + d)
+}
+
+void func_y(int a, int b, int c, int d)
+{ // get R0 = 1, R1 = 2, R2 = 4, R3 = 4 to local variable: a, b, c, d
+  return a + b + c + d; // Set R0 = (a + b + c + d)
+}
+```
+
+- If the arguments is greater 4, stack will be used.
+
+- For example, the main call `func_add(int a, int b, int c)` pass three arguments to R2, R1, R0, and get result via the R0:
+
+```assembly
+  ret = func_add(1, 5, 6);
+ 80002e6:  2206        movs  r2, #6
+ 80002e8:  2105        movs  r1, #5
+ 80002ea:  2001        movs  r0, #1
+ 80002ec:  f7ff ffd0   bl  8000290 <func_add>
+ 80002f0:  6078        str  r0, [r7, #4]
+```
+
+- In the `func_add(int a, int b, int c)`, callee push R7 to save it before use it and restore them before exiting:
+
+```assembly
+int func_add(int a, int b, int c)
+{
+ 8000290:  b480        push  {r7}
+ 8000292:  b085        sub  sp, #20
+ 8000294:  af00        add  r7, sp, #0
+ 8000296:  60f8        str  r0, [r7, #12]
+ 8000298:  60b9        str  r1, [r7, #8]
+ 800029a:  607a        str  r2, [r7, #4]
+  return a +b + c;
+ 800029c:  68fa        ldr  r2, [r7, #12]
+ 800029e:  68bb        ldr  r3, [r7, #8]
+ 80002a0:  441a        add  r2, r3
+ 80002a2:  687b        ldr  r3, [r7, #4]
+ 80002a4:  4413        add  r3, r2
+}
+ 80002a6:  4618        mov  r0, r3
+ 80002a8:  3714        adds  r7, #20
+ 80002aa:  46bd        mov  sp, r7
+ 80002ac:  f85d 7b04   ldr.w  r7, [sp], #4
+ 80002b0:  4770        bx  lr
+  ...
+
+```
+
 ## 11. Exception model of ARM Cortex Mx Processor
 
 ### 47. Exception model
