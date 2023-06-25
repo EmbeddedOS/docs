@@ -959,6 +959,32 @@ int func_add(int a, int b, int c)
 
 ```
 
+### 47. Stack activities during interrupt and exception
+
+- To allow a `C` function to be used as an exception/interrupt handler, the exception mechanism needs to save R0 to R3, R12, LR, and XPSR at exception entrance automatically and restore them at exception exit under the control of the processor hardware.
+
+- In this way, when returned to the interrupted program, all the registers would have the same value as when the interrupt entry sequence started.
+
+- when we switch to Interrupt/Exception handler:
+  - The processor saves ``caller saved registers`` since there is no caller for interrupt or exception handler. So, u can write an interrupt/exception handler as normal `C` function without worrying about AAPCS rules.
+  - Stack frame: |R0|R1|R2|R3|R12|LR|PC|XPSR|
+
+- Processor does **STACKING** automatically (push registers to stack frame) when entering handler mode.
+- And, **UN-STACKING** automatically (pop stack frame to registers) when exiting handler mode.
+
+- Stack initialization:
+  - Before reaching main.
+  - After reaching the main function, u may again reinitialize the stack pointer.
+
+- Stack initialization tips:
+  - 1. Evaluate your targeted application. Decide the amount of stack that would be needed for the worst-case scenario of your application runtime.
+  - 2. Know your processor's consumption model (FD, FA, ED, EA)
+  - 3. Decide stack placement in the RAM (middle, end, external memory)
+  - 4. In many applications, there may be second stage stack init. For example, if you want to allocate stack in external SDRAM then first start with internal RAM, in the main or startup code initialize the SDRAM then change the stack pointer to point to SDRAM.
+  - 5. If you are using ARM cortex Mx Processor, make sure that the first location of the vector table contains the initial stack address (MSP). The startup code of the project usually does this.
+  - 6. You may also use the linker script to decide the stack, heal and other RAM area boundaries. Start up code usually fetches boundary information from linker scripts.
+  - 7. In an RTOS scenario, the kernel code may use MSP to trace its own stack and configure PSP for user task's stack.
+
 ## 11. Exception model of ARM Cortex Mx Processor
 
 ### 47. Exception model
