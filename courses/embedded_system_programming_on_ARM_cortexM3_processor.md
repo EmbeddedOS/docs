@@ -1154,3 +1154,48 @@ int func_add(int a, int b, int c)
     - Active flags:
       - 0 = interrupt not active.
       - 1 = interrupt active.
+
+### 53. Peripheral interrupt exercise
+
+- Exercise-Enabling and Pending of USART3 interrupt:
+
+  MCU           |             Processor
+UASRT3----------|-IRQ39-----> |39 NVIC| <-----> |CPU|
+                |
+                |
+                |
+
+- Steps to program an MCU peripheral interrupt
+  - 1. Identify the IRQ number of the peripheral by referring to the MCU vector table. IRQ numbers are vendor-specific.
+  - 2. Program the Processor register to enable that IRQ (only when you enable the IRQ, the processor will accept the interrupt over that line). Set the priority (optional).
+  - 3. Configure the peripheral (USART3) using its peripheral configuration register. For example, in the case of USART3, whenever a packet is received, it will automatically issue an interrupt on the IRQ line 39.
+  - 4. When the interrupt is issued on the IRQ line, it will first get pended in the pending register of the processor.
+  - 5. NVIC will allow the IRQ handler associated with the IRQ number to run only if the priority of the new interrupts higher than the currently executing interrupt handler. Otherwise newly arrived interrupt will stay in pending state.
+  - 6. Please note that if peripheral issues an interrupt when the IRQ number is disabled (not activated from the processor side), then still interrupt will get pended in the pending register of the NVIC. As soon as IRQ is enabled, it will trigger the execution of the ISR of the priority is higher than the currently active ISR.
+
+- Data packet arrives from external world in to USART peripheral buffer
+  -> UART peripheral issues an interrupt.
+  -> interrupt pends in the pending register of the NVIC (Add to queue).
+  -> if IRQ enable, NVIC emit to CPU.
+  -> CPU fetch the ISR address from vector table and jumps to ISR.
+  -> in ISR { we will copy data from rx buffer to SRAM and handle it}.
+
+- Enable the interrupt 39:
+
+```C
+int main()
+{
+  // We we pend the pending bit manually because we don't have real device, that is same with issueing the interrupt.
+  uint32_t *pISPR1 = (uint32_t *)0xE000E204;
+  *pISPR1 |= (1 << (USART3_IRQNO % 32));
+
+  // Enable the USART3 IRQ number in NVIC.
+  uint32_t *pISER1 = (uint32_t *)0xE000E104;
+  *pISER1 |= (1 << (USART3_IRQNO % 32));
+}
+
+void USART3_IRQHandler(void)
+{
+  printf("I'm USART3_IRQHandler\n");
+}
+```
