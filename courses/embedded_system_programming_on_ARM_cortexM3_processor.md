@@ -1199,3 +1199,127 @@ void USART3_IRQHandler(void)
   printf("I'm USART3_IRQHandler\n");
 }
 ```
+
+## 12. Interrupt priority and configuration
+
+### 55. Interrupt priority explaination
+
+- What is priority?
+  - It means urgency
+- What is priority value?
+  - The priority value is a measure of urgency (decides how urgent from others).
+
+- Relation between priority and it's value.
+  - For example, timer priority value is 4, and ADC's value is 5. So timer is more URGENT than ADC interrupt.
+  - We say timer priority os HIGHER than ADC priority.
+  - If both interrupt hits the NVIC at the same time, NVIC allows TIMER interrupt first, so TIMER ISR will be executed first by the processor.
+
+- Diferent priority levels:
+  - Priority values are also called as priority levels.
+
+- How many different priority levels are there in ARM cortex Mx processor?
+  - It depends on the **Interrupt Priority Register** implementation by the MCU vendors.
+    - STM32F4x MCU has 16 different priority levels.
+
+- By using these registers u can configure priority levels for interrupts (IRQs) only.
+  - we have 60 Interrupt Priority Registers (60 * 32 / 8 = 240): NVIC_IPR0-NVIC_IPR59
+    - 8 bits for an interrupt.
+
+- Real implementation by the MCU vendors: they just use four bit [4-7] to make priority value because vendor just make only.
+  - So currently, we 16 priority levels.
+
+### 56. Preempt and sub priority
+
+- What if two interupts of the same priority hit the processor at the same time?
+  - The sub priority value of the interrupts will be checked to resolve the conflict. An interrupt with lower sub priority value will be allowed first.
+
+- Priority Grouping
+  - Pre-Empt Priority: when the processor is running interrupt handler, and another interrupt appears, *then the pre-empt priority values will be compared*, and interrupt with higher pre-empt priority (less in value) value will be allowed to run.
+  - Sub priority: This value is used only when two interrupts with the same preemt priority values occur at the same time. In this case, the interrupt with higher sub-priority(less in value) will be handled first.
+
+- Priority grouping value decides how the Interrupt Priority register should be read:
+
+|Priority group |pre-empt priority field|sub-priority field   |
+|0(default)     |Bit[7:1]               |Bit[0]               |
+|1              |Bit[7:2]               |Bit[1:0]             |
+|2              |Bit[7:3]               |Bit[2:0]             |
+|3              |Bit[7:4]               |Bit[3:0]             |
+|4              |Bit[7:5]               |Bit[4:0]             |
+|5              |Bit[7:6]               |Bit[5:0]             |
+|6              |Bit[7:7]               |Bit[6:0]             |
+|7              |None                   |Bit[7:0]             |
+
+- We can change the Priority grouping by changing `PRIGROUP`: bit[8-10] of the **Application Interrupt And Reset Control Register**.
+- however, because the bit[0-3] in 8 bits of interrupt priority, so there are only five valid cases, the other cases are same with default mode:
+
+|Priority group |pre-empt priority field|sub-priority field   |
+|0(default)     |Bit[7:1]               |Bit[0]               |
+|4              |Bit[7:5]               |Bit[4:0]             |
+|5              |Bit[7:6]               |Bit[5:0]             |
+|6              |Bit[7:7]               |Bit[6:0]             |
+|7              |None                   |Bit[7:0]             |
+
+- What if two interrupts of the same pre-empt priority and sub priority hit the processor at the same time?
+  - *Interrupt with the lowest IRQ number will be allowdd first*.
+
+### 57. Interrupt Priority configuration: Exercise
+
+- Generate the below peripheral interrupts using NVIC interrupt pending register and observe the execution of ISRs priorities are same and different.
+  - TIM2 global interrupt.
+  - I2C1 event interrupt.
+
+```C
+#define IRQNO_TIMER2   28
+#define IRQNO_I2C1    31
+
+uint32_t *pNVIC_IPRBase = (uint32_t *) 0xE000E400;  // Interrupt Priority Base Register.
+uint32_t *pNVIC_ISPRBase = (uint32_t *) 0xE000E200; // Interrupt Set-Pending Base Register.
+uint32_t *pNVIC_ISERBase = (uint32_t *) 0xE000E100; // Interrupt Set-Enable Base Register.
+
+void configure_priority_for_irqs(uint8_t irq_no, uint8_t priority_value)
+{
+  /* 1. Set priority. */
+  uint8_t ipr_offset = (irq_no * 8) / 32;
+  uint32_t *ipr = pNVIC_IPRBase + ipr_offset;
+  uint8_t ipr_bit_pos = (irq_no * 8) % 32;
+  *ipr &= (0xFF << ipr_bit_pos); // Clear old priority byte.
+  *ipr |= (priority_value << ipr_bit_pos); // Set new priority byte.
+
+  /* 2. Set pending state. */
+  uint8_t ispr_offset = irq_no / 32;
+  uint32_t *ispr = pNVIC_ISPRBase + ispr_offset;
+  uint8_t ispr_bit_pos = irq_no % 32;
+  *ispr |=  (1 << ispr_bit_pos);
+
+  /* 3. Enable Interrupt. */
+  uint8_t iser_offset = irq_no / 32;
+  uint32_t *iser = pNVIC_ISERBase + iser_offset;
+  uint8_t iser_bit_pos = irq_no % 32;
+  *iser |=  (1 << iser_bit_pos);
+}
+
+int main(void)
+{
+  configure_priority_for_irqs(IRQNO_I2C1, 0b01100000); // enable I2C1 event interrupt with priority 6.
+}
+
+void TIM2_IRQHandler(void)
+{
+  printf("TIM2_IRQHandler.\n");
+  while(1)
+  {
+  }
+}
+
+void I2C1_EV_IRQHandler(void)
+{
+  printf("I2C1_EV_IRQHandler.\n");
+  configure_priority_for_irqs(IRQNO_TIMER2, 0b01000000); // enable timer 2 interrupt with priority 4.
+  while(1)
+  {
+  }
+}
+
+```
+
+### 58. Pending interrupt behavior

@@ -294,3 +294,47 @@
       - `addressLength`: Length of the address measured in bytes.
 
 - 15. SSL Client:
+
+## IP v6
+
+```C
+#define SERVER_IP_ADDRESS_6 "2451:4590:1269:105d::104"
+
+  struct rsi_sockaddr_in6 server_addr_6, client_addr_6;
+
+  unsigned char hex_addr[RSI_IPV6_ADDRESS_LENGTH] = { 0 };
+  uint32_t server_address_6[4];
+
+  status =
+    rsi_inet_pton6(SERVER_IP_ADDRESS_6, SERVER_IP_ADDRESS_6 + strlen(SERVER_IP_ADDRESS_6), hex_addr, server_address_6);
+
+  client_socket = rsi_socket(AF_INET6, SOCK_STREAM, 0);
+
+  // Memset client structrue
+  memset(&client_addr_6, 0, sizeof(client_addr_6));
+  // Set family type
+  client_addr_6.sin6_family = AF_INET6;
+  // Set local port number
+  client_addr_6.sin6_port = htons(PORT_NUM);
+  // Bind socket
+  status = rsi_bind(client_socket, (struct rsi_sockaddr_in *)&client_addr_6, sizeof(client_addr_6));
+  if (status != RSI_SUCCESS) {
+    status = rsi_wlan_get_status();
+    rsi_shutdown(client_socket, 0);
+    LOG_PRINT("\r\nBind Failed, Error code : 0x%lX\r\n", status);
+    return status;
+  }
+  LOG_PRINT("\r\nBind Success\r\n");
+
+  // Set server structure
+  memset(&server_addr_6, 0, sizeof(server_addr_6));
+
+  // Set server address family
+  server_addr_6.sin6_family = AF_INET6;
+  // Set server port number, using htons function to use proper byte order
+  server_addr_6.sin6_port = htons(SERVER_PORT);
+  // Set IP address to localhost
+  memcpy(server_addr_6.sin6_addr._S6_un._S6_u32, server_address_6, RSI_IPV6_ADDRESS_LENGTH);
+    status = rsi_connect(client_socket, (struct rsi_sockaddr_in *)&server_addr_6, sizeof(server_addr_6));
+
+```
