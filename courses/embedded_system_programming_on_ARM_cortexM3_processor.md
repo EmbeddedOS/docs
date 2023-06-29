@@ -1323,3 +1323,68 @@ void I2C1_EV_IRQHandler(void)
 ```
 
 ### 58. Pending interrupt behavior
+
+- Case 1: Single Pended Interrupt
+  - When an interrupt request occurs, pending bit is set:
+    - processor swith to handler mode: stacking & vector fetch
+    - When interrupt handler start running:
+      - Pending bit is clear.
+      - Interrupt Active Status Bit is set.
+    - when exception return:
+      - Interrupt Active Status Bit is clear.
+      - Processor unstacking and switch to thread mode.
+
+- Case 2: Double pended interrupt:
+  - The pending bit of current interrupt will be pended again if there is new interrupt with higher priority occurs.
+  - If the new interrupt with low priority occurs, it will be hold on pending state.
+
+## 13. Exception entry and exit sequences
+
+### 59. Exception entry and exit sequences
+
+- Exception Entry Sequence:
+  - 1. Pending bit set.
+  - 2. Stacking and Vector fetch.
+  - 3. Entry into the handler and Active bit set.
+  - 4. Clears the pending status (processor does it automatically).
+  - 5. Now processor mode changed to handler mode.
+  - 6. Now handler code is executing.
+  - 7. The MSP will be used for any stack operations inside the handler.
+
+- Exception Exit Sequence:
+  - In Cortex-M3/M4 processors the exception return mechanism is triggered using a special return address called `EXC_RETURN`.
+  - `EXC_RETURN` is generated during exception entry and is stored in the LR.
+  - When `EXC_RETURN` is written to PC it triggers the exception return.
+
+- `EXC_RETURN` when it is generated?
+  - During an exception handler entry, the value of the return address(PC) is not stored in the LR as it is done during calling of a normal C function. Instead the exception mechanism stores **the special value called EXC_RETURN in LR**.
+
+- Decoding `EXC_RETURN` value:
+
+|Bits   |Descriptions                 |Values                                                 |
+|-------|-----------------------------|-------------------------------------------------------|
+|31:28  |EXC_RETURN indicicator       |0xF                                                    |
+|27:5   |Reserved(all 1)              |0xEFFFFF                                               |
+|4      |Stack frame type             |always 1 when floating point unit is not available.    |
+|3      |Return mode                  |1 = return to thread mode, 0 = return to handler mode  |
+|2      |Return stack                 |1 = return with PSP, 0 = return with MSP               |
+|1      |Reserved                     |0                                                      |
+|0      |Reserved                     |1                                                      |
+
+- For example `EXC_RETURN` = `0xFFFFFFF1` return handler mode, exception return gets state from the main stack. Execution uses MSP after return.
+
+### 60. Analyzing stack contents during exception entry and exit
+
+- Saved registers:
+  |XPSR |
+  |PC   |
+  |LR   |
+  |R12  |
+  |R3   |
+  |R2   |
+  |R1   |
+  |R0   |
+
+- When the `EXC_RETURN` is put on the `PC` register, exception exit will be triggered.
+  - `EXC_RETURN` = `0xFFFFFFF9` means exception return to thread mode and get state from main stack, execution uses MSP after return.
+  - After that PC get return address from stack frame and jump to it.
