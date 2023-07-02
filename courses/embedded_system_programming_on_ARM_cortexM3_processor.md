@@ -1432,5 +1432,193 @@ void I2C1_EV_IRQHandler(void)
   - 3. Execution of break point instruction when both halt mode and debug monitor is disabled.
   - 4. Executing SVC instruction inside SVC handler.
 
-- For example: an Configurable exceptions (usage, mem manage, bus fault) issues, Is Configurable exception enabled?
-  - yes - 
+- For example:
+  - An Configurable exceptions (usage, mem manage, bus fault) issues, Is Configurable exception enabled?
+    - No - Escalated to hardfault (FORCED) -> Hardfault handler.
+    - Yes - Handled by configurable exceptions handlers.
+  - Bus fault during vector fecth from vector table ---Always escaleted to hard fault---> Hardfault handler.
+
+- HardFault Status Register:
+  - bit[1]: VECTTBL - Indicates a BusFault on a vector table read during exception processing:
+    - 0 - no BusFault on vector table read.
+    - 1 - Busfault on vector table read,
+    - This error is always handled by the hard fault handler.
+
+### 63. Other configurable faults
+
+- Mem manage fault exception:
+  - This is a configurable fault exception. Disabled by default.
+  - You can enable this exception by configuring the processor register **System Handler Control and State Register (SHCSR)**
+  - When mem manage fault happens mem manage fault exception handler will be executed by the processor.
+  - Priority of this fault exception is configurable.
+
+- Causes:
+  - 1. As its name indicate this fault exception triggers when memory access violation is detected (access permission, etc).
+  - 2. Unprivileged thread mode code (such as user code in RTOS) tries to access memory region which is marked as *privileged access only* by the MPU.
+  - 3. Writing to memory regions which are marked as read-only by the MPU4.
+  - 4. This fault can also be triggered when trying to execute program code from *peripheral* memory regions. Peripheral memory regions are marked as XN (eXecute Never) regions by the processor design to avoid code injection attacks through peripherals.
+
+- Bus fault exception:
+  - This is a configurable fault exception. Disabled by default.
+  - You can enable this exception by configuring the processor register **System Handler Control and State Register (SHCSR)**
+  - When Bus fault happens Bus fault exception handler will be executed by the processor.
+  - Priority of this fault exception is configurable.
+
+- Causes:
+  - 1. Due to error response returned by the processor bus interfaces during access to memory device.
+    - During instruction fetch.
+    - During data read or write to memory devices.
+  - 2. If bus error happens during vector fetch, it will be escalated to a hard fault even if bus fault exception is enabled.
+  - 3. Memory device sends error response when the processor bus interface tries to access invalid or restricted memory locations whicl could generate a bus fault.
+  - 4. When the device is not ready to accept memory transfer.
+  - 5. You may encounter such issues when you play with external memories such as SDRAM connected via DRAM controllers.
+  - 6. Unprivileged access to the private peripheral bus.
+
+- Usage fault exception:
+  - This is a configurable fault exception. Disabled by default.
+  - You can enable this exception by configuring the processor register **System Handler Control and State Register (SHCSR)**
+  - When Usage fault happens Usage fault exception handler will be executed by the processor.
+  - Priority of this fault exception is configurable.
+
+- Causes:
+  - 1. Execution of undefined instruction (M4 only supports thumb ISA).
+  - 2. Executing floating point instruction keep floating point unit is disabled.
+  - 3. Trying to switch to ARM state to execute ARM ISA instructions. The T bit of the processor decides ARM state or THUMB state. Making T bit is 0 would result in a fault.
+  - 4. Trying to return to thread mode when an exception/interrupt is still active.
+  - 5. Unaligned memory access with multiple load or multiple store instructions.
+  - 6. Attempt to divide by zero (if enabled, by default divide by zero results in zero).
+  - 7. For all unaligned data access from memory (only if enabled ,otherwise cortex M supports unaligned data access).
+
+### 64. Configurable fault exception exercise
+
+- Write a program to enable all configurable fault exceptions, implement the fault exception handlers and cause the fault by follwing method:
+  - 1. Execute an undefined instruction.
+  - 2. Divide by zero.
+  - 3. Try executing instruction from peripheral region.
+  - 4. Executing SVC inside the SVC handler.
+  - 5. Executing SVC instruction inside interrupt handler whose priority is same or lesser than SVC handler.
+
+- Enable configurable exceptions:
+
+```C
+  /* 1. Enable configurable system exceptions */
+  uint32_t *pSHCSR = (uint32_t *)0xE000ED24; // Get System Handler Control and State Register.
+
+  *pSHCSR |= (1 << 16); // Mem manage fault
+  *pSHCSR |= (1 << 17); // Bus fault
+  *pSHCSR |= (1 << 18); // Usage fault
+```
+
+- 1. Execute an undefined instruction:
+
+  ```C
+    /* Test execute undefined instructions.*/
+    uint32_t *pSRAM = (uint32_t *) 0x20010000;
+    *pSRAM = 0xFFFFFFFF;
+    void (*some_func_ptr)(void);
+    some_func_ptr = *pSRAM;
+
+    // Jump to invalid opcode.
+    some_func_ptr();
+  ```
+
+  - The MemManage_Handler is issued.
+
+- Detect fault causes:
+  - Fault status and address information:
+    - When a fault happens, inside the fault handler, you can check a couple of fault status and address information registers to get more details about the fault and the instruction address at which the fault happened. This will be helpful during debugging.
+
+  - Registers:
+    - HardFault Status Register
+    - MemManage Fault Status Register
+    - BusFault Status Register
+    - UsageFault Register
+
+### 65. Analyzing stack frame
+
+- When a exception triggers, *Stacking of thread mode context* will be occurs. And then the handler mode is executed.
+
+- Stack looks like:
+  Top of stack before exception SP (MSP) ------>|Previous stack content |   Memory (+)
+                                          SP-4  |         XPSR          |     /\
+                                          SP-8  |          PC           |     ||
+                                          SP-12 |          LR           |     ||
+                                          SP-16 |          R12          |     ||
+                                          SP-20 |          R3           |     ||
+                                          SP-24 |          R2           |     ||
+                                          SP-28 |          R1           |     ||
+  Top of stack after exception triggers ->SP-32 |          R0           |     ||
+            SP (MSP)
+
+- We can get value of MSP in Exception handler and dump it, for example:
+
+```C
+void MemManage_Handler(void)
+{
+  __asm ("MRS R0, MSP");
+  register uint32_t msp_value __asm("r0");
+  uint32_t *pMSP = (uint32_t *)msp_value;
+  // Do some thing with MSP
+
+  printf("MemManage_Handler\n");
+  while(1);
+}
+```
+
+- Or capture it in `naked` function and pass to C function, as below:
+
+```C
+__attribute__((naked)) void MemManage_Handler(void)
+{
+  __asm("MRS R0, MSP");
+  __asm("B MemManage_Handler_in_c"); // RO is passed to MemManage_Handler_in_c as first argument.
+}
+
+void MemManage_Handler_in_c(uint32_t * base_stack_frame)
+{
+  // Do some thing with MSP
+  printf("MSP value: %p\n", base_stack_frame);
+  printf("R0 value: %lx\n", base_stack_frame[0]);
+  printf("R1 value: %lx\n", base_stack_frame[1]);
+  printf("R2 value: %lx\n", base_stack_frame[2]);
+  printf("R3 value: %lx\n", base_stack_frame[3]);
+  printf("R12 value: %lx\n", base_stack_frame[4]);
+  printf("LR value: %lx\n", base_stack_frame[5]);
+  printf("PC value: %lx\n", base_stack_frame[6]);
+  printf("XPSR value: %lx\n", base_stack_frame[7]);
+  while(1);
+}
+```
+
+- Value print on screen:
+
+```text
+MSP value: 0x2001ffc8
+R0 value: 20000000
+R1 value: 20000064
+R2 value: ffffffff
+R3 value: ffffffff
+R12 value: 0
+LR value: 80002d5
+PC value: fffffffe
+XPSR value: 61000000
+```
+
+- Test divide by zeeo:
+
+```C
+  /* 1. Enable divide by zero trap. */
+  uint32_t *pCCR = (uint32_t *)0xE000ED14; // Configuration and Control Register.
+  *pCCR |= (1 << 4);
+
+  int x = 0;
+  int y = 5/x;
+```
+
+- Summary error reporting when fault happens:
+  - Implement the handler which takes some remedial actions.
+  - Implement a user call back to report errors.
+  - Reset the micro-controller/processor.
+  - For an OS environment, the task that triggered the fault can be terminated and restarted.
+  - Report the fault status register and fault address register values.
+  - Report additional information of stack frame through debug interface such as printf.
