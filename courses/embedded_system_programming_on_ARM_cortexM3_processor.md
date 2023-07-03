@@ -1622,3 +1622,93 @@ XPSR value: 61000000
   - For an OS environment, the task that triggered the fault can be terminated and restarted.
   - Report the fault status register and fault address register values.
   - Report additional information of stack frame through debug interface such as printf.
+
+## 15. Exception for system level services
+
+### 68. SVC Exception
+
+- ARM cortex Mx Processor supports 2 important system-level service exceptions.
+  - SVC (SuperVisor Call) and PendSV(Pendable SerVice)
+
+- Supervisory calls are typically used to request privileged operations or access to system resource from operating system.
+
+- SVC exception is mainly used in an OS environment. For example, A less priviliged user task can trigger SVC exception to get system-level services (like accessing device drivers, peripherals) from the kernel of the OS.
+
+- PendSV is mainly used in an OS environment to carry out context switching between 2 or more tasks when no other exceptions are active on the system.
+
+- SVC (Supervisor Call) Instruction:
+  - SVC is a thumb ISA instruction which causes SVC exception.
+  - In an RTOS scenario, user tasks can execute SVC instruction with an associated argument to make supervisory calls to seek privileged resources from the kernel.
+  - Unprivileged user tasks use the SVC instruction to change the processor mode to privileged mode to access privileged resources like peripherals.
+  - SVC instruction is always used along with a number, which can be used to identify the request type by the kernel code.
+  - The SVC handler executes right after the SVC instruction (no delay, unless a higher priority exception arrives at the same time).
+
+- This instruction similar a `system call` in OS environment:
+
+User level code (SVC)--> Kernel level code:
+                         __SVC_request_handler(int svc_number)
+                         {
+                          case 1:
+                            __write(); --------> Privileged resource \
+                                                 (display), peripheral registers \
+                                                 access is protected by MPU.
+                          case 2:
+                            __read();
+                          case 3:
+                            __timer_start();
+                         }
+
+- User level code can not access directly to the privileged resource.
+  -> Mem manage fault exception will be trigger and kernel will kill this task.
+
+- Methods to trigger SVC exception
+  - There are two ways:
+    - 1. Direct execution of SVC instruction with an immediate value. Example: `SVC #0x04` in assembly (using SVC instruction is very efficient in terms of latency)
+    - 2. Setting the exception pending bit in `System Handler Control and State Register` (uncommon method)
+
+### 69. Extracting SVC number
+
+- How to extract the SVC number:
+  - The SVC instruction has a number embedded within it, often reffered to as the SVC number.
+  - In the SVC handler, u should fetch the opcode of the SVC instruction and then extract the SVC number.
+  - To fetch the opcode of SVC instruction from program memory, we should have the of PC (return address) where the user code had interrupted while triggering the SVC exception.
+  - The value of the PC (return address) where the user code had interrupted is stored in the stack as a part of exception entry sequence by the processor.
+
+- To get the SVC number, we need to get stack frame of the current thread when it trigger SVC exception. So when we have it, we can calculate data of return address (PC) ( for example `base_stack_frame[6]`).
+
+- SVC number = *((Next_ins_addr_after_svc) - 2)
+  - `(Next_ins_addr_after_svc) - 2` this gives the address, where SVC instruction is stored in the code memory.
+
+### 70. SVC number exercise
+
+- First we get return address, that is stored in PC register, this address actually is next instruction in thread mode (in that case, that is address of for loop).
+- After get the address, we will decrease the address to point to previous instruction -> that actually is SVC instruction.
+- After get SVC instruction address, this is memory and hold data is instruction. So we read value of it and get the SVC number.
+
+```C
+int main(void)
+{
+  __asm("SVC #8");
+  for(;;);
+}
+
+__attribute__((naked)) void SVC_Handler(void)
+{
+  __asm("MRS R0,MSP");
+  __asm("B SVC_Handler_In_C");
+}
+
+void SVC_Handler_In_C(uint32_t* pBaseOfStackFrame)
+{
+  /* 1. Get return address. */
+  uint8_t *pReturn_addr = (uint8_t *) pBaseOfStackFrame[6];
+
+  /* 2. Decrement the return address by 2 to point to opcode of the SVC instruction in
+   * the program memory. */
+  pReturn_addr -= 2;
+
+  /* 3. Extract the SVC number (LSByte of the opcode). */
+  uint8_t svc_number = *pReturn_addr;
+  printf("SVC number is: %d\n", svc_number);
+}
+```
