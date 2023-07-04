@@ -1689,6 +1689,9 @@ User level code (SVC)--> Kernel level code:
 int main(void)
 {
   __asm("SVC #8");
+  register uint32_t result __asm("r0");
+  printf("Result is: %d\n", result);
+
   for(;;);
 }
 
@@ -1710,5 +1713,38 @@ void SVC_Handler_In_C(uint32_t* pBaseOfStackFrame)
   /* 3. Extract the SVC number (LSByte of the opcode). */
   uint8_t svc_number = *pReturn_addr;
   printf("SVC number is: %d\n", svc_number);
+
+  /* 4. Return value to the thread mode via R0 register. */
+  pBaseOfStackFrame[0] = 0;
 }
 ```
+
+- To put the result back to the thread mode we use the R0 register, this register currently is store at stackframe (before it is automatically restored by the processor.)
+
+### 73. PendSV exception
+
+- It is an exception type 14 and has a programable priority level.
+- This exception is triggered by setting its pending status by writing to the `Interrupt Controll and State Register` of processor.
+
+- Triggering a pendSV system exception is a way of invoking the preemptive kernel to carry out the context switch in an OS environment.
+- In an OS environment, PendSV handler is set to the lowest priority level, and the pendSV handler carries out the context switch operation.
+
+- Typical use of PendSV:
+  - Typically this exception is triggered inside a higher priority exception handler, and it gets executed when the higher priority handler finishes.
+  - Using this characteristic, we can schedule the PendSV exception handler to be executed after all the other interrupt processing tasks are done.
+  - This is very useful for a context switching operation, which is a crucial operation in various OS design.
+  - Using PendSV in context switching will be more efficient in an interrupt noisy environment.
+  - In an interrupt noisy environment, *and we need to delay the context switch until all IRQ are executed*.
+
+- Context switching:
+  - Every 1 ms, system timer emit exception and in the sys-tick handler we will pend the pendSV. We don't do the context switching in the systick handler.
+  - When the systick handler exit:
+    - If no pending interrupts, the PendSV handler will be run: context switching will be run also. And then user task can be run.
+    - If have another interrupts is pending, these have higher priority to pendSV, so, the pendSV as context Switching will be pend until any interrupt with higher priority exit.
+
+- Offloading Interrupt Processing Using PendSV
+  - Interrupts may be serviced in 2 halves:
+    - 1. The first is the time critical part that needs to be executed as a part of ISR.
+    - 2. The second half is called bottom half, is basically delayed execution where rest of the time-consuming work will be done.
+
+  - So, PendSV can be used in these cases, to handle the second half execution by triggering it in the first half.
