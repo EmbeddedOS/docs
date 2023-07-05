@@ -1748,3 +1748,47 @@ void SVC_Handler_In_C(uint32_t* pBaseOfStackFrame)
     - 2. The second half is called bottom half, is basically delayed execution where rest of the time-consuming work will be done.
 
   - So, PendSV can be used in these cases, to handle the second half execution by triggering it in the first half.
+
+## 16. Implementation of task scheduler
+
+### 74. Introduction
+
+- Let's implement a scheduler which schedules multiple user tasks in a round-robin fashion by carrying out the context switch operation.
+- Round robin scheduling method is, time slices are assigned to each task in equal portions and in circular order.
+- First will use systick handler to carry out the context switch operation between multiple tasks.
+- Later will we change the code using pendSV handler.
+
+- What is a task?
+  - It is nothing but a piece of code, or u can call it a `C` function. Which does a specific job when it is allowed to run on the CPU.
+  - A task has its own stack to create its local variables when it runs on the CPU. Also when scheduler decides to remove a task from CPU, scheduler first saves the context (state) of the task in task's private stack.
+  - So, in summary, a piece code or a function is called a task when it is schedulable and never loses its `state` unless it is deleted permanently.
+
+### 76. Stack pointer selection
+
+|                                             |Private   |Private |Private |Private |Private |
+|                                             |Stack     |Stack   |Stack   |Stack   |Stack   |
+|                                             |Scheduler |T4      |T3      |T2      |T1      |
+|                                             |   1kb    |  1kb   |  1kb   |  1kb   |   1kb  |
+RAM_START<-----------------------------(128KB of RAM (SRAM1 +SRAM2))----------------->RAM_END
+
+- Total size we use for tasks and scheduler is 5KB. With end of this task will be start of next one.
+
+### 77. Tasks and scheduling
+
+- Scheduling policy selection
+  - We will be using round robin pre-emptive scheduling.
+  - No task priority.
+  - We will use SysTick Timer to generate  exception for every 1 ms to run the scheduler code.
+
+- What is scheduling?
+  - Scheduling is an algorithm which takes the decision of preempting a running task from the CPU and takes the decision about which task should run on the CPU next.
+  - The decision could be based on many factors such as system load, the priority of tasks shared resource access, or a simple round-robin method.
+
+- What is context switch?
+  - Context switching is the procedure of switching out of the currently running task from the CPU after saving the task's execution context or state and switching in the next task's to run on the CPU by retrieving the past execution context or state of the task.
+
+- What is execution context or state of a task?
+  - State of a task:
+    - General purpose registers (R0->R12) + some special registers (PSP, LR, PC) + status registers.
+
+- When scheduler decides to switch out a task, it should preserve these registers in task's private stack. Because these registers collectively represent current execution state of the Task. This state must be retrieved back again when scheduler decides to run the this task again in later time.
