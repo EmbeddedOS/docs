@@ -1792,3 +1792,61 @@ RAM_START<-----------------------------(128KB of RAM (SRAM1 +SRAM2))------------
     - General purpose registers (R0->R12) + some special registers (PSP, LR, PC) + status registers.
 
 - When scheduler decides to switch out a task, it should preserve these registers in task's private stack. Because these registers collectively represent current execution state of the Task. This state must be retrieved back again when scheduler decides to run the this task again in later time.
+
+### 78. Case study of context switching
+
+- Case of T1 switching out, T2 switching in:
+        |       Running task 1        |
+                    ||
+                    \/
+        |   Save the context of T1    | PUSH \
+        |   to T1's private stack     |       |
+                    ||                        |=> context saving
+                    \/                        |
+        | Save the PSP value of T1    |      /
+                    ||
+                    \/
+        |   Get current PSP value     |     \
+        |          of T2              |      |
+                    ||                       |=> context retrieving
+                    \/                       |
+        |   Retrieve the context of   | POP /
+        | T2 from T2's private stack  |
+                    ||
+                    \/
+        |         Run T2              |
+
+### 79. Configure systick timer
+
+- System clock (16Mhz) -----Processor clock (16MHz)---> Processor
+                        \---Count clock (16MHz)-------> Systick timer
+
+- Systick count value calculation:
+  - Processor clock = 16MHz
+  - 1ms is 1KHz in frequency domain.
+  - So, to bring down systick timer count clock from 16MHz to 1KHz use a divisor (reload value).
+  - Reload value = 16000.
+  - 16MHz /16000 = 1k Hz (TICK_HZ Desired exception frequency)
+
+- Systick timer count clock = 16MHz, so for 1 count it takes 0.0625 micro seconds:
+  - 0.0625 us delay = 1 count
+  - 1 us = 16 count
+  - 1 ms = 16000 count
+
+```C
+void init_stick_timer(uint32_t tick_hz)
+{
+  uint32_t count = SYSTICK_TIM_CLOCK/tick_hz - 1;
+  uint32_t *pSYST_RVR = (uint32_t *)0xE000E014;   // Get Sys-tick reload value register.
+  uint32_t *pSYST_CSR = (uint32_t *)0xE000E010;   // Get Sys-tick control and status register.
+
+  /* 1. Clear and setup reload register. */
+  *pSYST_RVR &= ~(0xFFFFFFFF);
+  *pSYST_RVR |= count;
+
+  /* 2. Enable sys-tick timer. */
+  *pSYST_CSR |= (1 << 1); // Enable exception request.
+  *pSYST_CSR |= (1 << 2); // Using processor clock source.
+  *pSYST_CSR |= (1 << 0); // Enable Sys-tick timer.
+}
+```
