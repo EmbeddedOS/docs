@@ -1850,3 +1850,54 @@ void init_stick_timer(uint32_t tick_hz)
   *pSYST_CSR |= (1 << 0); // Enable Sys-tick timer.
 }
 ```
+
+### 80. Case study of context switching
+
+- Save stack of Task 1:
+  - When task 1 is running a systick handler occurs, processor performs stacking automatically (XPSR, PC, LR, R12, R3, R2, R1 R0) (that is called as Stack Frame 1 - SF1)before switching to handler mode. when performs Stacking, processor use current stack pointer (for example, in thread mode, processor will be using PSP (if used before), in handler mode, processor will be used the MSP).
+  - So we need to push the other part (R4, R5, R6, R7, R8, R9, R10, R11) to stack. So we will call it as Stack frame 2 (SF2).
+
+  - And finally, we need to save the value of PSP. Because it is required later when processor needs to resume the execution of T1 by retrieving its saved state.
+
+- Retrieve (POP) context of Task 2:
+  - When Sys-tick handler exit, we will point PSP to Stack Frame 2 of Task 2, so, the processor will retrieve context of task 2 from that.
+
+- Task's stack area init and storing of dummy Stack Frame:
+  - Each task can consume a maximum of 1KB of memory as a private stack.
+  - This stack is used to hold tasks local variables and context (Stack Frame 1 + Stack Frame 2).
+  - When a Task is getting scheduled for the very first time, it doesn't have any context. So, the programmer should store *dummy* Stack Frame 1 and Stack Frame 2 in Task's stack area as a part of *task initialization* sequence before launching the scheduler.
+
+- Dummy initial context of a Task:
+
+|                 | Task 1 Stack Area
+|-----------------|
+|      xPSR       | Task 2 Stack Area \
+|       PC        |                   |
+|       LR        |                   |
+|       R12       |                   |=> Stack Frame 1 of task 2
+|       R3        |                   |
+|       R2        |                   |
+|       R1        |                   |
+|       R0        |-------------------/
+|       R11       |-------------------\
+|       R10       |                   |
+|       R9        |                   |
+|       R8        |                   |=> Stack Frame 2 of task 2
+|       R7        |                   |
+|       R6        |                   |
+|       R5        |                   |
+|       R4        |-------------------/ <= (SP) PSP
+|                 |
+|-----------------|
+|                 | Task 3 Stack Area
+|-----------------|
+
+- NOTE: When we dummy the Stack Frames:
+  - `xPSR` we should note about the T bit, that should be is 1. So value of the register look like: `0x01000000`
+  - The Return address(PC) should be address of the task 2 handler (And make sure that LSB of the address is 1).
+  - The LR should be contained a special value (EXC_RETURN) which controls the exception exit.
+    - That should be `0xFFFFFFFD`: Returns to Thread Mode, Exception return uses non-floating-point state from the PSP and execution uses PSP after return.
+
+### 81. Initialization of stack
+
+- Initialize scheduler stack pointer (MSP)
