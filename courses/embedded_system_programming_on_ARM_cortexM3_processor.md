@@ -2032,3 +2032,78 @@ void SysTick_Handler(void)
   *pICSR |= (1 << 28);
 }
 ```
+
+## 17. Bare metal embedded and linker scripts
+
+### 93. Bare metal embedded
+
+### 94. Cross compilation and toolchains
+
+- What is cross compilation?
+  - Cross-compilation is a process in which the cross-toolchain runs on the host machine (PC) and creates executables that run on different machine (ARM).
+
+- Cross compilation tool chains
+  - Toolchain or a cross-compilation toolchain is a collection of binaries which allows u to compile, assemble, link your applications:
+    - It also contains binaries to debug the application on the target.
+  - Toolchain also comes with other binaries which help u to analyze the executables:
+    - dissect different sections of the executable.
+    - disassemble.
+    - extract symbol and size information.
+    - convert executable to other formats such as bin, ihex.
+    - provides `C` standard libraries.
+
+- Popular tool-chains:
+  - 1. GNU tools GCC - for ARM Embedded Processors.
+  - 2. armcc from ARM (Not Free).
+
+- Downloaf GCC toolchains for ARM: [link](https://developer.arm.com/downloads/-/gnu-rm)
+
+- compile, linker, assembler: arm-none-eabi-gcc
+- ELF analyzer: arm-none-eabi-objdump, arm-none-eabi-readelf, arm-none-eabi-nm
+- Assembler: arm-none-eabi-as
+- linker: arm-none-eabi-ld
+- Format converter: arm-none-eabi-objcopy
+
+### 96. Build process
+
+- Compiler do: main.c -Pre-processing--> main.i --generate to arch machine code ---> main.s ---Assembler stage convert to opcodes ---> main.o
+- With multiple re-locatable object files with other libaries (optional), linker could be generate final executable or debug file, etc.
+
+-> This will be done, simply with one command: arm-none-eabi-gcc
+
+### 97. compiler flags
+
+- To build project we need to specify the CPU architecture, if u don't, the executable will not able to run on the target or compiler error when building executable (using asm inline), for example:
+
+```bash
+arm-none-eabi-gcc -c main.c -o main.o
+```
+
+- for example, error output:
+
+```text
+Error: selected processor does not support requested special purpose register --- `msr MSP,r3`
+```
+
+- We will use the flag: `-mcpu=cortex-m4`
+
+- And we should select between generating code that executes in ARM and Thumb states. USing the `-mthumb` or `-marm` flags.
+
+- Final building a file command look like:
+
+```bash
+arm-none-eabi-gcc -c -mcpu=cortex-m4 -mthumb main.c -o main.o
+```
+
+- Using makefile to build:
+
+```makefile
+CC=arm-none-eabi-gcc
+MACH=cortex-m4
+CFLAGS= -c -mcpu=$(MACH) -mthumb -std=gnu11 -o0
+
+main.o: main.c
+  $(CC) $(CFLAGS) $^ -o $@
+```
+
+- With `$^` denotes dependency (main.c in this case) and `$@` indicates the target (main.o in this case).
