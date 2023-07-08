@@ -1901,3 +1901,134 @@ void init_stick_timer(uint32_t tick_hz)
 ### 81. Initialization of stack
 
 - Initialize scheduler stack pointer (MSP)
+
+### 87. Blocking state of tasks
+
+- When a task has got nothing to do, it should simply call a `delay()` function which should put the task into the blocked state from running state until the specified delay is elapsed.
+
+- We should now maintain 2 states for a task: RUNNING and BLOCKED
+- The scheduler should schedule only those tasks which are in RUNNING state.
+- The scheduler also should unblock the blocked tasks of their blocking period is over and put them back to running state.
+
+- We will maintain Task Control Block structure for each task.
+
+```C
+typedef struct {
+  uint32_t psp_value;
+  uint32_t block_count;
+  uint8_t run_state;
+  void (*task_handler)(void);
+}TCB_t;
+
+static TCB_t user_tasks[MAX_TASKS] = {
+    {.psp_value = TASK_1_STACK_START, .run_state = USER_TASK_RUNNING_STATE, .block_count = 0, .task_handler = task_1_handler},
+    {.psp_value = TASK_2_STACK_START, .run_state = USER_TASK_RUNNING_STATE, .block_count = 0, .task_handler = task_2_handler},
+    {.psp_value = TASK_3_STACK_START, .run_state = USER_TASK_RUNNING_STATE, .block_count = 0, .task_handler = task_3_handler},
+    {.psp_value = TASK_4_STACK_START, .run_state = USER_TASK_RUNNING_STATE, .block_count = 0, .task_handler = task_4_handler}
+};
+```
+
+### 88. Blocking a task for a given number of ticks
+
+- Let's introduce a function called `task_delay()` which puts the calling task to the blocked state for a given number of ticks.
+  - E.g. `task_delay(1000);` if a task calls this function then `task_delay()` function puts the tasks into blocked state and allows the next task to run on the CPU.
+  - Here, the number 1000 denotes a block period in terms of ticks, the task who calls this function is going to block for 1000 ticks (systick exceptions), i.e for 1000 ms since each tick happens for every 1ms.
+- The scheduler should check elapsed block period of each blocked task and put them back to running state if the block period is over.
+
+- IDLE task:
+  - What if all the tasks are blocked? who is going to run on the CPU?
+    - We will use the idle task to run on the CPU if all the tasks are blocked.
+    - The IDLE task is like user tasks but only runs when all user tasks are blocked, and you can put the CPU to sleep.
+    - The IDLE task will be always RUNNING.
+
+### 89. Global tick count
+
+- How does the scheduler decide when to put the blocked state tasks (blocked using task_delay function) back to the running state?
+- It has to compare the task's delay tick account with a global tick count.
+- So scheduler should maintain a global tick count update it for every sys-tick exception.
+
+### 90. Deciding next task to run
+
+- Deciding which task to run depends on `state` of the next task.
+  - IF the state is blocked, we will bypass it to the next task.
+  - The IDLE task always will be run.
+
+```C
+void update_next_task(void)
+{
+  current_task++;
+  current_task %= MAX_TASKS;
+
+  if (user_tasks[current_task].run_state != USER_TASK_READY_STATE)
+  { // Move to the next task, if current task is not ready.
+    update_next_task();
+  }
+}
+
+void idle(void)
+{
+  while(1);
+}
+```
+
+### 91. Implementing pendSV handler for context switch
+
+- PendSV handler
+  - We will use pendSV handler to carry out the context switch operation instead of systick handler.
+
+```C
+__attribute__((naked)) void PendSV_Handler(void)
+{
+  /* 1. Save the context of the current task. */
+  __asm volatile("MRS R0, PSP");          // Get current PSP.
+  __asm volatile("STMDB R0!, {R4-R11}");  // Save stack frame 2 start from current PSP.
+                                          // Stack frame 1 is automatically saved by
+                                          // processor when it switch to handle mode to handle
+                                          // Sys-tick exception.
+                                          // STMDB - Store Multiple Decrement Before (Store
+                                          // Multiple Full Descending) stores multiple registers to
+                                          // sequential memory locations using an address
+                                          // from a base register. `!` causing the instruction
+                                          // to write a modified value back to R0.
+                                          // So when we save done, the R0 will hold the current
+                                          // PSP value.
+
+  __asm volatile ("PUSH {LR}");           // Save LR before we Branch everywhere.
+  __asm volatile("BL save_psp_value");    // Save current PSP after push stack frame 2,
+                                          // with first argument is R0.
+  /* 2. Retrieve the context of the next task. */
+  __asm volatile("BL update_next_task");  // Increase the current task to next task.
+  __asm volatile("BL get_psp_value");     // Get PSP value of next task and store to R0.
+  __asm volatile("LDMIA R0!, {R4-R11}");  // Retrieve stack frame 2 start from PSP's next task.
+                                          // Stack frame 1 of the next task will be retrieved
+                                          // when exception exit automatically by processor.
+  __asm volatile("MSR PSP, R0");          // Update PSP value to stack frame 1 after retrieving
+                                          // Stack frame 2.
+  __asm volatile ("POP {LR}");
+
+  /* 3. Return to thread mode. */
+  __asm volatile("BX LR");
+}
+
+- Systick handler:
+
+```C
+void SysTick_Handler(void)
+{
+  /* 1. Increase global tick count. */
+  g_tick_count++;
+
+  /* 2. Unblock blocked tasks if its wake up time. */
+  for (int i = 1; i < MAX_TASKS; i++)
+  {
+    if (user_tasks[i].run_state == USER_TASK_BLOCKED_STATE && user_tasks[i].block_count == g_tick_count)
+    {
+      user_tasks[i].run_state = USER_TASK_READY_STATE;
+    }
+  }
+
+  /* 3. Pend the PendSV exception for context switching. */
+  uint32_t *pICSR = (uint32_t *)0xE000ED04; // Get Interrupt Control and State Register.
+  *pICSR |= (1 << 28);
+}
+```
