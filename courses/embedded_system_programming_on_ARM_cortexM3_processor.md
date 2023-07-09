@@ -2188,8 +2188,70 @@ main.o: main.c
 
 - `.bss` (block started by symbol) and `.data` section.
   - All the uninitialized global variables and uninitialized static variables are stored in the `.bss` section.
-  - Since those variables do not have any initial values, they are not required to be stored in the `.data` section since the `.data` section consumes FLASH space. Imagine what would happen if there is a large global uninitialized array in the program, and if that is kept in the `.data` section, it would unnecessarily consume flash space yet carries no useful information at all.
+  - Since those variables do not have any initial values, they are not required to be stored in the `.data` section since the `.data` section consumes FLASH space. Imagine what would happen if there is a large global uninitialized array in the program, and if that is kept in the `.data` section, it would unnecessarily **consume flash space** yet carries no useful information at all.
 
 - `.bss` section doesn't consume any FLASH space unlike `.data` section.
 - You must reserve RAM space for the `.bss` section by knowing its size and initialize those memory space to zero. This is typically done in start up code.
 - Linker helps u to determine the final size of the `.bss` section. So, obtain the size information from a linker script symbols.
+
+### 104. Startup file in micro-controlller
+
+- The startup file is responsible for setting up the right environment for the main user code to run.
+- Code written in startup file runs before main(). So, u can say start up file calls main().
+- Some part of the startup code file is the target (processor) dependent.
+- Startup code takes care of vector table placement in code memory as required by ARM cortex Mx processor.
+- Startup code may also take care of stack reinitialization.
+- Startup code is responsible of `.data`, `.bss` section initialization in main memory.
+
+### 105. Write start up code
+
+- First of all, create a vector table:
+  - create an array to hold MSP and handlers addresses:
+    `uint32_t vector[] = {store MSP and address of various handlers here};`
+  - Instruct the linker not to include the above array in `.data` section but not in different user defined section.
+
+```C
+/* ISR vector table, we need to store that variable in start of
+ * `.code` section.
+ */
+uint32_t vector_table[] __attribute__((section(".isr_vector"))) = {
+    STACK_START,                // Configure MSP points to stack start.
+    (uint32_t)Reset_Handler     // Called automatically by processor.
+};
+```
+
+- We need to store this variable in start of code section, so we temporary push it into `.isr_vector` and using linker to relocate later.
+
+- U can check sections of object file with: `arm-none-eabi-objdump -h stm32_startup.o` output look like:
+
+```text
+stm32_startup.o:     file format elf32-littlearm
+
+Sections:
+Idx Name          Size      VMA       LMA       File off  Algn
+  0 .text         0000000c  00000000  00000000  00000034  2**1
+                  CONTENTS, ALLOC, LOAD, READONLY, CODE
+  1 .data         00000000  00000000  00000000  00000040  2**0
+                  CONTENTS, ALLOC, LOAD, DATA
+  2 .bss          00000000  00000000  00000000  00000040  2**0
+                  ALLOC
+  3 .isr_vector   00000008  00000000  00000000  00000040  2**2
+                  CONTENTS, ALLOC, LOAD, RELOC, DATA
+  4 .comment      00000034  00000000  00000000  00000048  2**0
+                  CONTENTS, READONLY
+  5 .ARM.attributes 0000002e  00000000  00000000  0000007c  2**0
+                  CONTENTS, READONLY
+```
+
+- We will define default handler for all exceptions using `alias` attribute:
+
+```C
+void __attribute__((alias("Default_Handler"))) NMI_Handler(void);
+void Default_Handler(void)
+{
+    while(1);
+}
+```
+
+- And the address of NMI_Handler will acctually is `Default_Handler`.
+- And if you make it as `weak` symbol, this will be allow to override with same function name in application code. There programmer can implement real implementation of handling that exception.
