@@ -2255,3 +2255,55 @@ void Default_Handler(void)
 
 - And the address of NMI_Handler will acctually is `Default_Handler`.
 - And if you make it as `weak` symbol, this will be allow to override with same function name in application code. There programmer can implement real implementation of handling that exception.
+
+### 108. Writing linker script
+
+- Linker scripts:
+  - Linker script is a text file which explains how different sections of the object file should be merged to create an output file.
+  - Linker and locator combination assigns unique absolute addresses to different sections of the output file by referring to address information mentioned in the linker script.
+  - Linker script also includes the code and data memory address and size information.
+  - Linker scripts are written using the GNU linker command language.
+  - GNU linker script has the file extension of `.ld`.
+  - You must supply linker script at the linking phase to the linker using -T option.
+
+- Linker scripts commands:
+  - `ENTRY`:
+    - This command is used to set the `Entry point address` information in the header of final elf file generated.
+    - In our case, `Reset_Handler` is the entry point into the application. the first piece of code that executes right after the processor reset.
+    - The debugger uses this information to locate the first function to execute.
+    - Not a mandatory command to use, but required when u debug the ELF file using the debugger (GDB)
+    - Syntax: `Entry(_symbol_name_)`
+  - `MEMORY`:
+    - This command allows you to describe the different memories present in the target and their start address and size information.
+    - The linker uses information mentioned in this command to assign addresses to merged sections.
+    - The information is given under this command also helps the linker to calculate total code and data memory consumed so far and throw an error message if data, code, heap or stack areas cannot fit into available size.
+    - By using memory command, you can fine-tune various memories available in your target and allow different sections to occupy different memory areas.
+    - Typically one linker script has one memory command.
+    - Syntax:
+      MEMORY
+      {
+        name(attr): ORIGIN = origin, LENGTH = len
+      }
+    - With `name` defines name of the memory region which will be later referenced by other parts of the linker script. the `origin` define origin address of the memory region, the `len` define the length information.
+    - The `attr` define the attribute list of the memory region valid attribute lists must be made up of the characters `ALIRWX` that match section attributes.
+      - `R` Read-only sections.
+      - `W` Read-Write sections.
+      - `X` Sections containing executable code.
+      - `A` Allocated sections.
+      - `I` initialized sections.
+      - `L` Same as `I`.
+      - `!` Invert the sense of any of the following attributes.
+    - In our case, we have Flash size is 1024KB, SRAM1 is 112KB, and SRAM2 is 16KB.
+
+      ```linker
+      memory
+      {
+          FLASH(rx): ORIGIN=0x08000000, LENGTH=1024K
+          SRAM(rwx): ORIGIN=0x20000000, LENGTH=128K
+      }
+      ```
+
+  - `SECTIONS`:
+  - `KEEP`:
+  - `ALIGN`:
+  - `AT>`:
