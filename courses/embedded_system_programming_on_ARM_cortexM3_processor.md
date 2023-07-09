@@ -2107,3 +2107,89 @@ main.o: main.c
 ```
 
 - With `$^` denotes dependency (main.c in this case) and `$@` indicates the target (main.o in this case).
+
+### 99. Analyzing relocatable object files
+
+- Analyzing object files (relocated object files):
+  - `main.o` is in ELF format (Executable and linkable format).
+  - ELF is a standard file format for object files and executable files when you use GCC.
+  - A file format standard describes a way of organizing various elements (data, read-only data, code, uninitialized data, etc.) of a program in different sections.
+
+- Other file formats:
+  - The Common Object File Format (COFF): Introduced by UNIX System V
+  - Arm Image Format (AIF): Introduced by ARM
+  - SRECORD: Introduced by Motorola
+
+- In relocatable object file. It doesn't contain any absolute addresses for data and code.
+
+### 100. code and data of a program
+
+- In a program code operates on data.
+- Instructions (codes) are stored in FLASH memory of the microcontroller.
+- Data (variables) are stored in main memory (RAM).
+- Why data is stored in RAM but not in FLASH?
+  - Because, data are nothing, but variables and they may change at anytime during runtime of the program.
+  - So, it makes sense to store read only data in flash but not variable.
+
+- So when link our object files, we need to locate the code section and `.rodata` into flash.
+
+- Different sections of the program in an ELF format:
+  - `.data` contain initialized data
+  - `.text` section contains code (instructions).
+  - `.rodata` Read-only data.
+  - `.bss` uninitialized data.
+  - User defined sections: contains data/code which programmer demands to put in user defined sections.
+  - Some special sections: Some special sections added by the compiler contains some special data.
+
+### 101. Linker and locator
+
+- Linker and locator:
+  - Use the linker to merge similar sections of different object files and to resolve all undefined symbols of different object files.
+  - Locator (part of linker) takes the help of a linker script to understand how you wish to merge different sections and assigns mentioned addresses to different sections.
+
+- The output is final executable file.
+
+- Storage of final executable in code memory (ROM).
+
+- In Flash memory:
+
+  |Vector Table   |
+  |   .text       |
+  |  .rodata      |
+  |  .init data   |
+  |Unused code mm |
+
+- The initialized data (global and static) will be stored at FLASH first, because FLASH will not be removed when reset, or no power.
+
+- And when program start, we will copy it to section `.data` RAM in start up code.
+
+- To perform copying, we need to mark the boundaries of `.data` section, that mean we need to create some symbol indicate the end and start of the `.data` section.
+
+### 102. Different data of a program
+
+- Different data of a program and related sections:
+  - local_un_data: don't care
+  - local_i_data: don't care
+  - local_un_s_data: `.bss`
+  - local_i_s_data: `.data`
+  - global_un_data: `.bss`
+  - global_i_data: `.data`
+  - global_un_s_data: `.bss`
+  - global_i_s_data: `.data`
+
+- For `.bss` section, startup code reserves space for this data in RAM and initializes zero.
+- `.data` section will be copied from flash to RAM by startup code.
+- local_un_data and local_i_data will be consumed at runtime.
+
+- All global const will be store at `.rodata` in FLASH.
+- All local const will be store at stack as locals.
+
+### 103. bss vs data section
+
+- `.bss` (block started by symbol) and `.data` section.
+  - All the uninitialized global variables and uninitialized static variables are stored in the `.bss` section.
+  - Since those variables do not have any initial values, they are not required to be stored in the `.data` section since the `.data` section consumes FLASH space. Imagine what would happen if there is a large global uninitialized array in the program, and if that is kept in the `.data` section, it would unnecessarily consume flash space yet carries no useful information at all.
+
+- `.bss` section doesn't consume any FLASH space unlike `.data` section.
+- You must reserve RAM space for the `.bss` section by knowing its size and initialize those memory space to zero. This is typically done in start up code.
+- Linker helps u to determine the final size of the `.bss` section. So, obtain the size information from a linker script symbols.
