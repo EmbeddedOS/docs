@@ -2332,6 +2332,7 @@ void Default_Handler(void)
     ```
 
     - With `vma` is virtual memory address, and `lma` is load memory address. `vma` is the address the section will have the program is run. `lma` is the address of the section when program is being loaded.
+      - Detailed information: [link](https://sourceware.org/binutils/docs/ld/Output-Section-LMA.html)
   - `KEEP`:
   - `ALIGN`:
   - `AT>`:
@@ -2352,3 +2353,180 @@ void Default_Handler(void)
 
 - A symbol is the name of an address.
 - A symbol declaration is not equivalent to a variable declaration what you do in your `C` application.
+
+### 114. Analyzing the ELF file
+
+- We can see the memory map of the final executable by specify the `-Wl,-Map=memory.map` flag in linker command. For example, output look like:
+
+```text
+Memory Configuration
+
+Name             Origin             Length             Attributes       
+FLASH            0x0000000008000000 0x0000000000100000 xr
+SRAM             0x0000000020000000 0x0000000000020000 xrw
+*default*        0x0000000000000000 0xffffffffffffffff
+
+Linker script and memory map
+
+LOAD main.o
+LOAD startup_stm32f407xx.o
+
+.text           0x0000000008000000      0x55a
+ *(.isr_vector)
+ .isr_vector    0x0000000008000000      0x1a8 startup_stm32f407xx.o     
+                0x0000000008000000                vector_table
+ *(.text)
+ .text          0x00000000080001a8      0x3a0 main.o
+
+```
+
+- Symbol is marked also:
+
+```text
+.data           0x0000000020000000       0x54 load address 0x000000000800055a
+                0x0000000020000000                _start_of_data = .
+ *(.data)
+ .data          0x0000000020000000       0x54 main.o
+                0x0000000020000000                current_task
+ .data          0x0000000020000054        0x0 startup_stm32f407xx.o
+                0x0000000020000054                _end_of_data = .
+```
+
+- Get list all symbol of ELF file with `arm-none-eabi-nm final.elf`.
+
+### 116. Flash executable file to the board
+
+- Host -> Development board
+
+- openOCD can connect to the built-in Debugger on the board via USB.
+
+- OpenOCD (Open ON Chip Debugger):
+  - The Open ON Chip Debugger (OpenOCD) aims to provide debugging, in system programming, and boundary-scan testing for embedded target devices.
+  - Its is free and opensource host application allows u to program, debug and analyze your applications using GDB.
+  - It supports various target boards based on different processor architecture.
+  - Open OCD currently supports many types of debug adapters: USB-based, parallel port-based, and other standalone boxes that run OpenOCD internally.
+  - GDB debug: it allows ARM7, ARM9, XScale, Cortex-M3, and Intel Quark based cores to be debugged via the GDB protocol.
+  - Flash programming: flash writing is supported for external CFI-compatible NOR flashes and several internal flashes.
+
+- Programming adapters:
+  - Programming adapters are used to get access to the debug interface of the target with native protocol signaling such as SWD or JTAG since HOST doesn't support such interface.
+  - It does protocol conversion. For example, commands and messages coming from host application in the form of USB packets will be converted to equivalent debug interface signaling (SWD or JTAG) and vice versa.
+  - Mainly debug adapter helps you to download and debug the code.
+  - Some advanced debug adapters will also help you to capture trace events such as on the fly instruction trace and profiling information.
+
+- Some of the popular debug adapters: SEGGER J-Link EDU - JTAG/SWD Debugger.
+
+- STM32F4 board:
+  - It has embedded ST-LInk-V2A in circuit programmer and debugger.
+  - Supports only SWD debug protocol.
+  - So we need setup:
+
+    HOST PC                                             |     | Board |
+    Telnet client port 4444 --->|         |   |ST-LINK  |     |       |
+                                | OpenOCD |-> |DRIVER   |---->|SWD    |
+    GDB client port 3333 ------>|         |   |         |     |       |
+
+### 117. Download code using OpenOCD
+
+- 1. Download and install OpenOCD:
+  `sudo apt-get -y install openocd`
+  `sudo apt-get install gdb-arm-none-eabi`
+- 2. Install Telnet client (for windows u can use PuTTY) or GDB client.
+- 3. Run OpenOCD with the board configuration file.
+  `openocd -f board/stm32f4discovery.cfg`
+  - Config file is stored at directory: `/usr/share/openocd/scripts/board/stm32f4discovery.cfg`
+- 4. Connect to the OPendOCD via Telnet CLient or GDB client.
+- 5. Issues commands over Telnet or GDB Client to OPenOCD to download and debug the code.
+
+### 118. Using GDB Client
+
+- When we run the OpenOCD server. Now u can connect to this server over various client programs such as telnet client, GDB clients, etc.
+
+- Run gdb:
+
+```bash
+gdb-multiarch # in window u need to run: arm-none-eabi-gdb instead.
+target remote localhost:3333
+```
+
+- On Openocd log look like:
+
+```text
+Info : accepting 'gdb' connection on tcp/3333
+```
+
+- Reset monitor (this is openocd general commands):
+
+```gdb
+monitor reset init
+```
+
+- And finally flash to board (this is openocd general commands):
+
+```gdb
+monitor flash write_image erase final.elf
+```
+
+- Reset board and pause:
+
+```gdb
+monitor reset halt
+```
+
+- Resume the program:
+
+```gdb
+monitor resume
+```
+
+- Stop the program:
+
+```gdb
+monitor halt
+```
+
+- Reset board:
+
+```gdb
+monitor reset
+```
+
+- verify some memory location:
+  - Via the memory map file, we can get store address of some variable, for example:
+
+  ```text
+   *(.data)
+  .data          0x0000000020000000       0x54 main.o
+                  0x0000000020000000                current_task
+  ```
+
+  - from that, u can get memory address value with `mdw`:
+
+    ```gdb
+    monitor mdw  0x20000000 4
+    ```
+
+    - Output look like:
+
+    ```text
+    monitor mdw  0x20000000 4
+    0x20000000: 8000f8d0 0f00f1b8 6847d01b d0f74547
+    ```
+
+- Set break point, for example, we need to trace function `task_2_handler` is called, first u need to check address of it in memory map file:
+
+  ```text
+                  0x000000000800045a                task_1_handler
+  ```
+
+  - Set break point at address:
+
+  ```gdb
+  monitor bp 0x0800045a 2 hw
+  ```
+
+- Instead GDB client, u also can use the telnet client to connect to openocd server:
+
+```bash
+telnet localhost 6666
+```
