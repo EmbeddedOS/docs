@@ -2304,6 +2304,51 @@ void Default_Handler(void)
       ```
 
   - `SECTIONS`:
+    - SECTIONS command is used to create different output sections in the final elf executable generated.
+    - Important command by which u can instruct the linker **how to merge the input sections to yield an output section**.
+    - This command also controls the order in which different output sections appear in the elf file generated.
+    - By using this command, u also mention the placement of a section in a memory region. For example, u instruct the linker to place the `.text` section in the FLASH memory region, which is described by the MEMORY command.
+
+    - For example:
+
+    ```linker
+    /*Sections*/
+    SECTIONS
+    {
+      /* This section should include `.text` section of all input files. */
+      .text:
+      {
+        // merge all `.isr_vector` section of all input files.
+        // merge all `.text` section of all input files.
+        // merge all `.rodata` section of all input files.
+      } > (vma) AT >(Ima)
+
+      /* This section should include `.data` section of all input files. */
+      .data:
+      {
+        // here merge all `.data` section of all input files.
+      } > (vma) AT >(lma)
+    }
+    ```
+
+    - With `vma` is virtual memory address, and `lma` is load memory address. `vma` is the address the section will have the program is run. `lma` is the address of the section when program is being loaded.
   - `KEEP`:
   - `ALIGN`:
   - `AT>`:
+
+### 110. Location counter
+
+- IF u determine begin and end point of `.data` section, u will able to calculate the it's size. And using it in C start up code to relocate it to RAM.
+
+- Linker provide a feature: Location counter (.):
+  - This is a special linker symbol denoted by a dot `.`.
+  - This symbol is called `location counter` since linker automatically updates this with location (address) information.
+  - You can use this symbol inside the linker script to track and define bound aries of various sections.
+  - You can also set location counter to any specific value while writing linker script.
+  - Location counter should appear inside the SECTIONS command.
+  - The location counter is incremented by the size of the output section.
+
+### 111. Linker script symbol
+
+- A symbol is the name of an address.
+- A symbol declaration is not equivalent to a variable declaration what you do in your `C` application.
