@@ -2530,3 +2530,49 @@ monitor reset
 ```bash
 telnet localhost 6666
 ```
+
+### 119. C standard library integration
+
+- Newlib:
+  - Newlib is a `C` standard library implementation intended for use on embedded systems, and it is introduced by Cygnus Solutions (now Red Hat).
+  - `Newlib` is written as a Glibc (GNU libc) replacement for embedded systems. It can be used with no OS ("bare metal") or with lightweight RTOS.
+  - Newlib ships with gnu ARM toolchains installation as the default C standard libary.
+  - GNU libc (glibc) includes ISO C, POSIX, System V, and XPG interfaces. uClibc provides ISO C, POSIX and System V, while Newlib provides only ISO C.
+
+- Newlib-nano
+  - Due to the increased feature set in the newlib, it has become too bloated to use on the systems where the amount of memory is very much limited.
+  - To provide a C libratr with a minimal memory footprint, suited for use with micro-controllers, ARM introduced newlib-nano based on newlib.
+
+- Low level system call
+  - The idea of Newlib is to implement the hardware-independent parts of the standard C library and rely on a few low-level system calls that must be implemented with the target hardware in mind.
+  - When u are using new-lib, you must implemeny the system calls appropriarely to support devices, file-systems, and memory management.
+
+- For example:
+
+    printf()        | Application
+            ||
+            \/
+    _write()        | Newlib-nano
+        ||  ||    ||
+        \/  \/    \/
+      UART ITM    LCD
+
+  - `_write()` function implemented here will receive all the strings pre-formatted by `printf()`.
+
+  - scanf() -> _read().
+  - malloc() -> _sbrk().
+
+- Using flag `--specs=nano.specs` in linker will compiler our program with nano.specs libary.
+
+### 121. Section merging of standard library
+
+- Standard library generate a lot of section, for example, `.text.__exit`, `.text.memset`, etc. We need to merge them to main sections.
+
+### 123. semi-hosting
+
+- It is technical to printf message on the openocd console. We need to change the spec file in linker from `--specs=nano.specs` to `--specs=rdimon.specs`
+- To using semi you need to init monitor also:
+
+```C
+initialise_monitor_handles();
+```
