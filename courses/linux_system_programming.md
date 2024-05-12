@@ -40,3 +40,21 @@
   - First `7` means user have `111` `read-write-execute` permissions.
   - Second `7` means group also have full access.
   - Final six means `110` means others have read-write permissions and don't have execute.
+
+## 4. Advanced I/O
+
+### 14. Race condition
+
+- Advanced - FILE I/O
+  - Advanced File Input-Output operations.
+
+- Multi processing/threading:
+  - Linux provides a multi processing environment.
+  - This means there several processes running parallel in Linux system.
+  - Each process based on its priority, the scheduler gives every process a definite time on CPU to execute.
+  - Hence giving the user a virtual feeling as if all process are executing at same time and in parallel.
+- Race condition:
+  - A race condition is a situation where the result produced by two processes (or threads) operating on shared resources depends in an unexpected way on the relative order in which the processes gain access to the CPU(s).
+
+- For example, two process access the same file and write data to it.
+  - Race Round - Condition: Unpredicted write to File because of Race Around between 2 different programs to write to a file.
