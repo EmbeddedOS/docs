@@ -58,3 +58,17 @@
 
 - For example, two process access the same file and write data to it.
   - Race Round - Condition: Unpredicted write to File because of Race Around between 2 different programs to write to a file.
+
+### 15. Atomicity
+
+- Atomicity is a condition in which the code is written in such a way that code cannot be run by other process/thread `AT SAME TIME` while it is being executed/running by first process/thread.
+
+- All system calls in Linux are executed atomically. By this, we mean that the kernel guarantees that all of the steps in a system call are completed as a single operation. Also in Linux the system calls either return pass of fail, without any intermediate results.
+
+- The Atomicity is very much important to maintain in multi-processing environment like a linux system, else `Race Round` condition can occur.
+
+- How Atomicity work?
+
+```text
+
+```
