@@ -106,3 +106,40 @@
 - Struct variables are never declared global.
 - All functions accept pointer to struct where they can find the data that they need.
 - Data flow is always through the code and not outside of it.
+
+- For example `mcp4461 driver`:
+
+```C
+struct mcp4461 {
+    i2c_device_t i2c;
+    gpio_device_t gpio;
+    uint8_t addr;
+    uint32_t reset_pin, wp_pin;
+    struct analog_device;
+};
+
+// ...
+static int _mcp4461_write_reg(struct mcp4461 *self, uint8_t reg, uint8_t val)
+{
+    int ret = 0;
+    uint8_t data[] = {
+        reg | MCP4XXX_OP_WRITE | (uint8_t)(val >> 8),
+        (uint8_t)(val & 0xff)
+    };
+
+    if ((ret = i2c_transfer(
+                    self->i2c,
+                    self->addr,
+                    data, 2, NULL, 0, MCP4461_TIMEOUT)) < 0)
+    {
+        return ret;
+    }
+
+    return 0;
+}
+```
+
+- mcp4461 is an i2c potentiometer.
+- We represent an INSTANCE using struct.
+- We have methods that operate on that struct.
+- Everything needed is inside the struct.
