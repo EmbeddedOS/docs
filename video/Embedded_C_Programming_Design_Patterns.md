@@ -84,3 +84,25 @@
 - C is a way to express program structure in text form. It says nothing about the structure we are going to be expressing.
 - We need **design patters** to write good software in any language (specially in C) because typically do not enforce patterns.
 - Design patterns are concerned with organizing higher level concepts into arrays and trees (code, objects, device driver, etc.).
+
+## 10. High Level Design Patterns For Driver Development
+
+- 1. Struct pattern.
+- 2. Multi-level struct pattern (containment).
+- 3. Opaque objects (implementation hidden).
+- 4. Data abstraction pattern using `container_of`.
+- 5. Abstract interface using `container_of` and virtual methods.
+
+## 11. Struct Pattern
+
+- 1. All methods operate on collections of data.
+- 2. Fine grained control over data scope thus minimizing unintentional data manipulation.
+- 3. Ensures functions are re-entrant (No globally manipulated state).
+- 4. Simplifies multithreaded programming because you can easily locate relevant data.
+- 5. Simplicity of testing because code can be easily compiled in isolation and fed with mock data.
+- 6. Functions never operate on global state.
+
+- All data must be stored in struct passed as arguments.
+- Struct variables are never declared global.
+- All functions accept pointer to struct where they can find the data that they need.
+- Data flow is always through the code and not outside of it.
