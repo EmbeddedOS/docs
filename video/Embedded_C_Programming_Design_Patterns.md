@@ -78,3 +78,9 @@
 - 2. C arrays and variables that have initial values are compiled into the data section.
 - 3. C arrays and variables that are not initialized are grouped in `.bss` array so that they can be initialized by startup code.
 - 4. Once everything is running we can switch to a higher level language or scripting engine.
+
+## 9. So do we just code then?
+
+- C is a way to express program structure in text form. It says nothing about the structure we are going to be expressing.
+- We need **design patters** to write good software in any language (specially in C) because typically do not enforce patterns.
+- Design patterns are concerned with organizing higher level concepts into arrays and trees (code, objects, device driver, etc.).
