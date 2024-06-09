@@ -162,3 +162,33 @@ static int _mcp4461_write_reg(struct mcp4461 *self, uint8_t reg, uint8_t val)
 - Opaque objects are typically allocated on heap (for example at startup).
 - Object definition is in THE SAME source file as implementation (ie. NOT public).
 - Public interface only contains methods that operate on a pointer to the opaque object.
+
+- For example: Console Driver
+
+```C
+// src/driver/tty/console.c
+struct console {
+    struct console_device dev;
+    serial_port_t serial;
+    struct list_head commands;
+    size_t ncommands;
+    // ...
+}
+```
+
+- Application doesn't need to know about particular implementation of the console application.
+- Console data structure is defined locally in the `.c` file.
+
+```C
+struct console *self = kzmalloc(sizeof(struct console));
+```
+
+- The object is then registered as an interface for use with other parts of the application.
+- Application deals with pointer only.
+
+```C
+console_device_init(&self->dev, fdt, fdt_node, &_console_ops);
+console_device_register(&self->dev);
+console_add_command(&self->dev.ops, self, "ps", "Show list of processors", "", _cmd_ps);
+console_add_command(&self->dev.ops, self, "md", "Dump raw memory location", "", _cmd_md);
+```
