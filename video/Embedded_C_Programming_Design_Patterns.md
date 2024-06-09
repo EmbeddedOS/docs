@@ -29,3 +29,14 @@
 - 2. The processor hardware directly traverses `.text` array and occasionally peeks into `.data` and `.bss` arrays to supply program with data.
 - 3. All programs are compiled into a set of arrays like this.
 - 4. We use linker scripts to create binary program image.
+
+## 4. ELF File Format
+
+- Central to all programs. This is the container which contains software program.
+- Divided into 4 main sections:
+  - `.text`
+  - `.data`
+  - `.bss`
+  - `isr_vectors` (interrupt table)
+- Many other sections are used for less important things - like debug info.
+- Note: Dump section headers: `arm-none-eabi-readelf -IS <elf_file>`
