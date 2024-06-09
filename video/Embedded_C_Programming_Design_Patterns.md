@@ -153,3 +153,12 @@ static int _mcp4461_write_reg(struct mcp4461 *self, uint8_t reg, uint8_t val)
 - Related variables are grouped in structs and included into other structs.
 - Every function (behavior) takes a pointer to struct that contains only data relevant to that behavior.
 - Multiple instances of a behavior can be easily created when you use this pattern.
+
+## 13. Opaque Objects
+
+- Enables hiding the implementation.
+- Structure of the object is hidden from all other code in the project (technically still accessible but programmers can't access it inadvertently).
+
+- Opaque objects are typically allocated on heap (for example at startup).
+- Object definition is in THE SAME source file as implementation (ie. NOT public).
+- Public interface only contains methods that operate on a pointer to the opaque object.
