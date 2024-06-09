@@ -49,3 +49,21 @@
 - 1. Bootloader - loads the main program from one of the supported locations (flash, uart, usb, network).
 - 2. Main program - RTOS or kernel - either is the only program that runs or loads other programs from data storage.
 - 3. Application - a program loaded or started after the main program has started.
+
+## 6. How does chip boot your program
+
+- In desktop software entry point is specified in ELF file.
+- On micro-controller entry point is fixed: typically first bytes in flash are stack pointer and initial instruction pointer.
+- CPU loads SP and IP into internal registers and starts to run the program. Whatever is  at address specified is executed.
+
+## 7. So What is the Main program
+
+- The purpose of the main program is to enforce time. For more complex systems we can bundle our main program (kernel) with other applications.
+- We use **build systems** to achieve this.
+
+- 1. On MCU we use RTOS or program directly against hardware.
+- 2. On Micro-processors we use LInux and build firmware using firmware builder:
+  - 1. Buildroot.
+  - 2. OpenWrt.
+  - 3. Yocto.
+- 3. Main program takes care of lowest level hardware events: interrupts.
