@@ -40,3 +40,12 @@
   - `isr_vectors` (interrupt table)
 - Many other sections are used for less important things - like debug info.
 - Note: Dump section headers: `arm-none-eabi-readelf -IS <elf_file>`
+
+## 5. Firmware
+
+- A firmware is a collection of programs or applications that are either linked together into a single image or combined together as a combinations of code and data/
+- Very similar to how a program container is made except contains many different programs and often filesystem as well.
+
+- 1. Bootloader - loads the main program from one of the supported locations (flash, uart, usb, network).
+- 2. Main program - RTOS or kernel - either is the only program that runs or loads other programs from data storage.
+- 3. Application - a program loaded or started after the main program has started.
