@@ -143,3 +143,13 @@ static int _mcp4461_write_reg(struct mcp4461 *self, uint8_t reg, uint8_t val)
 - We represent an INSTANCE using struct.
 - We have methods that operate on that struct.
 - Everything needed is inside the struct.
+
+## 12. Hierarchical Containment
+
+- Enables reuse of behavior (functionality) for all instance of the same `type`.
+- Allows one type to **have-an** instance of another type.
+- Only possible if you use struct pattern throughout your application from the start.
+
+- Related variables are grouped in structs and included into other structs.
+- Every function (behavior) takes a pointer to struct that contains only data relevant to that behavior.
+- Multiple instances of a behavior can be easily created when you use this pattern.
