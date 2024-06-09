@@ -67,3 +67,14 @@
   - 2. OpenWrt.
   - 3. Yocto.
 - 3. Main program takes care of lowest level hardware events: interrupts.
+
+## 8. We Use C Because It maps Perfectly into thi structure
+
+- No matter which language you use, you can not escape the fact that you have to create the initial startup binary and C just so happens to be the language that maps most tightly into how hardware works.
+- Which is why C is still nr 1 most used programming language after almost 50 years.
+- There is an almost one to one relationship between C code and binary image (ELF file). Even if optimizations are used - it's still very close.
+
+- 1. C language describes code that is compiled directly into the `.text`  array of machine instructions.
+- 2. C arrays and variables that have initial values are compiled into the data section.
+- 3. C arrays and variables that are not initialized are grouped in `.bss` array so that they can be initialized by startup code.
+- 4. Once everything is running we can switch to a higher level language or scripting engine.
