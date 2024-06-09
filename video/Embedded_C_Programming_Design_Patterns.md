@@ -192,3 +192,21 @@ console_device_register(&self->dev);
 console_add_command(&self->dev.ops, self, "ps", "Show list of processors", "", _cmd_ps);
 console_add_command(&self->dev.ops, self, "md", "Dump raw memory location", "", _cmd_md);
 ```
+
+## 14. `Container Of` Pattern
+
+- Write generic code to implement algorithms that manipulate data structures.
+- Operate on collections without caring what data they contain.
+- Reuse lists, avl trees, hash tables and other useful data structures - in C.
+
+```C
+#define container_of(ptr, type, member) ({ \
+    const typeof(((type *)0)->member) \
+    * __mptr = (ptr);
+    (type *)( (char *)__mptr - offsetof(type, member));
+})
+```
+
+- Aggregate item (like list struct) is embedded in an closing struct.
+- Pointer to item is passed around and used for organizing items.
+- Pointer to main struct is retrieved using `container_of` macro to get the actual data.
