@@ -210,3 +210,69 @@ console_add_command(&self->dev.ops, self, "md", "Dump raw memory location", "", 
 - Aggregate item (like list struct) is embedded in an closing struct.
 - Pointer to item is passed around and used for organizing items.
 - Pointer to main struct is retrieved using `container_of` macro to get the actual data.
+
+- For example: Serial Driver
+  - STM32 serial driver implements an abstract interface called `serial_port_t`.
+  - When application calls abstract interface it passes address of the virtual method table as handle.
+  - Driver method needs to get the address of driver local data locally.
+  - Always works and is very reliable.
+
+```C
+struct stm32_uart {
+    struct serial_device dev;
+    USART_TypeDef *hw;
+    struct thread_queue tx_queue;
+    struct thread_queue rx_queue;
+    struct mutex wr_lock, rd_lock;
+    int crlf;
+}
+
+//...
+
+static int _serial_write(serial_port_t serial,
+                         const void *data,
+                         size_t size,
+                         uint32_t timeout)
+{
+  struct stm32_uart *self = container_of(serial, struct stm32_uart, dev.ops);
+  //...
+}
+
+//...
+static const struct serial_device_ops _serial_ops = { .read = _serial_read,
+                                                      .write = _serial_write};
+```
+
+## 15. Abstract Interface
+
+- Ensures single interface for interacting with several different data structures of different types.
+- Functional implementation of instances is different. Usage pattern is the same!
+- Allows true **polymorphism** in C!
+
+- Every abstract type has a `vtable` with functions.
+- Every instance contains pointer to that `vtable` through which function calls are made.
+- Abstract handle to an object is a **POINTER** to that **POINTER** to that `vtable` - opaque!
+
+- Example: Serial Driver
+
+```C
+static const struct serial_device_ops _serial_ops = { .read = _serial_read,
+                                                      .write = _serial_write};
+```
+
+- STM32 serial driver implements an abstract interface called `serial_port_t`
+- When application calls abstract interface it passes address of the virtual method table as handle.
+- Driver method needs to get the address of driver local data locally.
+- Always works and is very reliable.
+
+```C
+#define serial_port_t serial_device_t
+
+typedef const struct serial_device_ops **serial_port_t;
+
+struct serial_device_ops {
+  int (*write)(serial_port_t port, const void *ptr, size_t size, uint32_t timeout_ms);
+  int (*read)(serial_port_t port, void *ptr, size_t size, uint32_t timeout_ms);
+};
+
+```
