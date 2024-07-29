@@ -14,3 +14,9 @@
   - 2. Paragraphs: Recognize different paragraph styles and incorporate most appropriate one for the kind of thing that you are writing.
   - 3. Sentences: How to structure elegant sentences. How to apply concepts like algorithm to your writing.
   - 4. Words: How to choose the perfect words, color words.
+
+### 2. The four ninja levels
+
+### 3. A quick proof
+
+- We have some sentences and I hope you try to fix it and make it more beautiful:
