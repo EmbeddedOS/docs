@@ -74,3 +74,46 @@ The best advice: **YOU NEED TO START**.
   - What about this experience made it your favorite? Why was it impactful and memorable?
     - Because it's my passion, I want to learn to get better.
 - Apply your Learning Experience worksheet to learning new things.
+
+## II. Motivation
+
+### 6. Intrinsic vs. Extrinsic Motivation
+
+A motivation is the drive to perform an action. Two types of motivation: Extrinsic and intrinsic motivation.
+
+- Extrinsic Motivation: When we do something for rewards that are external to the action we're taking (grades, money, praise, social status).
+- Intrinsic Motivation: When the action itself is reason enough to do it (games, hobbits, enjoy doing sports).
+
+If you identify why you want to learn something, it can help you succeed at learning it.
+
+### 7. Autonomous motivation & 3 core psychological needs
+
+Self-determinatic theory (SDT), Human have 3 core psychological needs:
+
+- Competence: The feeling that you are be able, effective at the things you do.
+- Relatedness: The feeling that you connected to others.
+- Autonomy: The feeing that you are the source of your actions.
+
+What if you're trying to learn something that you don't really want to learn? Instead, try to answer this: How is what you're learning meaningful to you? That may make your motivation.
+
+### 8. Activity: What motivates you?
+
+Stop and think about why you are motivated to learn? For example you have a bunch of Udemy course to learn, what course you choose to learn first? What motivates you the most?
+
+1. Why did you choose to learn this topic? Is it out of a personal interest? Is it for work?
+2. What motivates you about the topic? Is it primarily intrinsic or extrinsic?
+3. What will this learning help you do and why does that matter to you?
+
+## III. Setting Learning Goals
+
+### 9. Why set goals?
+
+Goals provide direction so that you can truly focus on the outcomes you want to archive.
+Setting a goal that's personal and valuable will motivate you.
+Settings goals impacts the likelihood of actually getting what you want.
+
+Why set goals?
+
+- Goals help you define and envision what you want to accomplish.
+- Goals can keep you motivated and on track.
+- Goals make it more likely that you'll actually do what you set out to do.
