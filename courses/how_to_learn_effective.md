@@ -117,3 +117,35 @@ Why set goals?
 - Goals help you define and envision what you want to accomplish.
 - Goals can keep you motivated and on track.
 - Goals make it more likely that you'll actually do what you set out to do.
+
+### 10. What are GOOD learning Goals?
+
+- It's something you're motivated by.
+- It's meaningful to you and drives impact in your life.
+- It's focused on an authentic, real-world outcome.
+
+- In other word, you should choose the learning goals that matter to you. For example: The Goals are not just finish some courses.
+- Focus on what your learning will help you personally achieve.
+
+### 11. How to Set Learning Goals?
+
+- I'd like to you the **SMART** framework:
+  - **S** - Specific: Don't make goal with vague words like: good at st, master of st, etc. We need to specific here with a particular outcome. For example: learning python code to **develop a web system using python**.
+  - **M** - Measurable: measurable by time, you produce something like: a web system in a month, divide smaller like: frontend in 2 week, backend in 2 week.
+  - **A** - Attainable: Don't set some impossible goals out of the learning path, like: learn python and machine learning in a month.
+  - **R** - Relevant: The goal should be meaningful to you and connected to your value or higher level: work, relation, mindset, etc.
+  - **T** - Time-Based: Give yourself a deadline to do it.
+
+- A goal, for example when we combine every properties: By march 31, I will use Adobe Illustrator (and what I learned in my Udemy course) to create 1 header image and 1 logo for our Q2 company newsletter.
+
+### 12. Activity: Set your learning goals
+
+- Your watch Udemy course for a reason, what is this? what do want to archive?
+- And when you have a general goals, apply SMART structure into it.
+  - Make it specific: clearly state of particular action you be able to do by completing this course.
+  - Make it measurable: how do you complete the goal? measure something before-after to see the **changes**.
+  - Make it attainable: be sure it's possible for you.
+  - Make it Relevant: Is this somethings really matter to you at work, at life, etc?
+  - Make it Time-based: make yourself a realistic deadline. Consider the time you need to dedicate the learning goal.
+
+- When you have the goal: write it down: put it to some where you can see it often.
