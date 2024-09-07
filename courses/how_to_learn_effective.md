@@ -149,3 +149,20 @@ Why set goals?
   - Make it Time-based: make yourself a realistic deadline. Consider the time you need to dedicate the learning goal.
 
 - When you have the goal: write it down: put it to some where you can see it often.
+
+## 4. Practice and Application
+
+### 13. Learning is DOING
+
+For example, you want to learn Tennis, you watching video how to play it. If you just watching it, you'll just good at **WATCHING** not **PLAYING**. Everything need **PRACTICING**.
+
+Does what you do when you're learning look like what you do when you're applying?
+
+### 14. Get specific with learning objectives
+
+Learning objectives answer the question: What should be able to do if you complete a learning experience?
+
+### 15. Activity: Go practice
+
+Look at the course the you taking, and identify where there are opportunities to practice.
+Define some authentic tasks for yourself based on your learning goal.
