@@ -150,7 +150,7 @@ Why set goals?
 
 - When you have the goal: write it down: put it to some where you can see it often.
 
-## 4. Practice and Application
+## IV. Practice and Application
 
 ### 13. Learning is DOING
 
@@ -166,3 +166,29 @@ Learning objectives answer the question: What should be able to do if you comple
 
 Look at the course the you taking, and identify where there are opportunities to practice.
 Define some authentic tasks for yourself based on your learning goal.
+
+## V. Reflection
+
+### 16. Why reflect?
+
+- When you finish a learning section, you can stop and ask questions about what have you learnt.
+- Think critically about what we're learning:
+  - Actively connect new information to existing knowledge.
+  - Ask questions about what we know and what we don't.
+
+### 17. Reflection for motivation and learning
+
+- If motivation is flagging, reflect on why you're learning.
+- Reflecting on what you're experiencing makes you an active participant in your learning.
+- Try to understand, not only remember things.
+
+### 18. Reflect on What You've Learned
+
+- What is the most surprising thing you've learned so far?
+- Which topic or concept has been most difficult?
+- What other information or practice might you need here?
+- What questions do you have about the material or how to apply it?
+
+- Reflect on your learning goal:
+  - What have you learned that's brought you closer to your goal?
+  - What else do you still need to learn in order to achieve it?
