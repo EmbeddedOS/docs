@@ -192,3 +192,60 @@ Define some authentic tasks for yourself based on your learning goal.
 - Reflect on your learning goal:
   - What have you learned that's brought you closer to your goal?
   - What else do you still need to learn in order to achieve it?
+
+## VI. Learning with others
+
+### 19. Don't learn Alone
+
+- Just about everything we do, we do with others.
+- When students collaborate on class projects they learn the material better.
+- People tend to perform better when other people are around.
+- The most fundamental mechanism of learning is feedback.
+- Collaborative or shared work can be very motivating.
+- Doing things with others can be fun.
+
+### 20. What you need others to Do?
+
+- Get someone to learn with you.
+- Ask someone to be an accountability partner.
+- Take on the role of instructor and teach your accountability partner.
+
+### 21. Who should you Learn with?
+
+- Learn with someone who cares about you and your learning.
+- Learning with and from others:
+  - Exposes you to different perspectives and ideas.
+  - Helps broaden your understanding.
+
+### 22. Find your learning buddy and community
+
+- Find someone you personally know to be a part of your learning.
+- See if anyone want to take your course with you.
+- Look outside your immediate network to find another source of learning.
+
+## 7. Put Learning on Repeat
+
+### 23. Repetition and Memory
+
+- Doing something repeatedly helps make it an automatic process.
+- Repetition is important when we practice and apply our learning.
+- Memory consists of three process:
+  - 1. Encoding: Encoding is the process of turning information into a memory.
+  - 2. Storage: Refers to how an encoded memory is held in the brain.
+  - 3. Retrieval: Retrieval occurs when you need to access previously stored information.
+
+- Try to connect new information to existing information to improve encoding.
+- Acronyms or mnemonic devices.
+- Practice generating the things you want to remember using cues.
+
+### 24. Make Learning on Ongoing Habit
+
+- Repetition helps us build habits.
+- Making learning an ongoing habit starts by defining and prioritizing learning time.
+- Start small.
+- Schedule regular and repeated time with yourself to learn.
+
+### 25. Activity: Schedule Your Learning Time
+
+- If you want archive your goal in a period time, think about how much time you'll need for various learning activities.
+- Schedule events with yourself to complete these activities.
