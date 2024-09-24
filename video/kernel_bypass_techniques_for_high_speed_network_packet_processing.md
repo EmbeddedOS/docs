@@ -47,3 +47,31 @@
 - The Rx rings circular buffer is shared between NIC device and NIC driver (DMA).
 
 ## Top-half interrupt processing
+
+## Bottom-half interrupt processing
+
+- NIC driver processing:
+
+1. Driver dynamically allocates an `sk-buff`.
+2. Update `sk-buff` with packet metadata.
+3. Remove the Ethernet header.
+4. Pass `sk-buff` to the network stack. -> Call L3 protocol handler.
+
+- L3 processing:
+    1. match destination IP/socket.
+    2. verify checksum.
+    3. route lookup.
+    4. combine fragmented packets.
+    5. remove header.
+    6. Call L4 protocol handler.
+
+- L4 processing:
+  - Handle TCP state machine.
+  - Enqueue to socket read queue.
+  - Signal the socket.
+
+- User space read processing:
+  - dequeue packet from socket receive queue (kernel space).
+  - Copy packet to application buffer.
+  - Release `sk-buff`.
+  - Return back to application.
