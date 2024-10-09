@@ -7,3 +7,9 @@
 - General-purpose registers: R0~R15 (PC)
   - Used as input or output to assembly instruction.
   - Represent the execution flow of process.
+
+- CPSR, SPSRs:
+  - Conditional flags.
+  - Exception bit mask.
+  - Processor mode.
+  - Control the execution of exception flow.
