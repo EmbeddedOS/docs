@@ -15,3 +15,15 @@
 ### 2. Tools and Prerequisites
 
 - Tool: StarUML.
+
+## II. Software Project Management Foundations
+
+### 4. Why you shouldn't skip this module?
+
+- Software development requires structure.
+
+### 5. Water falls vs Agile: Software development approaches
+
+- Water falls like building a house. require pre-defined of everything.
+- Agile changes friendly and responsive.
+
