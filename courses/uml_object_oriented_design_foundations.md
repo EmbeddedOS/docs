@@ -11,3 +11,7 @@
   - Essential UML Diagrams.
   - Challenges and Quizzes.
   - Case study: Designing a Note-Taking App.
+
+### 2. Tools and Prerequisites
+
+- Tool: StarUML.
