@@ -27,3 +27,14 @@
 - Water falls like building a house. require pre-defined of everything.
 - Agile changes friendly and responsive.
 
+### 6. The Waterfall Model
+
+- The development process flows in cascades.
+- Each phase builds upon the previous one.
+- Phases:
+  1. Collect & Analyze requirements.
+  2. Architecture definition.
+  3. Implementation.
+  4. Verification.
+  5. Maintenance.
+- Use the waterfall if the requirements are clear and won't change frequently. For example: Life-control systems, Medical system, Military systems, etc.
