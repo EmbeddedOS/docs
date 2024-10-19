@@ -38,3 +38,16 @@
   4. Verification.
   5. Maintenance.
 - Use the waterfall if the requirements are clear and won't change frequently. For example: Life-control systems, Medical system, Military systems, etc.
+
+### 7. Agile Manifesto
+
+- Aimed to end the proliferation of software development methodologies.
+- 4 key values:
+  1. Individual and interactions over processes and tools.
+  2. Working software over comprehensive documentation.
+  3. Customer collaboration over contract negotiation.
+  4. Responding to change over following a plan.
+
+- Sprints and Reviews: sprint each 2 or 4 weeks.
+- Each sprints have their own phases: design, implementation, testing, etc.
+- Agile is a way of thinking.
