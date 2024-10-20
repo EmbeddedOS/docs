@@ -51,3 +51,12 @@
 - Sprints and Reviews: sprint each 2 or 4 weeks.
 - Each sprints have their own phases: design, implementation, testing, etc.
 - Agile is a way of thinking.
+
+### 8. Waterfall or Agile?
+
+- Can we define requirements in advance?
+  - Yes -> Waterfall.
+  - No -> Agile.
+
+- Waterfall is best suited for projects with clear requirements and fixed scope.
+- Choose Agile if requirements are unstable and may changed frequently.
