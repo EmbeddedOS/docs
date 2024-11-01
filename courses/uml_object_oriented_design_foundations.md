@@ -60,3 +60,11 @@
 
 - Waterfall is best suited for projects with clear requirements and fixed scope.
 - Choose Agile if requirements are unstable and may changed frequently.
+
+## III. Core Object-oriented concepts
+
+### 9. A brief history of programming
+
+- 1950: Non-structured programming.
+  - Sequentially ordered instructions.
+  - Numbered code lines.
