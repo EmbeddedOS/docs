@@ -24,4 +24,33 @@
 
 #### 2.2.2. Stage 2: Meson
 
-- 
+- Meson build system describes the build and install process for:
+  1. executable:
+       - tools: `qemu-img`, `qemu-nbd`, `qemu-ga` (guest agent), etc.
+       - System emulators: `qemu-system-$ARCH`
+       - Userspace emulators: `qemu-$ARCH`
+       - Unit tests.
+  2. doc.
+  3. ROMs.
+  4. Other data files, such as icons or desktop files.
+
+- The source code is highly modularized, split across many files to facilitate building of all of these components with as little duplicated compilation as possible.
+- Using `sourceset` functionality, `meson.build` files group the source files in rules. Sourcesets belong to 1 of 4 groups:
+  1. **Subsystem sourceset**: `block_ss` for block device subsystem, `char_ss` for character device subsystem. etc. They are turned into static libs.
+  2. **Target-independent emulator sourceset**: code lives in the `common_ss` (used everywhere), `system_ss`(used in system emulator) and `user_ss` (used in userspace emulator) sourcesets. Helpers, platform portability wrapper functions, etc. Are linked to binaries if needed.
+  3. **Target-dependent emulator sourceset**:
+        - CPU emulation, included in the `specific_ss` sourceset, for example `arm_ss`.
+        - source code for each emulator are in the `hw/` and `target/` subdirectories.
+        - Each subdirectory in `hw/` adds one sourceset to the `hw_arch` directory, for example: `hw/arm/meson.build` define arm sourceset:
+
+            ```meson
+            arm_ss = ss.source_set()
+            arm_ss.add(files('boot.c'), fdt)
+            ...
+            hw_arch += {'arm': arm_ss}
+            ```
+
+  4. **Module sourceset**:
+  5. **Utility sourcesets**: All binaries link with a static library `libqemuutil.a` built in some general sourcesets: `util_ss`, `stub_ss`.
+
+#### 2.2.3. Stage 3: Make
