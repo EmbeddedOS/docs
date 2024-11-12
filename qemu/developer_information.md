@@ -96,13 +96,39 @@ config STM32F405_SOC
     - For example: `TCG && ARM` false and `CONFIG_NETDUINOPLUS2` become `n` and `NETDUINOPLUS2` become false.
 
 3. Reverse dependencies: `select <symbol> [if <expr>]`
-    - If `<symbol>` is true, this element become true.
+    - Set `<symbol>` another element to true.
 
 4. Default value: `default <value> [if <expr>]`
     - Default value to the config symbol.
     - The `select` or `depends on` can change default value.
 
 5. Reverse default: `imply <symbol> [if <expr>]`
-    - force to true if `<symbol>` is true.
+    - Set default another element `<symbol>` to true.
 
 ##### 2.2.2. Guidelines for writing Kconfig files
+
+- We have five type of configurable elements:
+
+1. subsystems
+2. devices
+3. device groups
+4. boards
+5. internal elements
+
+## 3. Testing QEMU
+
+## 4. Internal QEMU APIs
+
+## 5. Internal Subsystem information
+
+### 5.1. The QEMU Object Model
+
+- QOM provides a framework for **registering user creatable** types and instantiating objects from those types. QOM features:
+  - System for dynamically registering types.
+  - Support for single-inheritance of types.
+  - Multiple inheritance of stateless interfaces.
+  - Mapping internal members to publicly exposed properties.
+
+- The root object class is `TYPE_OBJECT` which provides for the basic object methods.
+
+## 6. TCG Emulation
