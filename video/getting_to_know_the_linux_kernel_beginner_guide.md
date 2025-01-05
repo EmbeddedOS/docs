@@ -33,4 +33,11 @@
 - `make defconfig` generate recommended default `.config` for your system.
 - Configure manually - Edit the `.config` file directly (not recommended).
 
-8:14
+## Modify Kernel code
+
+- Implement new features.
+- Develop custom drivers.
+- Custom security or access control.
+- Fix bugs or security vulnerabilities.
+- Optimize for specific hardware.
+- Debugging.
