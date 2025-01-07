@@ -41,3 +41,23 @@
 - Fix bugs or security vulnerabilities.
 - Optimize for specific hardware.
 - Debugging.
+
+## Build and install your kernel
+
+- <https://kernelnewbies.org/KernelBuild>
+- Take your current running kernel config:
+
+```bash
+cp /boot/config-`uname -r`* .config
+```
+
+## Testing and Debugging the Linux Kernel
+
+- Manual testing:
+  - printk.
+  - dmesg.
+- Automated testing:
+  - Linux Test Project (LTP): <https://github.com/linux-test-project/ltp>
+  - Linux Kernel selftests (kselftests): part of the Linux kernel.
+- Static analysis tools.
+- Dynamic analysis tools.
