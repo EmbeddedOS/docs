@@ -1,0 +1,26 @@
+edition = "2023";
+
+message ReadRequest {
+  int32 sensor_type = 2;
+}
+
+enum Level
+{
+    SENSOR_LEVEL_LOW = 0;
+    SENSOR_LEVEL_MEDIUM = 2;
+    SENSOR_LEVEL_HIGH = 4;
+}
+
+message HomeSensorData {
+    int32 temperature = 1;
+    int32 light = 2;
+}
+
+message ReadReply {
+    HomeSensorData home_data = 1;
+    Level level = 2;
+}
+
+service Sensor {
+    rpc ReadSensor(ReadRequest) returns (ReadReply) {}
+}
