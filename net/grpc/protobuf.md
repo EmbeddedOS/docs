@@ -42,3 +42,15 @@
 - Each field in a message has a unique numbered tag. These tags are used to identify your fields  in the message binary format, and should not be changed once in use.
 
 ## 2. Syntax
+
+## 3. Generating client and server code
+
+This command will generate 2 files .grpc.pb.h and .grpc.pb.c for service classes.
+
+```bash
+protoc --grpc_out=. --plugin=protoc-gen-grpc=`which grpc_cpp_plugin`
+```
+
+###
+
+
