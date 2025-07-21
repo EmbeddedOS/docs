@@ -45,10 +45,25 @@
 
 ## 3. Generating client and server code
 
-This command will generate 2 files .grpc.pb.h and .grpc.pb.c for service classes.
+This command will generate 2 files `.grpc.pb.h` and `.grpc.pb.cc` for service classes.
 
 ```bash
-protoc --grpc_out=. --plugin=protoc-gen-grpc=`which grpc_cpp_plugin`
+protoc --grpc_out=. --plugin=protoc-gen-grpc=`which grpc_cpp_plugin` sensor.proto
 ```
 
-###
+This command will generate 2 files `.pb.h` and `.pb.cc` for message classes.
+
+```bash
+protoc --cpp_out=. sensor.proto
+```
+
+Message classes are used to present data structure to transfer, and service classes presents how to use services to send/recv those messages.
+
+### 3.1. Message classes
+
+### 3.2. Service classes
+
+#### 3.2.1. Client side
+
+#### 3.2.2. Server side
+
