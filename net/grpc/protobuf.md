@@ -193,6 +193,30 @@ If you want to change value, use `mutable_home_data()` method to get the pointer
 
 ### 3.2. Service classes
 
+One class is generated for each service, inside this class there are few sub-classes that are used for both client and server sides.
+
+```cpp
+class Sensor final {
+
+    // Client side code.
+    class StubInterface { ... };
+    class Stub final : public StubInterface { ... };
+
+    static std::unique_ptr<Stub> NewStub(const std::shared_ptr< ::grpc::ChannelInterface>& channel, const ::grpc::StubOptions& options = ::grpc::StubOptions());
+
+    // Server side code.
+    class Service : public ::grpc::Service { ... };
+
+    class WithAsyncMethod_ReadSensor : public BaseClass {...};
+    typedef WithAsyncMethod_ReadSensor<Service> AsyncService;
+
+    class WithCallbackMethod_ReadSensor : public BaseClass {...};
+    typedef WithCallbackMethod_ReadSensor<Service > CallbackService;
+    typedef CallbackService ExperimentalCallbackService;
+    // ...
+}
+```
+
 #### 3.2.1. Client side
 
 #### 3.2.2. Server side
