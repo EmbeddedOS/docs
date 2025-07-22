@@ -61,6 +61,136 @@ Message classes are used to present data structure to transfer, and service clas
 
 ### 3.1. Message classes
 
+```text
+message ReadRequest {
+  int32 sensor_type = 2;
+}
+```
+
+The message `ReadRequest` will be generated into a class:
+
+```cpp
+class ReadRequest final : public ::google::protobuf::Message
+{
+    // Default methods ...
+    ReadRequest* PROTOBUF_NONNULL New(::google::protobuf::Arena* PROTOBUF_NULLABLE arena = nullptr);
+    void CopyFrom(const ReadRequest& from);
+    void MergeFrom(const ReadRequest& from);
+    void Swap(ReadRequest* PROTOBUF_NONNULL other);
+    bool IsInitialized() const;
+    ABSL_ATTRIBUTE_REINITIALIZES void Clear() PROTOBUF_FINAL;
+    // And more ...
+
+    // accessors -------------------------------------------------------
+    enum : int {
+       kSensorTypeFieldNumber = 2,
+    };
+
+    // int32 sensor_type = 2;
+    bool has_sensor_type() const;
+    void clear_sensor_type() ;
+    ::int32_t sensor_type() const;
+    void set_sensor_type(::int32_t value);
+}
+```
+
+#### 3.1.1. Enum
+
+```text
+enum Level
+{
+    SENSOR_LEVEL_LOW = 0;
+    SENSOR_LEVEL_MEDIUM = 2;
+    SENSOR_LEVEL_HIGH = 4;
+}
+```
+
+become enum with some helper functions:
+
+```cpp
+enum Level : int {
+  SENSOR_LEVEL_LOW = 0,
+  SENSOR_LEVEL_MEDIUM = 2,
+  SENSOR_LEVEL_HIGH = 4,
+  Level_INT_MIN_SENTINEL_DO_NOT_USE_ =
+      ::std::numeric_limits<::int32_t>::min(),
+  Level_INT_MAX_SENTINEL_DO_NOT_USE_ =
+      ::std::numeric_limits<::int32_t>::max(),
+};
+
+// Along with some methods...
+
+inline bool Level_IsValid(int value) {
+  return 0 <= value && value <= 4 && ((21u >> value) & 1) != 0;
+}
+
+template <>
+inline const ::std::string& Level_Name(Level value) {
+  return ::google::protobuf::internal::NameOfDenseEnum<Level_descriptor, 0, 4>(
+      static_cast<int>(value));
+}
+```
+
+#### 3.1.2. Nested messages
+
+For messages that use other messages as its field, for example:
+
+```text
+message HomeSensorData {
+    int32 temperature = 1;
+    int32 light = 2;
+}
+
+message ReadReply {
+    HomeSensorData home_data = 1;
+    Level level = 2;
+}
+```
+
+The `home_data` become a member of `ReadReply` class, and can access through some methods:
+
+```cpp
+class HomeSensorData final : public ::google::protobuf::Message
+{
+    // accessors -------------------------------------------------------
+    enum : int {
+        kTemperatureFieldNumber = 1,
+        kLightFieldNumber = 2,
+    };
+
+    // int32 temperature = 1;
+    bool has_temperature() const;
+    void clear_temperature() ;
+    ::int32_t temperature() const;
+    void set_temperature(::int32_t value);
+
+    public:
+    // int32 light = 2;
+    bool has_light() const;
+    void clear_light() ;
+    ::int32_t light() const;
+    void set_light(::int32_t value);
+}
+
+class ReadReply final : public ::google::protobuf::Message
+{
+  // accessors -------------------------------------------------------
+  enum : int {
+    kHomeDataFieldNumber = 1,
+    kLevelFieldNumber = 2,
+  };
+
+  bool has_home_data() const;
+  void clear_home_data() ;
+  const ::HomeSensorData& home_data() const;
+  [[nodiscard]] ::HomeSensorData* PROTOBUF_NULLABLE release_home_data();
+  ::HomeSensorData* PROTOBUF_NONNULL mutable_home_data();
+  void set_allocated_home_data(::HomeSensorData* PROTOBUF_NULLABLE value);
+}
+```
+
+If you want to change value, use `mutable_home_data()` method to get the pointer, if you want to read-only, get constant reference `home_data()`. You also can free and allocate new one.
+
 ### 3.2. Service classes
 
 #### 3.2.1. Client side
