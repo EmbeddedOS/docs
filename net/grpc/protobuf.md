@@ -217,7 +217,21 @@ class Sensor final {
 }
 ```
 
-#### 3.2.1. Client side
+#### 3.2.1. API Implementations
 
-#### 3.2.2. Server side
+GRPC can be implemented using synchronous, asynchronous, or asynchronous with callback approaches.
+
+- Synchronous: blocking APIs, simplicity, clients wait for server responses.
+- Asynchronous:
+  - Non-blocking.
+  - binding RPC with a completion queue. Do read/write operations with a tag. And then using completion queue's Next method to wait for the next ready response.
+  - Take one thread to handle multiple RPC response, caller thread can still do its tasks, CompletionQueue will handle Completion responses and able to notice to outside. Like event-driven architecture. One thread to handle completion responses for all RPCs.
+- Callback:
+  - Wrapper of Asynchronous.
+  - No need to use CompletionQueue and make a thread for that (By default gRPC will launch a thread for that automatically - this is also called a reactor and you can wrap it too.)
+  - Just pass the callback - function pointer to that, and it will be called directly, you can using some basic notify mechanism like future-promise, condition variable to notify to outside.
+
+#### 3.2.2. Client side
+
+#### 3.2.3. Server side
 
