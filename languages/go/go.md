@@ -88,6 +88,8 @@ The better than C++ is that, you don't have to inherit an abstract class, to mak
 
 ### 3.1. Use interfaces as a function paramter
 
+### 3.2. empty interface and interface type
+
 ## 4. Go routine
 
 ## 5. Memory allocation
