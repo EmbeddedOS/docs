@@ -36,4 +36,54 @@ func (p *Point) sum() float64 {
 
 ## 3. Interface
 
+An interface is a type. That is similar like a pointer to a abstract class in C++, that you can point to derived classes, convert and act like children.
+This feature is how abstraction and polymorphism work in Go.
+
+Let say you have 2 structs that have same one kind of interface, for example, dog run and cat run:
+
+```go
+type Dog struct
+{
+	age int
+	name string
+}
+
+type Cat struct
+{
+	age int
+	name string
+}
+
+type Animal interface {
+	run()
+}
+```
+
+Now you implement two methods for those structs:
+
+```go
+type Animal interface {
+	run()
+}
+
+func (d *Dog) run() {
+	fmt.Println("Dog run")
+}
+
+func (d *Cat) run() {
+	fmt.Println("Cat run")
+}
+
+func main() {
+	dog:= Dog{}
+
+	var animal Animal
+	animal = &dog
+
+	animal.run()
+}
+```
+
 ## 4. Go routine
+
+## 5. Memory allocation
