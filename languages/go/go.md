@@ -15,7 +15,7 @@
 
 ## 2. struct and method
 
-Methods can be made outside the struct make it very flexible.
+Methods can be made outside the struct make it very flexible, don't have to change the struct itself while we can add custom methods for different modules without knowing about others.
 
 ```go
 type Point struct
@@ -83,6 +83,8 @@ func main() {
 	animal.run()
 }
 ```
+
+The better than C++ is that, you don't have to inherit an abstract class, to make an interface, for now you can make interfaces outside of the struct without changing the struct, that make it very flexible. Different modules can define different interfaces without knowing each other.
 
 ## 4. Go routine
 
