@@ -86,6 +86,8 @@ func main() {
 
 The better than C++ is that, you don't have to inherit an abstract class, to make an interface, for now you can make interfaces outside of the struct without changing the struct, that make it very flexible. Different modules can define different interfaces without knowing each other.
 
+### 3.1. Use interfaces as a function paramter
+
 ## 4. Go routine
 
 ## 5. Memory allocation
