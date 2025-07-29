@@ -1,5 +1,7 @@
 # Go summary
 
+Every go program has its own go runtime checker run along with it. That 
+
 ## 1. Defer
 
 - Adding a callback when scope exit.
@@ -88,7 +90,51 @@ The better than C++ is that, you don't have to inherit an abstract class, to mak
 
 ### 3.1. Use interfaces as a function paramter
 
+Similar like function in C++, we can use interfaces as a paramter type, and then take the interface advantage `polymorphism`:
+
+```go
+func AnimalRun(animal Animal) {
+	animal.run()
+}
+
+func main() {
+	dog:= Dog{}
+
+	var animal Animal
+	animal = &dog
+
+	AnimalRun(animal)
+}
+```
+
 ### 3.2. empty interface and interface type
+
+Empty interface:
+
+```go
+i := interface{}
+```
+
+that can be converted into any type, similar like `void *`. You can then check the interface type to convert and do the right task:
+
+```go
+func do(i interface{}) {
+	switch v := i.(type) {
+	case int:
+		fmt.Printf("Twice %v is %v\n", v, v*2)
+	case string:
+		fmt.Printf("%q is %v bytes long\n", v, len(v))
+	default:
+		fmt.Printf("I don't know about type %T!\n", v)
+	}
+}
+
+func main() {
+	do(21)
+	do("hello")
+	do(true)
+}
+```
 
 ## 4. Go routine
 
