@@ -46,4 +46,23 @@ To program efficiently is **to reduce the amount of work** that the program has 
 
 - Manual memory management.
   - You can program in such a way as to avoid allocations/deallocations and blocking in the hot path.
-  - C has memory management too. But C++ as scalable zero-cost abstractions: algorithms, templates.
+- C has memory management too. But C++ as scalable zero-cost abstractions: algorithms, templates.
+- Huge body of existing libraries and frameworks. e.g: JUCE(audio), Unreal Engine (gaming).
+
+## 4. C++ techniques for low-latency programming
+
+- Two categories:
+  - Efficient programming.
+  - Programming for deterministic execution time.
+- Most crucial thing: **measuring**.
+
+## 5. Measuring
+
+- You don't know whether something is efficient, fast, etc. Unless you measure it.
+- Results often surprising/counter intuitive:
+  - Fedor Pikus: The Art of Writing Efficient Programs.
+  - Dave Rowland: Optimizing a real-time audio processing library (CppOnSea 2023).
+  - C++ Weekly, Episode 274: Why is My pair 310x Faster than `std::pair`?
+
+34:42
+ 
