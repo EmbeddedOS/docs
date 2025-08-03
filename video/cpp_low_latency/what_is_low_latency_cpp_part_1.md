@@ -63,6 +63,42 @@ To program efficiently is **to reduce the amount of work** that the program has 
   - Fedor Pikus: The Art of Writing Efficient Programs.
   - Dave Rowland: Optimizing a real-time audio processing library (CppOnSea 2023).
   - C++ Weekly, Episode 274: Why is My pair 310x Faster than `std::pair`?
-
-34:42
  
+ ### 5.1. Measuring techniques
+
+- Profiling:
+  - gprof, perf, VTune, DTrace, valgrind, Optick, ...
+  - Sampling profiling vs instrumentation profiling.
+    - Mathieu Ropert: "The basics of profiling".
+    - Chandler Carruth: "Going Nowhere Faster".
+
+- Performance analysis:
+  - Measure cache misses (perf stat, cachegrind).
+  - Measure branch mispredicts, syscalls, allocations... (various platform-specific tools).
+  - Measure performance of machine instructions on a particular CPU (llvm-mca).
+
+- Inspect generated assembly (fewer instructions != faster code).
+  - Compiler explorer.
+  - CLion Disassembly on Demand.
+
+- Benchmarking:
+  - Google Benchmark, gperftools, Nonius, etc.
+  - Quick-bench.
+  - Actual code vs microbenchmarks.
+
+### 5.2. Microbenchmarks are tricky
+
+- Warm the cache.
+- Randomize the heap.
+- Measure release build with same compiler flags.
+- But optimizations change what code you are measuring!
+  - A lot of stuff can "constexpr away" in microbenchmark but not in production code.
+
+## 6. C++ techniques for low-latency programming
+
+- Two categories:
+  - Efficient programming.
+  - Programming for deterministic execution time.
+- Most crucial thing: measuring!
+
+## Writing efficient code requires
