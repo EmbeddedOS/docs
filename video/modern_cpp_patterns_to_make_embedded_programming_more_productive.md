@@ -274,7 +274,7 @@ public:
 ```
 
 ```cpp
-constexpr UUID operator "" _uuid(const char *text, size_t length)
+constexpr UUID operator ""_uuid(const char *text, size_t length)
 {
     UUID result;
     size_t index = 0;
@@ -288,5 +288,97 @@ constexpr UUID operator "" _uuid(const char *text, size_t length)
 
     return result;
 }
-
 ```
+
+And using string conversion:
+
+```cpp
+static const UUID uuid = "{ 01234567-89AB-CDEF-01233-456789ABCDEF }"_uuid;
+static const MACAddr mac = "12:34:56:78:80:AB"_mac_addr;
+// ...
+```
+
+## 4. Use Stream-based IO, but skip the library
+
+### 4.1. Lean Stream-based IO
+
+```cpp
+int main(int, char**)
+{
+    std::cout << "Hello, world" << "\r\n";
+}
+```
+
+### 4.2. Create a Lightweight Filestream Object
+
+```cpp
+namespace mcu
+{
+    class FileStream
+    {
+    public:
+        using Radix_t = enum class RadixEnum {Binary=2, Octal=8, Decimal=10, Hex=16};
+    protected:
+        size_t mFileDescriptor;
+        Radix_t mRadixSetting;
+    public:
+        FileStream(size_t fd): mFileDescriptor(fd), mRadixSetting(RadixEnum::Hex) {}
+
+    public:
+        FileStream& operator <<(const char *string)
+        {
+            const size_t length = std::strlen(string);
+            _write(mFileDescriptor, string, length);
+            return *this;
+        }
+    }
+
+    template<typename U> requires std::integral<U>
+    FileStream& operator <<(const U value) { /* ... */ }
+
+    template<typename U> requires std::floating_point<U>
+    FileStream& operator <<(const U value) { /* ... */ }
+}
+```
+
+### 4.3. Instantiate Filestream for each output
+
+```cpp
+namespace mcu
+{
+    FileStream debug(1);
+    FileStream swo(2);
+}
+```
+
+### 4.4. Some plumbing for output modes
+
+```cpp
+extern "C" int _write(int fd, const void*data, size_t length)
+{
+    switch (fd)
+    {
+        case 1:
+            SWOWrite((const char*)data, length);
+            break;
+        case 2:
+            UARTWrite((const char*)data, length);
+            break;
+        case 3:
+            UDPWrite(connection, (const char*)data, length);
+        /* ... */
+    }
+}
+```
+
+And use them:
+
+```cpp
+int main()
+{
+    mcu::swo << "Hello, Serial Wire Debug!\r\n";
+    mcu::debug << "Hello, UART Debug!\r\n";
+}
+```
+
+## Dare to use the heap
