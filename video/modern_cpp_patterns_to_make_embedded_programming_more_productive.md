@@ -503,4 +503,17 @@ namespace std::chrono
         return time_point(nanoseconds(1000ull * static_cast<nanoseconds::rep>(chrono_timer->CNT)));
     }
 }
+
+using namespace std::chrono;
+
+template<typename T>
+void Benchmark(const std::function<void[]>& f, const std::string_view label)
+{
+    const auto start = high_resolution_clock::now();
+    f()
+    auto elapsed = high_resolution_clock::now() - start;
+
+    mcu::debug << label << " : " << duration_cast<T>(elapsed) << "\r\n";
+}
+
 ```
