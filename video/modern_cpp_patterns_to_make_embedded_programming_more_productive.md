@@ -381,4 +381,126 @@ int main()
 }
 ```
 
-## Dare to use the heap
+## 5. Dare to use the heap
+
+- With some caveats.
+- In non safety related applications.
+
+### 5.1. Using heap in embedded applications
+
+- Runtime behavior can cause heap exhaustion.
+- Long runtimes can cause (unsolvable) fragmentation.
+- Heap errors have graceful resolution.
+- Many applications stick to static allocation.
+- Off limits: `std::vector`, `std::map`, `std::list`, `std::deque`.
+
+### 5.2. Use in allocate-once scenarios
+
+```cpp
+class CalculationNode
+{
+public:
+    using NodeHandle = std::unique_ptr<CalculationNode>;
+private:
+    size_t mNodeNumber;
+    std::vector<NodeHandle> mNodeCollection;
+
+public:
+    virtual bool Calculate()
+    {
+        for (node : mNodeCollection) -> node->Calculate();
+    }
+};
+```
+
+### 5.2. Use Arena allocators
+
+- For monotonic, allocate-once applications:
+  - Fast.
+  - Low overhead.
+- Preferably deterministic memory usage.
+- See also Lakos (2017) and Steagall(2017) talks.
+
+#### 5.2.1. Overriding the global new operator
+
+```cpp
+void *operator new(size_t size)
+{
+    static constexpr size_t ArenaSize = 1'000;
+    static char Arena[ArenaSize];
+    auto ptr = Arena + AllocatedBytes;
+    AllocatedBytes += size;
+
+    return ptr;
+}
+```
+
+#### 5.2.2. Overriding new on a per-class basis
+
+```cpp
+template<typename T>
+class ArenaAllocator
+{
+    static constexpr size_t ArenaSize = 1'000;
+    static char Arena[ArenaSize];
+
+public:
+    T *allocate(size_t size) {}
+}
+```
+
+```cpp
+class CalculationNode
+{
+public:
+    using NodeHandle = std::unique_ptr<CalculationNode>;
+private:
+    std::vector<NodeHandle, ArenaAllocator<NodeHandle>> mCollectionOfNodes;
+
+    void * operator new(size_t size)
+    {
+        ArenaAllocator<char> alloc;
+        return alloc.allocate(size);
+    }
+}
+```
+
+#### 5.2.3. Sum up
+
+It is possible to do runtime allocation while avoiding pitfalls of fragmentation, and to avoid heap overhead. Be safe.
+
+## 6. Implement one function to unlock all of time
+
+### 6.1. Unlock std::chrono
+
+- Embedded time sources.
+  - Relative (Hardware timer).
+  - Absolute (RTC).
+- Applications.
+  - Performance instrumentation.
+  - Time of day and calendering.
+
+```cpp
+static TIM_TypeDef ChronoHWTimer = nullptr;
+bool MicrosecondClockConfigure(TIM_TypeDef *timer, volatile uint32_t&rcc_reg, ...)
+{
+    bool success =true;
+    const uint32_t timer_freq = 1'000'000;
+
+    // Program timer for std::chrono functions.
+    ChronoHWTimer = timer;
+    rcc_reg |= rcc_value;
+
+    return success;
+}
+```
+
+```cpp
+namespace std::chrono
+{
+    time_point<high_resolution_clock> high_resolution_clock::now()
+    {
+        return time_point(nanoseconds(1000ull * static_cast<nanoseconds::rep>(chrono_timer->CNT)));
+    }
+}
+```
